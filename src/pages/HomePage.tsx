@@ -4,7 +4,6 @@ import React from 'react';
 import {
   Activity,
   Headphones,
-  MessageSquare,
   Mic,
   Moon,
   Play,
@@ -45,7 +44,6 @@ export interface HomePageProps {
   palette: ThemePalette;
   cloudEnabled?: boolean;
   onStartMode: (launch: ActiveModeLaunch) => void;
-  onOpenCoach: () => void;
   onOneTapBackup: () => void;
   onDismissPromoted: () => void;
   onGenerateAiQuestionsNow?: () => Promise<{
@@ -127,13 +125,15 @@ export const HomePage: React.FC<HomePageProps> = ({
   palette,
   cloudEnabled = false,
   onStartMode,
-  onOpenCoach,
   onOneTapBackup,
   onDismissPromoted,
   onGenerateAiQuestionsNow,
 }) => {
   const [generatingAi, setGeneratingAi] = React.useState(false);
   const [aiGenNotice, setAiGenNotice] = React.useState<string | null>(null);
+  const [rightPanelTab, setRightPanelTab] = React.useState<
+    'gate' | 'calendar' | 'library'
+  >('gate');
 
   const activeChunks = chunks.filter((c) => !c.disabled);
   const seedCount = activeChunks.filter((c) => c.source === 'seed').length;
@@ -266,7 +266,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             >
               <div className="flex items-center gap-2 font-bold text-sm">
                 <Headphones size={17} strokeWidth={1.75} color="currentColor" />
-                <span>サイレントモード（満員電車・親指タップ）</span>
+                <span>サイレントモード（聴く・並べる）</span>
               </div>
               <p className="text-xs opacity-80">
                 {todaySessions.some((s) => s.mode === 'silent')
@@ -329,20 +329,11 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
             </div>
 
-            {/* Live実戦モード */}
+            {/* サブモード（Live実戦 / スリープ）：コンパクト2列 */}
             <div
               style={{ borderColor: palette.border }}
-              className="border-t pt-3.5 flex items-center justify-between gap-3"
+              className="border-t pt-3.5 grid grid-cols-2 gap-2.5"
             >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 font-bold text-sm">
-                  <Radio size={17} strokeWidth={1.75} color="currentColor" />
-                  <span>Live実戦モード（20分フリートーク）</span>
-                </div>
-                <p className="text-xs opacity-80">
-                  会話ログを取り込むと、言えなかった表現をそのまま復習リストに追加します。
-                </p>
-              </div>
               <button
                 type="button"
                 onClick={() =>
@@ -353,27 +344,18 @@ export const HomePage: React.FC<HomePageProps> = ({
                   borderColor: palette.border,
                   borderBottomWidth: '3px',
                 }}
-                className="min-h-[44px] px-4 py-2 rounded-lg border font-bold text-xs tactile-block shrink-0"
+                className="p-3 rounded-lg border text-left space-y-1 tactile-block"
                 data-testid="start-live-20"
               >
-                20分実戦
-              </button>
-            </div>
-
-            {/* スリープ・プライミングモード */}
-            <div
-              style={{ borderColor: palette.border }}
-              className="border-t pt-3.5 flex items-center justify-between gap-3"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 font-bold text-sm">
-                  <Moon size={17} strokeWidth={1.75} color="currentColor" />
-                  <span>スリープ・プライミング（就寝前3分）</span>
+                <div className="flex items-center gap-1.5 font-bold text-xs">
+                  <Radio size={15} strokeWidth={1.75} color="currentColor" />
+                  <span>Live実戦（20分）</span>
                 </div>
-                <p className="text-xs opacity-80">
-                  目に優しい暗色画面で、今日苦戦した表現を音声だけで聴き流します。
+                <p className="text-[11px] opacity-75">
+                  会話ログから弱点を登録
                 </p>
-              </div>
+              </button>
+
               <button
                 type="button"
                 onClick={() =>
@@ -384,194 +366,212 @@ export const HomePage: React.FC<HomePageProps> = ({
                   borderColor: palette.border,
                   borderBottomWidth: '3px',
                 }}
-                className="min-h-[44px] px-4 py-2 rounded-lg border font-bold text-xs tactile-block shrink-0"
+                className="p-3 rounded-lg border text-left space-y-1 tactile-block"
                 data-testid="start-sleep-3"
               >
-                3分開始
-              </button>
-            </div>
-
-            {/* AI講師に質問チャット */}
-            <div
-              style={{ borderColor: palette.border }}
-              className="border-t pt-3.5 flex items-center justify-between gap-3"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 font-bold text-sm">
-                  <MessageSquare size={17} strokeWidth={1.75} color="currentColor" />
-                  <span>専属AI講師に質問チャット</span>
+                <div className="flex items-center gap-1.5 font-bold text-xs">
+                  <Moon size={15} strokeWidth={1.75} color="currentColor" />
+                  <span>スリープ（3分）</span>
                 </div>
-                <p className="text-xs opacity-80">
-                  フレーズのニュアンス、語順のイメージ、発音のコツを気軽に聞けます。
+                <p className="text-[11px] opacity-75">
+                  就寝前の音声聴き流し
                 </p>
-              </div>
-              <button
-                type="button"
-                onClick={onOpenCoach}
-                style={{
-                  backgroundColor: palette.background,
-                  borderColor: palette.border,
-                  borderBottomWidth: '3px',
-                }}
-                className="min-h-[44px] px-4 py-2 rounded-lg border font-bold text-xs tactile-block shrink-0"
-                data-testid="open-coach-chat"
-              >
-                AI講師に聞く
               </button>
             </div>
           </div>
         </div>
 
-        {/* 右カラム：昇格ゲート進捗＋ヒートマップカレンダー */}
-        <div className="space-y-5">
-          <PromotionProgress
-            gateStatus={gateStatus}
-            etaText={etaText}
-            bossCooldownUntil={settings.bossCooldownUntil}
-            palette={palette}
-            onStartBossBattle={() =>
-              onStartMode({ mode: 'boss', plannedMinutes: 10 })
-            }
-          />
-
-          <HeatmapCalendar
-            sessions={sessions}
-            aiReports={aiReports}
-            palette={palette}
-            currentStudyDate={currentStudyDate}
-          />
-
-          {/* あなたの学習ライブラリ */}
+        {/* 右カラム：タブ切り替えで1枚に集約（昇格ゲート / 学習カレンダー / ライブラリ） */}
+        <div className="space-y-4">
           <div
             style={{
               backgroundColor: palette.card,
               borderColor: palette.border,
-              color: palette.text,
             }}
-            className="border rounded-xl p-5 space-y-3 text-xs"
-            data-testid="ai-question-bank-card"
+            className="border rounded-xl p-1.5 grid grid-cols-3 gap-1.5 text-xs font-bold"
+            data-testid="home-right-tabs"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 font-bold text-sm">
-                <Sparkles size={16} strokeWidth={1.75} color="currentColor" />
-                <span>あなたの学習ライブラリ</span>
-              </div>
-              <span className="font-mono font-bold">
-                全 {activeChunks.length} 問
-              </span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div
-                style={{
-                  backgroundColor: palette.background,
-                  borderColor: palette.border,
-                }}
-                className="p-2.5 rounded border"
-              >
-                <div className="opacity-75">基本フレーズ</div>
-                <div className="text-base font-bold font-mono">{seedCount}問</div>
-              </div>
-              <div
-                style={{
-                  backgroundColor: palette.background,
-                  borderColor: palette.border,
-                }}
-                className="p-2.5 rounded border"
-              >
-                <div className="opacity-75">追加フレーズ</div>
-                <div
-                  style={{ color: palette.amberText ?? palette.text }}
-                  className="text-base font-bold font-mono"
-                >
-                  {aiCount}問
-                </div>
-              </div>
-              <div
-                style={{
-                  backgroundColor: palette.background,
-                  borderColor: palette.border,
-                }}
-                className="p-2.5 rounded border"
-              >
-                <div className="opacity-75">実戦・応用</div>
-                <div className="text-base font-bold font-mono">
-                  {liveOrRecompCount}問
-                </div>
-              </div>
-            </div>
-
-            <p className="opacity-80">
-              セッションを完了するたびに新しい表現が自動で5問追加されます。下のボタンから今すぐ追加することもできます。
-            </p>
-
-            {onGenerateAiQuestionsNow && (
+            {(
+              [
+                { key: 'gate', label: '昇格ゲート' },
+                { key: 'calendar', label: '学習カレンダー' },
+                { key: 'library', label: `ライブラリ (${activeChunks.length})` },
+              ] as const
+            ).map((tab) => (
               <button
+                key={tab.key}
                 type="button"
-                disabled={generatingAi}
-                onClick={async () => {
-                  setGeneratingAi(true);
-                  setAiGenNotice(null);
-                  try {
-                    const res = await onGenerateAiQuestionsNow();
-                    setAiGenNotice(
-                      `新しく ${res.addedCount} 問を追加しました！（次回のトレーニングで優先出題されます）`
-                    );
-                  } finally {
-                    setGeneratingAi(false);
-                  }
-                }}
+                onClick={() => setRightPanelTab(tab.key)}
                 style={{
-                  backgroundColor: palette.background,
-                  borderColor: palette.text,
-                  borderBottomWidth: '3px',
+                  backgroundColor:
+                    rightPanelTab === tab.key
+                      ? palette.text
+                      : 'transparent',
+                  color:
+                    rightPanelTab === tab.key ? palette.card : palette.text,
                 }}
-                className="w-full min-h-[44px] px-4 py-2.5 rounded-lg border font-bold text-xs tactile-block disabled:opacity-50"
-                data-testid="generate-ai-questions-now-button"
+                className="py-2 px-2 rounded-lg transition-colors"
+                data-testid={`home-tab-${tab.key}`}
               >
-                {generatingAi
-                  ? '新しいフレーズを作成中...'
-                  : '新しいフレーズを5問追加する'}
+                {tab.label}
               </button>
-            )}
-
-            {aiGenNotice && (
-              <p className="font-bold pt-1" style={{ color: palette.greenText }}>
-                {aiGenNotice}
-              </p>
-            )}
+            ))}
           </div>
 
-          {/* 今回の振り返りメモ */}
-          {aiReports.filter((r) => r.analyst).length > 0 && (
+          {rightPanelTab === 'gate' ? (
+            <PromotionProgress
+              gateStatus={gateStatus}
+              etaText={etaText}
+              bossCooldownUntil={settings.bossCooldownUntil}
+              palette={palette}
+              onStartBossBattle={() =>
+                onStartMode({ mode: 'boss', plannedMinutes: 10 })
+              }
+            />
+          ) : rightPanelTab === 'calendar' ? (
+            <div className="space-y-4">
+              <HeatmapCalendar
+                sessions={sessions}
+                aiReports={aiReports}
+                palette={palette}
+                currentStudyDate={currentStudyDate}
+              />
+              {aiReports.filter((r) => r.analyst).length > 0 && (
+                <div
+                  style={{
+                    backgroundColor: palette.card,
+                    borderColor: palette.border,
+                    color: palette.text,
+                  }}
+                  className="border rounded-xl p-5 space-y-2 text-xs"
+                >
+                  <div className="flex items-center gap-2 font-bold text-sm">
+                    <Sparkles size={16} strokeWidth={1.75} color="currentColor" />
+                    <span>専属AI講師からの振り返りメモ</span>
+                  </div>
+                  {(() => {
+                    const latest = [...aiReports]
+                      .reverse()
+                      .find((r) => r.analyst);
+                    if (!latest?.analyst) return null;
+                    return (
+                      <div className="space-y-1">
+                        <p className="font-semibold">
+                          ボトルネック分析: {latest.analyst.bottleneck}
+                        </p>
+                        <p className="opacity-85">
+                          成長コメント: {latest.analyst.growth}
+                        </p>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+          ) : (
             <div
               style={{
                 backgroundColor: palette.card,
                 borderColor: palette.border,
                 color: palette.text,
               }}
-              className="border rounded-xl p-5 space-y-2 text-xs"
+              className="border rounded-xl p-5 space-y-3 text-xs"
+              data-testid="ai-question-bank-card"
             >
-              <div className="flex items-center gap-2 font-bold text-sm">
-                <Sparkles size={16} strokeWidth={1.75} color="currentColor" />
-                <span>専属AI講師からの振り返りメモ</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 font-bold text-sm">
+                  <Sparkles size={16} strokeWidth={1.75} color="currentColor" />
+                  <span>あなたの学習ライブラリ</span>
+                </div>
+                <span className="font-mono font-bold">
+                  全 {activeChunks.length} 問
+                </span>
               </div>
-              {(() => {
-                const latest = [...aiReports]
-                  .reverse()
-                  .find((r) => r.analyst);
-                if (!latest?.analyst) return null;
-                return (
-                  <div className="space-y-1">
-                    <p className="font-semibold">
-                      ボトルネック分析: {latest.analyst.bottleneck}
-                    </p>
-                    <p className="opacity-85">
-                      成長コメント: {latest.analyst.growth}
-                    </p>
+
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div
+                  style={{
+                    backgroundColor: palette.background,
+                    borderColor: palette.border,
+                  }}
+                  className="p-2.5 rounded border"
+                >
+                  <div className="opacity-75">基本フレーズ</div>
+                  <div className="text-base font-bold font-mono">
+                    {seedCount}問
                   </div>
-                );
-              })()}
+                </div>
+                <div
+                  style={{
+                    backgroundColor: palette.background,
+                    borderColor: palette.border,
+                  }}
+                  className="p-2.5 rounded border"
+                >
+                  <div className="opacity-75">追加フレーズ</div>
+                  <div
+                    style={{ color: palette.amberText ?? palette.text }}
+                    className="text-base font-bold font-mono"
+                  >
+                    {aiCount}問
+                  </div>
+                </div>
+                <div
+                  style={{
+                    backgroundColor: palette.background,
+                    borderColor: palette.border,
+                  }}
+                  className="p-2.5 rounded border"
+                >
+                  <div className="opacity-75">実戦・応用</div>
+                  <div className="text-base font-bold font-mono">
+                    {liveOrRecompCount}問
+                  </div>
+                </div>
+              </div>
+
+              <p className="opacity-80">
+                セッションを完了するたびに新しい表現が自動で5問追加されます。下のボタンから今すぐ追加することもできます。
+              </p>
+
+              {onGenerateAiQuestionsNow && (
+                <button
+                  type="button"
+                  disabled={generatingAi}
+                  onClick={async () => {
+                    setGeneratingAi(true);
+                    setAiGenNotice(null);
+                    try {
+                      const res = await onGenerateAiQuestionsNow();
+                      setAiGenNotice(
+                        `新しく ${res.addedCount} 問を追加しました！（次回のトレーニングで優先出題されます）`
+                      );
+                    } finally {
+                      setGeneratingAi(false);
+                    }
+                  }}
+                  style={{
+                    backgroundColor: palette.background,
+                    borderColor: palette.text,
+                    borderBottomWidth: '3px',
+                  }}
+                  className="w-full min-h-[44px] px-4 py-2.5 rounded-lg border font-bold text-xs tactile-block disabled:opacity-50"
+                  data-testid="generate-ai-questions-now-button"
+                >
+                  {generatingAi
+                    ? '新しいフレーズを作成中...'
+                    : '新しいフレーズを5問追加する'}
+                </button>
+              )}
+
+              {aiGenNotice && (
+                <p
+                  className="font-bold pt-1"
+                  style={{ color: palette.greenText }}
+                >
+                  {aiGenNotice}
+                </p>
+              )}
             </div>
           )}
         </div>

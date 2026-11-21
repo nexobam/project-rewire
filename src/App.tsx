@@ -380,7 +380,6 @@ export const App: React.FC = () => {
           palette={palette}
           cloudEnabled={cloudEnabled}
           onStartMode={handleStartMode}
-          onOpenCoach={() => setActiveTab('coach')}
           onOneTapBackup={() => void handleOneTapBackup()}
           onDismissPromoted={() => setJustPromotedBanner(false)}
           onGenerateAiQuestionsNow={generateAiQuestionsNow}
