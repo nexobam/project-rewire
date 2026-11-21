@@ -143,10 +143,11 @@ export interface PictureChoiceJudgeParams {
 }
 
 /**
- * 絵カード（および音変化4択）の評価判定
- * - 緑：正解、かつ <= 1500ms
- * - 黄：正解、かつ <= 3000ms
- * - 赤：それ以外またはミス
+ * 絵カード・音変化4択の評価判定（認知負荷・視覚スキャン時間に基づく人間工学的基準）
+ * - 絵カード4択（場所・相手・感情タグ×4枚のスキャン＋判断＋タップ）:
+ *   緑 <= 3200ms / 黄 <= 5500ms / 赤 > 5500ms
+ * - 音変化・連続多聴4択（英文4本を読む認知負荷を考慮）:
+ *   緑 <= 4000ms / 黄 <= 6500ms / 赤 > 6500ms
  */
 export function judgePictureChoiceTiming(params: PictureChoiceJudgeParams): {
   rating: Rating;
@@ -167,10 +168,13 @@ export function judgePictureChoiceTiming(params: PictureChoiceJudgeParams): {
     };
   }
 
+  const greenLimitMs = isSoundChange ? 4000 : 3200;
+  const yellowLimitMs = isSoundChange ? 6500 : 5500;
+
   let rawRating: Rating = 'red';
-  if (completionMs <= 1500) {
+  if (completionMs <= greenLimitMs) {
     rawRating = 'green';
-  } else if (completionMs <= 3000) {
+  } else if (completionMs <= yellowLimitMs) {
     rawRating = 'yellow';
   } else {
     rawRating = 'red';

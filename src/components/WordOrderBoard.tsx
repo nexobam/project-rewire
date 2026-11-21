@@ -52,18 +52,18 @@ export const WordOrderBoard: React.FC<WordOrderBoardProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* 上段：組み立て中の語順スロット（最小高72pxで固定し下段の位置を一切動かさない） */}
+      {/* 上段：組み立て中の語順スロット（高さ固定 h-[168px] で折り返し時も下段の位置を1pxもずらさない） */}
       <div
         style={{
           backgroundColor: palette.card,
           borderColor: palette.border,
           color: palette.text,
         }}
-        className="border rounded-lg p-4 min-h-[88px] flex flex-wrap items-center gap-3"
+        className="border rounded-lg p-3.5 h-[168px] overflow-y-auto flex flex-wrap content-start items-start gap-2.5"
         data-testid="assembled-slots"
       >
         {selectedBlocks.length === 0 ? (
-          <span className="text-sm opacity-60">
+          <span className="text-sm opacity-60 self-center my-auto w-full text-center">
             {isAudioPlaying
               ? '音声を聴いています...'
               : '聴こえた英語の語順のままブロックをタップ（または数字キー 1〜9）'}
@@ -80,7 +80,7 @@ export const WordOrderBoard: React.FC<WordOrderBoardProps> = ({
                 borderBottomWidth: '3px',
                 color: palette.text,
               }}
-              className="min-h-[56px] px-4 py-2 rounded-lg border font-semibold text-base tactile-block flex items-center justify-center"
+              className="min-h-[44px] px-3 py-1.5 rounded-lg border font-semibold text-sm tactile-block flex items-center justify-center"
               data-testid={`selected-block-${block.id}`}
             >
               <span>{block.text}</span>

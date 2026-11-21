@@ -104,18 +104,49 @@ describe('timingJudge - 動的タイムリミットと境界値判定', () => {
     expect(wrong.missType).toBe('order_delay');
   });
 
-  it('絵カード判定の境界値（1500ms / 3000ms）が正確であること', () => {
+  it('絵カード4択（3200/5500ms）および音変化4択（4000/6500ms）の人間工学的境界値が正確であること', () => {
+    // 絵カード4択
     expect(
-      judgePictureChoiceTiming({ isCorrect: true, completionMs: 1500 }).rating
+      judgePictureChoiceTiming({ isCorrect: true, completionMs: 3200 }).rating
     ).toBe('green');
     expect(
-      judgePictureChoiceTiming({ isCorrect: true, completionMs: 1501 }).rating
+      judgePictureChoiceTiming({ isCorrect: true, completionMs: 3201 }).rating
     ).toBe('yellow');
     expect(
-      judgePictureChoiceTiming({ isCorrect: true, completionMs: 3000 }).rating
+      judgePictureChoiceTiming({ isCorrect: true, completionMs: 5500 }).rating
     ).toBe('yellow');
     expect(
-      judgePictureChoiceTiming({ isCorrect: true, completionMs: 3001 }).rating
+      judgePictureChoiceTiming({ isCorrect: true, completionMs: 5501 }).rating
+    ).toBe('red');
+
+    // 音変化・連続多聴（英文4択）
+    expect(
+      judgePictureChoiceTiming({
+        isCorrect: true,
+        completionMs: 4000,
+        isSoundChange: true,
+      }).rating
+    ).toBe('green');
+    expect(
+      judgePictureChoiceTiming({
+        isCorrect: true,
+        completionMs: 4001,
+        isSoundChange: true,
+      }).rating
+    ).toBe('yellow');
+    expect(
+      judgePictureChoiceTiming({
+        isCorrect: true,
+        completionMs: 6500,
+        isSoundChange: true,
+      }).rating
+    ).toBe('yellow');
+    expect(
+      judgePictureChoiceTiming({
+        isCorrect: true,
+        completionMs: 6501,
+        isSoundChange: true,
+      }).rating
     ).toBe('red');
     expect(
       judgePictureChoiceTiming({
