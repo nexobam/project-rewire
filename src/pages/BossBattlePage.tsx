@@ -9,7 +9,7 @@ import {
   evaluateBossBattle,
   type BossQuestion,
 } from '../domain/promotionGate';
-import { strictShuffleBlocks } from '../domain/shuffle';
+import { shuffleArray, strictShuffleBlocks } from '../domain/shuffle';
 import {
   isAcceptableWordOrder,
   judgePictureChoiceTiming,
@@ -70,6 +70,7 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(true);
   const [shuffledBlocks, setShuffledBlocks] = useState<Block[]>([]);
+  const [shuffledSoundChoices, setShuffledSoundChoices] = useState<string[]>([]);
   const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
   const [results, setResults] = useState<{ chunkId: string; rating: Rating }[]>(
     []
@@ -92,6 +93,16 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
       setIsAudioPlaying(true);
       setShuffledBlocks(
         strictShuffleBlocks(q.chunk.blocks, q.chunk.acceptableOrders)
+      );
+      setShuffledSoundChoices(
+        shuffleArray(
+          q.chunk.soundChangeChoices ?? [
+            q.chunk.enText,
+            'Let us check that schedule later.',
+            'I am going to head back soon.',
+            'That sounds completely fine to me.',
+          ]
+        )
       );
 
       void speakEnglishText({
@@ -311,14 +322,7 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
               <div className="p-6 text-center text-sm">音声再生中...</div>
             ) : (
               <div className="grid grid-cols-1 gap-3">
-                {(
-                  currentQ.chunk.soundChangeChoices ?? [
-                    currentQ.chunk.enText,
-                    'Let us check that schedule later.',
-                    'I am going to head back soon.',
-                    'That sounds completely fine to me.',
-                  ]
-                ).map((choice, idx) => (
+                {shuffledSoundChoices.map((choice, idx) => (
                   <button
                     key={idx}
                     type="button"

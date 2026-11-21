@@ -8,7 +8,7 @@ import { WordOrderBoard } from '../components/WordOrderBoard';
 import type { ThemePalette } from '../domain/contrast';
 import type { GateStatus } from '../domain/promotionGate';
 import { buildSessionBatch } from '../domain/scheduler';
-import { strictShuffleBlocks } from '../domain/shuffle';
+import { shuffleArray, strictShuffleBlocks } from '../domain/shuffle';
 import {
   isAcceptableWordOrder,
   judgePictureChoiceTiming,
@@ -95,6 +95,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(true);
   const [shuffledBlocks, setShuffledBlocks] = useState<Block[]>([]);
+  const [shuffledSoundChoices, setShuffledSoundChoices] = useState<string[]>([]);
   const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
   const [pictureChoices, setPictureChoices] = useState<Chunk[]>([]);
   const [replayBeforeShown, setReplayBeforeShown] = useState(0);
@@ -174,18 +175,22 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
       setShuffledBlocks(
         strictShuffleBlocks(chunk.blocks, chunk.acceptableOrders)
       );
-
-      // 絵カード4択用のダミー選択肢3枚＋正解1枚を作成
-      const distractors = allChunks
-        .filter((c) => c.id !== chunk.id && !c.disabled)
-        .slice(0, 12);
-      const pickedDistractors: Chunk[] = [];
-      for (let i = 0; i < distractors.length && pickedDistractors.length < 3; i++) {
-        pickedDistractors.push(distractors[(currentIndex + i) % distractors.length]);
-      }
-      const fourCards = [...pickedDistractors, chunk].sort((a, b) =>
-        a.id.localeCompare(b.id)
+      setShuffledSoundChoices(
+        shuffleArray(
+          chunk.soundChangeChoices ?? [
+            chunk.enText,
+            'I am going to check it later.',
+            'Let us talk about that tomorrow.',
+            'That sounds totally fine with me.',
+          ]
+        )
       );
+
+      // 絵カード4択用のダミー選択肢3枚＋正解1枚をランダムに混ぜて作成
+      const distractors = shuffleArray(
+        allChunks.filter((c) => c.id !== chunk.id && !c.disabled)
+      ).slice(0, 3);
+      const fourCards = shuffleArray([...distractors, chunk]);
       setPictureChoices(fourCards);
 
       void speakEnglishText({
@@ -710,14 +715,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-3">
-                  {(
-                    currentChunk.soundChangeChoices ?? [
-                      currentChunk.enText,
-                      'I am going to check it later.',
-                      'Let us talk about that tomorrow.',
-                      'That sounds totally fine with me.',
-                    ]
-                  ).map((choice, idx) => (
+                  {shuffledSoundChoices.map((choice, idx) => (
                     <button
                       key={idx}
                       type="button"

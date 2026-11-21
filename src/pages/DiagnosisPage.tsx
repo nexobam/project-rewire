@@ -6,7 +6,7 @@ import { VisualCard } from '../components/VisualCard';
 import { WordOrderBoard } from '../components/WordOrderBoard';
 import { LV0_DIAGNOSIS_CHUNKS } from '../data/seed';
 import type { ThemePalette } from '../domain/contrast';
-import { strictShuffleBlocks } from '../domain/shuffle';
+import { shuffleArray, strictShuffleBlocks } from '../domain/shuffle';
 import { calculateMedianPerTapMs } from '../domain/timingJudge';
 import { playTactileClick, unlockAudioContext } from '../services/audioService';
 import {
@@ -40,6 +40,7 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [shuffledBlocks, setShuffledBlocks] = useState<Block[]>([]);
+  const [shuffledSoundChoices, setShuffledSoundChoices] = useState<string[]>([]);
   const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
   const [tapIntervals, setTapIntervals] = useState<number[]>([]);
   const [finishedPerTapMs, setFinishedPerTapMs] = useState<number | null>(null);
@@ -73,6 +74,9 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
       setSelectedBlockIds([]);
       setShuffledBlocks(
         strictShuffleBlocks(chunk.blocks, chunk.acceptableOrders)
+      );
+      setShuffledSoundChoices(
+        shuffleArray(chunk.soundChangeChoices ?? [chunk.enText])
       );
       playQuestionAudio(chunk);
     },
@@ -298,7 +302,7 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
-              {(currentChunk.soundChangeChoices ?? [currentChunk.enText]).map(
+              {shuffledSoundChoices.map(
                 (choice, idx) => (
                   <button
                     key={idx}

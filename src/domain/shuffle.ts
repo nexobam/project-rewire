@@ -6,7 +6,7 @@ import { isAcceptableWordOrder } from './timingJudge';
 /**
  * 配列をFisher-Yatesアルゴリズムでランダムにシャッフルした新しい配列を返す
  */
-function fisherYatesShuffle<T>(items: readonly T[]): T[] {
+export function shuffleArray<T>(items: readonly T[]): T[] {
   const copy = [...items];
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -32,7 +32,7 @@ export function strictShuffleBlocks(
 
   // ランダム試行（最大60回）
   for (let attempt = 0; attempt < 60; attempt++) {
-    const candidate = fisherYatesShuffle(blocks);
+    const candidate = shuffleArray(blocks);
     const candidateTexts = candidate.map((b) => b.text);
     if (!isAcceptableWordOrder(candidateTexts, acceptableOrders)) {
       return candidate;
@@ -41,7 +41,7 @@ export function strictShuffleBlocks(
 
   // フォールバック：ランダム試行で偶然すべて正解並びになった場合、
   // 異なるテキストを持つ2要素のスワップやローテーションを探索して確実に非正解並びを返す
-  const base = fisherYatesShuffle(blocks);
+  const base = shuffleArray(blocks);
   for (let i = 0; i < base.length; i++) {
     for (let j = i + 1; j < base.length; j++) {
       if (base[i].text !== base[j].text) {
