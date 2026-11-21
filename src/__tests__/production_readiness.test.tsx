@@ -534,6 +534,12 @@ describe('本番運用エッジケース & シナリオ検証', () => {
         await vi.waitFor(() => {
           expect(screen.getByTestId('revealed-en-text')).toBeInTheDocument();
         });
+        expect(
+          screen.getByTestId('post-answer-correctness')
+        ).toBeInTheDocument();
+        expect(
+          screen.getByTestId('post-answer-judge-reason')
+        ).toBeInTheDocument();
         expect(screen.getByTestId('revealed-en-text')).toHaveTextContent(
           currentSpoken
         );

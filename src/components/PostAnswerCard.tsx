@@ -24,6 +24,8 @@ import type { Chunk, Rating } from '../types';
 export interface PostAnswerCardProps {
   chunk: Chunk;
   rating: Rating;
+  isCorrect?: boolean;
+  judgeReason?: string;
   reactionMs: number | null;
   completionMs: number | null;
   palette: ThemePalette;
@@ -38,6 +40,8 @@ export interface PostAnswerCardProps {
 export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
   chunk,
   rating,
+  isCorrect,
+  judgeReason,
   reactionMs,
   completionMs,
   palette,
@@ -151,28 +155,55 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
       className="border-2 rounded-lg p-5 space-y-4 animate-pop-in"
       data-testid="post-answer-card"
     >
-      {/* 評価ヘッダー（色と秒数で表示・要件2-1-3） */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div
-          style={{ color: ratingColor }}
-          className="flex items-center gap-2 font-bold text-base"
-        >
-          {rating === 'green' ? (
-            <CheckCircle size={20} strokeWidth={1.75} color="currentColor" />
-          ) : rating === 'yellow' ? (
-            <AlertCircle size={20} strokeWidth={1.75} color="currentColor" />
-          ) : (
-            <XCircle size={20} strokeWidth={1.75} color="currentColor" />
-          )}
-          <span data-testid="post-answer-rating">{ratingLabel}</span>
+      {/* 評価ヘッダー（正誤＋色と秒数で表示・要件2-1-3） */}
+      <div className="space-y-1.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {typeof isCorrect === 'boolean' && (
+              <span
+                style={{
+                  backgroundColor: isCorrect
+                    ? (palette.greenText ?? palette.text)
+                    : (palette.crimsonText ?? palette.text),
+                  color: palette.background === '#141416' ? '#141416' : '#FFFFFF',
+                }}
+                className="px-2.5 py-0.5 rounded font-bold text-xs"
+                data-testid="post-answer-correctness"
+              >
+                {isCorrect ? '○ 正解' : '× 不正解'}
+              </span>
+            )}
+            <div
+              style={{ color: ratingColor }}
+              className="flex items-center gap-1.5 font-bold text-base"
+            >
+              {rating === 'green' ? (
+                <CheckCircle size={20} strokeWidth={1.75} color="currentColor" />
+              ) : rating === 'yellow' ? (
+                <AlertCircle size={20} strokeWidth={1.75} color="currentColor" />
+              ) : (
+                <XCircle size={20} strokeWidth={1.75} color="currentColor" />
+              )}
+              <span data-testid="post-answer-rating">{ratingLabel}</span>
+            </div>
+          </div>
+
+          <div className="text-[11px] font-mono opacity-75 flex items-center gap-2.5">
+            {reactionMs !== null &&
+              completionMs !== null &&
+              reactionMs !== completionMs && <span>初動 {reactionSec}</span>}
+            <span>完了 {completionSec}</span>
+          </div>
         </div>
 
-        <div className="text-[11px] font-mono opacity-75 flex items-center gap-2.5">
-          {reactionMs !== null &&
-            completionMs !== null &&
-            reactionMs !== completionMs && <span>初動 {reactionSec}</span>}
-          <span>完了 {completionSec}</span>
-        </div>
+        {judgeReason && (
+          <p
+            className="text-xs opacity-85 font-medium"
+            data-testid="post-answer-judge-reason"
+          >
+            {judgeReason}
+          </p>
+        )}
       </div>
 
       {/* 回答後に初めて英文全体を開示（要件2-1-2） */}

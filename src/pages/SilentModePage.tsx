@@ -111,6 +111,8 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
   // 回答後の結果表示ステート
   const [answeredResult, setAnsweredResult] = useState<{
     rating: Rating;
+    isCorrect: boolean;
+    judgeReason: string;
     reactionMs: number | null;
     completionMs: number | null;
   } | null>(null);
@@ -353,8 +355,31 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
     settings.ttsRate,
   ]);
 
+  const buildJudgeReasonText = (
+    isCorrect: boolean,
+    rating: Rating,
+    beforeReplays: number,
+    afterReplays: number
+  ): string => {
+    if (!isCorrect) {
+      return '選んだ内容が正解と異なっていたため、赤判定になりました。';
+    }
+    if (rating === 'green') {
+      return '正解！制限時間内に迷わず答えられたため、緑判定です。';
+    }
+    if (rating === 'yellow') {
+      if (beforeReplays >= 2 || afterReplays >= 1) {
+        return '正解！リプレイ（聴き直し）を使用したため、黄判定になりました。';
+      }
+      return '正解！少し時間がかかったため、黄判定になりました。';
+    }
+    return '正解ですが、制限時間を大きく超えたため、赤判定（要復習）になりました。';
+  };
+
   const submitAnswer = async (params: {
     rating: Rating;
+    isCorrect: boolean;
+    judgeReason: string;
     reactionMs: number | null;
     completionMs: number | null;
     missType?: 'sound_change' | 'order_delay';
@@ -362,8 +387,15 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
     if (submittingAnswerRef.current || answeredResult || !currentChunk) return;
     submittingAnswerRef.current = true;
     try {
-      const { rating, reactionMs, completionMs, missType } = params;
-      setAnsweredResult({ rating, reactionMs, completionMs });
+      const { rating, isCorrect, judgeReason, reactionMs, completionMs, missType } =
+        params;
+      setAnsweredResult({
+        rating,
+        isCorrect,
+        judgeReason,
+        reactionMs,
+        completionMs,
+      });
 
       const nextResults = [...sessionResults, rating];
       setSessionResults(nextResults);
@@ -455,6 +487,13 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
 
       void submitAnswer({
         rating: judged.rating,
+        isCorrect,
+        judgeReason: buildJudgeReasonText(
+          isCorrect,
+          judged.rating,
+          replayBeforeShown,
+          replayAfterShown
+        ),
         reactionMs,
         completionMs,
         missType: judged.missType,
@@ -491,6 +530,13 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
 
     void submitAnswer({
       rating: judged.rating,
+      isCorrect,
+      judgeReason: buildJudgeReasonText(
+        isCorrect,
+        judged.rating,
+        replayBeforeShown,
+        replayAfterShown
+      ),
       reactionMs: completionMs,
       completionMs,
       missType: judged.missType,
@@ -516,6 +562,13 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
 
     void submitAnswer({
       rating: judged.rating,
+      isCorrect,
+      judgeReason: buildJudgeReasonText(
+        isCorrect,
+        judged.rating,
+        replayBeforeShown,
+        replayAfterShown
+      ),
       reactionMs: completionMs,
       completionMs,
       missType: judged.missType,
@@ -865,6 +918,8 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
             <PostAnswerCard
               chunk={currentChunk}
               rating={answeredResult.rating}
+              isCorrect={answeredResult.isCorrect}
+              judgeReason={answeredResult.judgeReason}
               reactionMs={answeredResult.reactionMs}
               completionMs={answeredResult.completionMs}
               palette={palette}
