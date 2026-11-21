@@ -14,6 +14,7 @@ import { evaluateStreakAndTickets } from '../domain/studyDate';
 import { mergeCloudAndLocalStores } from '../hooks/useAppStore';
 import { BossBattlePage } from '../pages/BossBattlePage';
 import { CoachChatPage } from '../pages/CoachChatPage';
+import { DiagnosisPage } from '../pages/DiagnosisPage';
 import { SettingsPage } from '../pages/SettingsPage';
 import { SilentModePage } from '../pages/SilentModePage';
 import { SpeakModePage } from '../pages/SpeakModePage';
@@ -546,5 +547,27 @@ describe('本番運用エッジケース & シナリオ検証', () => {
       });
       globalThis.SpeechSynthesisUtterance = originalUtterance;
     }
+  });
+
+  it('DiagnosisPage で回答直後に正誤フィードバックが表示され、次へ進めること', async () => {
+    render(
+      <DiagnosisPage
+        palette={THEME_PALETTES.light}
+        ttsRate={1.0}
+        clickSound={false}
+        onCompleteDiagnosis={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('start-diagnosis-button'));
+    await vi.waitFor(() => {
+      expect(screen.getByTestId('diagnosis-choice-0')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('diagnosis-choice-0'));
+    expect(
+      screen.getByTestId('diagnosis-question-feedback')
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('diagnosis-next-button')).toBeInTheDocument();
   });
 });

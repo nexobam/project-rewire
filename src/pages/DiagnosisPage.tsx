@@ -1,13 +1,17 @@
 // Lv.0 初回レベル診断（3分・全15問：音変化と語順タップ、perTapMs中央値計測・設定画面からの再測定対応・要件2-1-3, 3）
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CheckCircle, Play, Volume2 } from 'lucide-react';
+import { CheckCircle, Play, Volume2, XCircle } from 'lucide-react';
 import { VisualCard } from '../components/VisualCard';
 import { WordOrderBoard } from '../components/WordOrderBoard';
 import { LV0_DIAGNOSIS_CHUNKS } from '../data/seed';
+import { extractSituationMeaning } from '../domain/chunkExplanation';
 import type { ThemePalette } from '../domain/contrast';
 import { shuffleArray, strictShuffleBlocks } from '../domain/shuffle';
-import { calculateMedianPerTapMs } from '../domain/timingJudge';
+import {
+  calculateMedianPerTapMs,
+  isAcceptableWordOrder,
+} from '../domain/timingJudge';
 import { playTactileClick, unlockAudioContext } from '../services/audioService';
 import {
   speakEnglishText,
@@ -46,9 +50,16 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
   const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
   const [tapIntervals, setTapIntervals] = useState<number[]>([]);
   const [finishedPerTapMs, setFinishedPerTapMs] = useState<number | null>(null);
+  const [questionFeedback, setQuestionFeedback] = useState<{
+    isCorrect: boolean;
+    userText?: string;
+  } | null>(null);
+  const [listeningCorrect, setListeningCorrect] = useState(0);
+  const [orderCorrect, setOrderCorrect] = useState(0);
 
   const lastTapTimeRef = useRef<number | null>(null);
   const preparedIndexRef = useRef<number | null>(null);
+  const pendingIntervalsRef = useRef<number[]>([]);
   const currentChunk = questions[currentIndex];
 
   // 前半5問は音変化4択、後半10問は語順ブロックタップ（合計15問）
@@ -73,6 +84,7 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
     (index: number) => {
       const chunk = questions[index];
       if (!chunk) return;
+      setQuestionFeedback(null);
       setSelectedBlockIds([]);
       setShuffledBlocks(
         strictShuffleBlocks(chunk.blocks, chunk.acceptableOrders)
@@ -103,23 +115,23 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
     }
   }, [started, currentIndex, finishedPerTapMs, currentChunk, prepareQuestion]);
 
-  const advanceOrFinish = useCallback(
-    (updatedIntervals: number[]) => {
-      const nextIdx = currentIndex + 1;
-      if (nextIdx >= questions.length) {
-        const median = calculateMedianPerTapMs(updatedIntervals);
-        setFinishedPerTapMs(median);
-      } else {
-        // iOS Safariのタップコンテキスト内で次問題の音声を同期的に再生するため直接準備する
-        preparedIndexRef.current = nextIdx;
-        prepareQuestion(nextIdx);
-        setCurrentIndex(nextIdx);
-      }
-    },
-    [currentIndex, prepareQuestion, questions.length]
-  );
+  const handleNextAfterFeedback = useCallback(() => {
+    playTactileClick(clickSound);
+    const nextIdx = currentIndex + 1;
+    if (nextIdx >= questions.length) {
+      stopSpeechSynthesis();
+      const median = calculateMedianPerTapMs(pendingIntervalsRef.current);
+      setFinishedPerTapMs(median);
+    } else {
+      // iOS Safariのタップコンテキスト内で次問題の音声を同期的に再生するため直接準備する
+      preparedIndexRef.current = nextIdx;
+      prepareQuestion(nextIdx);
+      setCurrentIndex(nextIdx);
+    }
+  }, [clickSound, currentIndex, prepareQuestion, questions.length]);
 
   const handleSelectBlock = (block: Block) => {
+    if (questionFeedback || isAudioPlaying) return;
     playTactileClick(clickSound);
     const now = performance.now();
     let updatedIntervals = tapIntervals;
@@ -136,12 +148,26 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
     setSelectedBlockIds(nextSelected);
 
     if (nextSelected.length === currentChunk.blocks.length) {
-      // 1問完了
-      advanceOrFinish(updatedIntervals);
+      const userOrder = nextSelected
+        .map((id) => currentChunk.blocks.find((b) => b.id === id)?.text ?? '')
+        .filter(Boolean);
+      const isCorrect = isAcceptableWordOrder(
+        userOrder,
+        currentChunk.acceptableOrders
+      );
+      if (isCorrect) {
+        setOrderCorrect((prev) => prev + 1);
+      }
+      pendingIntervalsRef.current = updatedIntervals;
+      setQuestionFeedback({
+        isCorrect,
+        userText: userOrder.join(' '),
+      });
     }
   };
 
   const handleUndoBlock = (blockId?: string) => {
+    if (questionFeedback) return;
     playTactileClick(clickSound);
     if (!blockId) {
       setSelectedBlockIds((prev) => prev.slice(0, -1));
@@ -150,7 +176,8 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
     }
   };
 
-  const handleSoundChangeChoice = (_choiceText: string) => {
+  const handleSoundChangeChoice = (choiceText: string) => {
+    if (questionFeedback || isAudioPlaying) return;
     playTactileClick(clickSound);
     const now = performance.now();
     let updatedIntervals = tapIntervals;
@@ -161,7 +188,15 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
         setTapIntervals(updatedIntervals);
       }
     }
-    advanceOrFinish(updatedIntervals);
+    const isCorrect = choiceText === currentChunk.enText;
+    if (isCorrect) {
+      setListeningCorrect((prev) => prev + 1);
+    }
+    pendingIntervalsRef.current = updatedIntervals;
+    setQuestionFeedback({
+      isCorrect,
+      userText: choiceText,
+    });
   };
 
   if (!started) {
@@ -177,12 +212,11 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
         >
           <h1 className="text-xl font-bold">
             {isRecalibration
-              ? 'タップ速度（perTapMs）の再測定'
+              ? '操作スピードの再測定'
               : 'Lv.0 初回レベル診断（約3分・全15問）'}
           </h1>
-          <p className="text-sm opacity-90">
-            音変化の聞き取り（5問）と語順ブロックタップ（10問）を通じて、あなたの指のタップ間隔の中央値（
-            <code>perTapMs</code>：350〜700ms）を測定し、専用タイムリミットとLv.1の出題順を設定します。
+          <p className="text-sm opacity-90 leading-relaxed">
+            英語の聞き取り（5問）と語順の並べ替え（10問）に答えるだけで、あなたの理解の速さに合った「ちょうどいい制限時間」を自動で設定します。
           </p>
           <div className="flex items-center gap-3 pt-2">
             <button
@@ -225,6 +259,25 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
   }
 
   if (finishedPerTapMs !== null) {
+    const totalCorrect = listeningCorrect + orderCorrect;
+    const totalCount = questions.length;
+    const accuracyPercent = Math.round((totalCorrect / Math.max(1, totalCount)) * 100);
+    const speedType =
+      finishedPerTapMs <= 430
+        ? {
+            label: '高速タイプ（テンポよく即答できるペース）',
+            detail: '反応が速いため、キビキビ進める制限時間に設定しました。',
+          }
+        : finishedPerTapMs <= 570
+          ? {
+              label: '標準タイプ（バランスの良いペース）',
+              detail: '焦りすぎず考えすぎない、標準の制限時間に設定しました。',
+            }
+          : {
+              label: 'じっくりタイプ（丁寧・確実に進めるペース）',
+              detail: '落ち着いて英語の語順を掴める、ゆとりのある制限時間に設定しました。',
+            };
+
     return (
       <div className="max-w-2xl mx-auto px-4 py-10">
         <div
@@ -233,23 +286,53 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
             borderColor: palette.border,
             color: palette.text,
           }}
-          className="border rounded-xl p-6 space-y-4 text-center"
+          className="border rounded-xl p-6 space-y-5 text-center"
           data-testid="diagnosis-complete-card"
         >
           <div className="flex justify-center">
             <CheckCircle size={36} strokeWidth={1.75} color="currentColor" />
           </div>
-          <h2 className="text-xl font-bold">診断完了！</h2>
-          <p className="text-sm">
-            測定されたあなたの基準タップ速度（<code>perTapMs</code>）：
-            <strong className="text-lg font-mono ml-1">
-              {finishedPerTapMs} ms
-            </strong>
-          </p>
-          <p className="text-xs opacity-80">
-            この速度をもとに、語順ブロックの動的タイムリミット（
-            <code>perTapMs × ブロック数 + 800ms</code>）が最適化されました。
-          </p>
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold">診断完了！</h2>
+            <p className="text-xs opacity-75">
+              あなた専用のトレーニング設定が完了しました
+            </p>
+          </div>
+
+          <div
+            style={{
+              backgroundColor: palette.background,
+              borderColor: palette.border,
+            }}
+            className="p-4 rounded-lg border space-y-3 text-left text-sm"
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">正答数</span>
+              <span className="font-bold font-mono text-base" data-testid="diagnosis-score-summary">
+                {totalCorrect} / {totalCount} 問正解（{accuracyPercent}%）
+              </span>
+            </div>
+            <div className="text-xs opacity-80 flex items-center justify-between">
+              <span>内訳</span>
+              <span>
+                聞き取り {listeningCorrect}/5問 ・ 語順 {orderCorrect}/10問
+              </span>
+            </div>
+            <div
+              style={{ borderColor: palette.border }}
+              className="pt-2.5 border-t space-y-1"
+            >
+              <p className="text-xs font-bold opacity-75">あなたの反応ペース判定</p>
+              <p className="font-bold text-sm" data-testid="diagnosis-speed-label">
+                {speedType.label}
+              </p>
+              <p className="text-xs opacity-80">{speedType.detail}</p>
+              <p className="text-[11px] font-mono opacity-60">
+                （参考：1タップ基準 {finishedPerTapMs} ms）
+              </p>
+            </div>
+          </div>
+
           <button
             type="button"
             disabled={completing}
@@ -285,9 +368,79 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
         </span>
       </div>
 
-      <VisualCard chunk={currentChunk} palette={palette} />
+      <VisualCard
+        chunk={currentChunk}
+        palette={palette}
+        showSituationMeaning={Boolean(questionFeedback)}
+        showEnglishSubtitle={Boolean(questionFeedback)}
+      />
 
-      {isSoundChangeStep ? (
+      {questionFeedback ? (
+        <div
+          style={{
+            backgroundColor: palette.card,
+            borderColor: questionFeedback.isCorrect
+              ? (palette.greenText ?? palette.border)
+              : (palette.crimsonText ?? palette.border),
+          }}
+          className="border-2 rounded-xl p-5 space-y-3"
+          data-testid="diagnosis-question-feedback"
+        >
+          <div
+            style={{
+              color: questionFeedback.isCorrect
+                ? (palette.greenText ?? palette.text)
+                : (palette.crimsonText ?? palette.text),
+            }}
+            className="flex items-center gap-2 font-bold text-base"
+          >
+            {questionFeedback.isCorrect ? (
+              <CheckCircle size={20} strokeWidth={2} color="currentColor" />
+            ) : (
+              <XCircle size={20} strokeWidth={2} color="currentColor" />
+            )}
+            <span>
+              {questionFeedback.isCorrect ? '正解！' : '不正解'}
+            </span>
+          </div>
+
+          <div
+            style={{
+              backgroundColor: palette.background,
+              borderColor: palette.border,
+            }}
+            className="p-3 rounded-lg border space-y-1 text-sm"
+          >
+            <p className="text-xs opacity-75 font-semibold">正解の英語</p>
+            <p className="font-bold">{currentChunk.enText}</p>
+            <p className="text-xs opacity-85 pt-0.5">
+              意味：{extractSituationMeaning(currentChunk)}
+            </p>
+            {!questionFeedback.isCorrect && questionFeedback.userText && (
+              <p className="text-xs opacity-70 pt-1">
+                あなたの回答：{questionFeedback.userText}
+              </p>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleNextAfterFeedback}
+            style={{
+              backgroundColor: palette.text,
+              color: palette.card,
+              borderColor: palette.text,
+              borderBottomWidth: '3px',
+            }}
+            className="w-full min-h-[52px] px-5 py-3 rounded-lg font-bold text-sm tactile-block"
+            data-testid="diagnosis-next-button"
+          >
+            {currentIndex + 1 >= questions.length
+              ? '診断結果を見る'
+              : '次の問題へ'}
+          </button>
+        </div>
+      ) : isSoundChangeStep ? (
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold">
