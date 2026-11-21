@@ -256,23 +256,3 @@ a,
   will-change: opacity, transform;
   animation: rewirePageEnter 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-nudge,
-  .animate-marquee,
-  .animate-spin-slow,
-  .animate-shimmer,
-  .animate-mic-pulse,
-  .audio-wave-bar,
-  .animate-card-enter,
-  .animate-pop-in,
-  .animate-combo-bump,
-  .animate-page-enter {
-    animation: none !important;
-  }
-  .reveal-item {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
-  }
-}
