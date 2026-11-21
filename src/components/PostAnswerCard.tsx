@@ -166,9 +166,9 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
           <span data-testid="post-answer-rating">{ratingLabel}</span>
         </div>
 
-        <div className="text-xs font-mono flex items-center gap-3">
-          <span>初動: {reactionSec}</span>
-          <span>完了: {completionSec}</span>
+        <div className="text-[11px] font-mono opacity-75 flex items-center gap-2.5">
+          <span>初動 {reactionSec}</span>
+          <span>完了 {completionSec}</span>
         </div>
       </div>
 
@@ -241,7 +241,7 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
         {practiceTranscript.length > 0 && (
           <div className="text-xs space-y-0.5 pt-1">
             <p className="font-semibold">
-              STT認識補助: &ldquo;{practiceTranscript}&rdquo;（一致率{' '}
+              発音チェック: &ldquo;{practiceTranscript}&rdquo;（一致率{' '}
               {Math.round((practiceMatchRate ?? 0) * 100)}%）
             </p>
           </div>

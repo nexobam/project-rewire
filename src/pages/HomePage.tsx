@@ -97,18 +97,18 @@ export function selectRecommendedAction(params: {
     };
   }
 
-  // 期限到来のSRS復習が多い場合はサイレント15分、そうでなければ手軽な3分または15分
+  // 期限到来の復習が多い場合はサイレント15分、そうでなければ標準15分
   if (dueReviewCount >= 5) {
     return {
-      label: `サイレントモード（15分）を開始（復習期限 ${dueReviewCount}件）`,
-      reason: 'SRSの復習期限が到来しています。音と語順ブロックで瞬発力を維持しましょう。',
+      label: `サイレントモード（15分）を開始（今日の復習 ${dueReviewCount}件）`,
+      reason: '復習のタイミングが来たフレーズがあります。音と語順で瞬発力をキープしましょう。',
       launch: { mode: 'silent', plannedMinutes: 15 },
     };
   }
 
   return {
     label: 'サイレントモード（15分）を開始',
-    reason: '音変化リスニングと語順ブロックの標準15分バッチで英語OSを鍛えます。',
+    reason: '音と語順ブロックの標準15分トレーニングで英語の瞬発力を鍛えます。',
     launch: { mode: 'silent', plannedMinutes: 15 },
   };
 }
@@ -184,10 +184,10 @@ export const HomePage: React.FC<HomePageProps> = ({
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider opacity-75">
-                迷ったらこれ（1タップですぐ開始）
+                今日のおすすめ（1タップですぐ開始）
               </span>
               <span className="text-xs font-semibold">
-                SRS期限到来: {dueCount}問
+                今日の復習: {dueCount}問
               </span>
             </div>
 
@@ -246,32 +246,32 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
           )}
 
-          {/* 5つの学習モード一覧（曜日固定なし・1日に何回でも可・要件4） */}
+          {/* 学習モード一覧（1日に何回でも実行可能） */}
           <div
             style={{
               backgroundColor: palette.card,
               borderColor: palette.border,
               color: palette.text,
             }}
-            className="border rounded-lg p-5 space-y-4"
+            className="border rounded-xl p-5 space-y-4"
           >
             <h2 className="font-bold text-base">
-              5つの学習モード（1日何回でも実行可能）
+              トレーニングを選ぶ
             </h2>
 
-            {/* 1. サイレントモード */}
+            {/* サイレントモード */}
             <div
               style={{ borderColor: palette.border }}
-              className="border-t pt-3 space-y-2"
+              className="border-t pt-3.5 space-y-2"
             >
               <div className="flex items-center gap-2 font-bold text-sm">
                 <Headphones size={17} strokeWidth={1.75} color="currentColor" />
-                <span>1. サイレントモード（満員電車・親指タップ）</span>
+                <span>サイレントモード（満員電車・親指タップ）</span>
               </div>
               <p className="text-xs opacity-80">
                 {todaySessions.some((s) => s.mode === 'silent')
-                  ? '本日2回目以降：今日学んだ問題の高速定着復習＆耳だけのリスニング'
-                  : '本日1回目：音変化リスニング・状況カード／語順ブロック瞬発タップ'}
+                  ? '本日2回目以降：今日学んだ表現の高速定着＆耳だけのリスニング'
+                  : '声を出さずに、英語の音と語順の感覚を鍛えます'}
               </p>
               <div className="grid grid-cols-4 gap-2 pt-1">
                 {([3, 15, 30, 60] as const).map((mins) => (
@@ -295,17 +295,17 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
             </div>
 
-            {/* 2. 発話ドリルモード */}
+            {/* 発話ドリルモード */}
             <div
               style={{ borderColor: palette.border }}
-              className="border-t pt-3 space-y-2"
+              className="border-t pt-3.5 space-y-2"
             >
               <div className="flex items-center gap-2 font-bold text-sm">
                 <Mic size={17} strokeWidth={1.75} color="currentColor" />
-                <span>2. 発話ドリルモード（お手本音声なし・瞬間発話）</span>
+                <span>発話ドリル（瞬間スピーキング）</span>
               </div>
               <p className="text-xs opacity-80">
-                今週サイレントでクリアした表現を優先出題。自己判定3ボタン＋STT認識補助。
+                状況カードを見て2秒以内に英語を口から出す実践トレーニング。
               </p>
               <div className="grid grid-cols-3 gap-2 pt-1">
                 {([5, 15, 30] as const).map((mins) => (
@@ -329,18 +329,18 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
             </div>
 
-            {/* 3. Live実戦モード */}
+            {/* Live実戦モード */}
             <div
               style={{ borderColor: palette.border }}
-              className="border-t pt-3 flex items-center justify-between gap-3"
+              className="border-t pt-3.5 flex items-center justify-between gap-3"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2 font-bold text-sm">
                   <Radio size={17} strokeWidth={1.75} color="currentColor" />
-                  <span>3. Live実戦モード（1回20分）</span>
+                  <span>Live実戦モード（20分フリートーク）</span>
                 </div>
                 <p className="text-xs opacity-80">
-                  専用プロンプトをワンタップコピー＆終了時のJSONログから弱点チャンクを自動登録。
+                  会話ログを取り込むと、言えなかった表現をそのまま復習リストに追加します。
                 </p>
               </div>
               <button
@@ -360,18 +360,18 @@ export const HomePage: React.FC<HomePageProps> = ({
               </button>
             </div>
 
-            {/* 4. スリープ・プライミングモード */}
+            {/* スリープ・プライミングモード */}
             <div
               style={{ borderColor: palette.border }}
-              className="border-t pt-3 flex items-center justify-between gap-3"
+              className="border-t pt-3.5 flex items-center justify-between gap-3"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2 font-bold text-sm">
                   <Moon size={17} strokeWidth={1.75} color="currentColor" />
-                  <span>4. スリープ・プライミング（就寝前3分）</span>
+                  <span>スリープ・プライミング（就寝前3分）</span>
                 </div>
                 <p className="text-xs opacity-80">
-                  スリープ専用配色に切替。今日苦戦した3チャンクを音声だけで聴き流します。
+                  目に優しい暗色画面で、今日苦戦した表現を音声だけで聴き流します。
                 </p>
               </div>
               <button
@@ -391,18 +391,18 @@ export const HomePage: React.FC<HomePageProps> = ({
               </button>
             </div>
 
-            {/* 5. AI講師に質問チャット */}
+            {/* AI講師に質問チャット */}
             <div
               style={{ borderColor: palette.border }}
-              className="border-t pt-3 flex items-center justify-between gap-3"
+              className="border-t pt-3.5 flex items-center justify-between gap-3"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2 font-bold text-sm">
                   <MessageSquare size={17} strokeWidth={1.75} color="currentColor" />
-                  <span>5. 専属AI講師に質問チャット（語順イメージ・発音解説）</span>
+                  <span>専属AI講師に質問チャット</span>
                 </div>
                 <p className="text-xs opacity-80">
-                  学習中フレーズの1タップ質問やテンプレートから、ニュアンス・語順・発音をすぐ解消。
+                  フレーズのニュアンス、語順のイメージ、発音のコツを気軽に聞けます。
                 </p>
               </div>
               <button
@@ -441,20 +441,20 @@ export const HomePage: React.FC<HomePageProps> = ({
             currentStudyDate={currentStudyDate}
           />
 
-          {/* 問題バンク内訳 ＆ 専属AI講師による新規問題生成パネル */}
+          {/* あなたの学習ライブラリ */}
           <div
             style={{
               backgroundColor: palette.card,
               borderColor: palette.border,
               color: palette.text,
             }}
-            className="border rounded-lg p-5 space-y-3 text-xs"
+            className="border rounded-xl p-5 space-y-3 text-xs"
             data-testid="ai-question-bank-card"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-bold text-sm">
                 <Sparkles size={16} strokeWidth={1.75} color="currentColor" />
-                <span>問題バンク ＆ 専属AI講師ステータス</span>
+                <span>あなたの学習ライブラリ</span>
               </div>
               <span className="font-mono font-bold">
                 全 {activeChunks.length} 問
@@ -469,7 +469,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 }}
                 className="p-2.5 rounded border"
               >
-                <div className="opacity-75">初期コア問題</div>
+                <div className="opacity-75">基本フレーズ</div>
                 <div className="text-base font-bold font-mono">{seedCount}問</div>
               </div>
               <div
@@ -479,7 +479,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 }}
                 className="p-2.5 rounded border"
               >
-                <div className="opacity-75">AI講師作成問題</div>
+                <div className="opacity-75">追加フレーズ</div>
                 <div
                   style={{ color: palette.amberText ?? palette.text }}
                   className="text-base font-bold font-mono"
@@ -494,7 +494,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 }}
                 className="p-2.5 rounded border"
               >
-                <div className="opacity-75">Live弱点・応用</div>
+                <div className="opacity-75">実戦・応用</div>
                 <div className="text-base font-bold font-mono">
                   {liveOrRecompCount}問
                 </div>
@@ -502,7 +502,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             <p className="opacity-80">
-              セッション完了時（「終了して集計」時）にAI講師が自動で新問題を5問作りますが、下のボタンから今すぐ追加作成することもできます。
+              セッションを完了するたびに新しい表現が自動で5問追加されます。下のボタンから今すぐ追加することもできます。
             </p>
 
             {onGenerateAiQuestionsNow && (
@@ -515,7 +515,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   try {
                     const res = await onGenerateAiQuestionsNow();
                     setAiGenNotice(
-                      `AI講師が新しく ${res.addedCount} 問を作成しました！（次回のバッチで優先出題されます）`
+                      `新しく ${res.addedCount} 問を追加しました！（次回のトレーニングで優先出題されます）`
                     );
                   } finally {
                     setGeneratingAi(false);
@@ -530,8 +530,8 @@ export const HomePage: React.FC<HomePageProps> = ({
                 data-testid="generate-ai-questions-now-button"
               >
                 {generatingAi
-                  ? '専属AI講師が新問題を作成・品質監査中...'
-                  : '今すぐAI講師に新問題を5問作らせる'}
+                  ? '新しいフレーズを作成中...'
+                  : '新しいフレーズを5問追加する'}
               </button>
             )}
 
@@ -542,7 +542,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             )}
           </div>
 
-          {/* 直近のAI講師コメントサマリー */}
+          {/* 今回の振り返りメモ */}
           {aiReports.filter((r) => r.analyst).length > 0 && (
             <div
               style={{
@@ -550,11 +550,11 @@ export const HomePage: React.FC<HomePageProps> = ({
                 borderColor: palette.border,
                 color: palette.text,
               }}
-              className="border rounded-lg p-5 space-y-2 text-xs"
+              className="border rounded-xl p-5 space-y-2 text-xs"
             >
               <div className="flex items-center gap-2 font-bold text-sm">
                 <Sparkles size={16} strokeWidth={1.75} color="currentColor" />
-                <span>AI講師からの最新フィードバック</span>
+                <span>専属AI講師からの振り返りメモ</span>
               </div>
               {(() => {
                 const latest = [...aiReports]

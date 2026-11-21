@@ -24,11 +24,11 @@ export interface HeaderProps {
 }
 
 const LEVEL_PHASE_LABELS: Record<Level, string> = {
-  0: 'Lv.0 初回診断（3分）',
-  1: 'Lv.1 音と基本OSの開通期（目安〜90h）',
-  2: 'Lv.2 思考拡張・語彙爆発期（目安〜350h）',
-  3: 'Lv.3 言い換え・状況対応期（目安〜600h）',
-  4: 'Lv.4 ネイティブ雑談・自由発話（目安1,000h+）',
+  0: 'Lv.0 初回診断',
+  1: 'Lv.1 基礎開通期',
+  2: 'Lv.2 思考拡張期',
+  3: 'Lv.3 言い換え期',
+  4: 'Lv.4 自由発話',
 };
 
 export const Header: React.FC<HeaderProps> = ({
@@ -43,8 +43,8 @@ export const Header: React.FC<HeaderProps> = ({
   const phaseSubText =
     level === 1
       ? lv1Phase === 'picture'
-        ? '前半：絵カード期'
-        : '後半：語順ブロック期'
+        ? '絵カード期'
+        : '語順期'
       : '';
 
   return (

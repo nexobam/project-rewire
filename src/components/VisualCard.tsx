@@ -74,28 +74,6 @@ export const VisualCard: React.FC<VisualCardProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5">
-          {/* 問題ソースバッジ（AI生成・Live弱点・コア問題の見える化） */}
-          <span
-            style={{
-              backgroundColor: palette.background,
-              borderColor: palette.border,
-              color:
-                chunk.source === 'ai'
-                  ? (palette.amberText ?? palette.text)
-                  : palette.text,
-            }}
-            className="text-[11px] font-bold px-2 py-0.5 rounded border"
-            data-testid={`chunk-source-${chunk.source}`}
-          >
-            {chunk.source === 'ai'
-              ? 'AI生成'
-              : chunk.source === 'live'
-                ? 'Live弱点'
-                : chunk.source === 'recomposed'
-                  ? '弱点応用'
-                  : 'コア問題'}
-          </span>
-
           {/* Miami Heat タグは回答前のネタバレ防止のため、回答後（showCategoryBadge時）のみ表示（要件7・背景トークンと組み合わせて4.5:1以上を確保） */}
           {isHeat && showCategoryBadge && (
             <span

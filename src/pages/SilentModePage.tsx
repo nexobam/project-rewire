@@ -634,33 +634,48 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
-      {/* 上部バー（回答中はタイマーも残り時間も表示しない・要件2-1-3） */}
-      <div className="flex items-center justify-between text-xs font-semibold">
-        <div className="flex items-center gap-2">
-          <Headphones size={16} strokeWidth={1.75} color="currentColor" />
-          <span>
-            {isRehab
-              ? '3分リハビリ'
-              : isSecondOrLaterToday
-                ? `サイレント高速復習 (${plannedMinutes}分枠)`
-                : `サイレントモード (${plannedMinutes}分枠)`}
-          </span>
-          <span>
-            / バッチ {currentIndex + 1} / {batch.length}
-          </span>
+      {/* 上部バー＋進捗プログレスバー */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs font-semibold">
+          <div className="flex items-center gap-2">
+            <Headphones size={16} strokeWidth={1.75} color="currentColor" />
+            <span>
+              {isRehab
+                ? '3分リハビリ'
+                : isSecondOrLaterToday
+                  ? `サイレント復習 (${plannedMinutes}分)`
+                  : `サイレント (${plannedMinutes}分)`}
+            </span>
+            <span className="font-mono opacity-80">
+              {currentIndex + 1} / {batch.length}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span>連続クリア: {combo}</span>
+            <button
+              type="button"
+              onClick={handleFinishSessionEarly}
+              style={{ borderColor: palette.border }}
+              className="px-2.5 py-1 rounded border text-xs"
+              data-testid="finish-session-button"
+            >
+              ここで終了
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span>緑コンボ: {combo}</span>
-          <button
-            type="button"
-            onClick={handleFinishSessionEarly}
-            style={{ borderColor: palette.border }}
-            className="px-2.5 py-1 rounded border text-xs"
-            data-testid="finish-session-button"
-          >
-            終了して集計
-          </button>
+        <div
+          style={{ backgroundColor: palette.border }}
+          className="w-full h-1.5 rounded-full overflow-hidden"
+        >
+          <div
+            style={{
+              backgroundColor: palette.text,
+              width: `${Math.round(((currentIndex + 1) / Math.max(1, batch.length)) * 100)}%`,
+            }}
+            className="h-full transition-all duration-300"
+          />
         </div>
       </div>
 

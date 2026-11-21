@@ -396,23 +396,40 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
-      <div className="flex items-center justify-between text-xs font-semibold">
-        <div className="flex items-center gap-2">
-          <Mic size={16} strokeWidth={1.75} color="currentColor" />
-          <span>
-            発話ドリルモード ({plannedMinutes}分) / 問題 {currentIndex + 1} /{' '}
-            {batch.length}
-          </span>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs font-semibold">
+          <div className="flex items-center gap-2">
+            <Mic size={16} strokeWidth={1.75} color="currentColor" />
+            <span>
+              発話ドリル ({plannedMinutes}分)
+            </span>
+            <span className="font-mono opacity-80">
+              {currentIndex + 1} / {batch.length}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleFinishEarly}
+            style={{ borderColor: palette.border }}
+            className="px-2.5 py-1 rounded border text-xs"
+            data-testid="speak-finish-early-button"
+          >
+            ここで終了
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={handleFinishEarly}
-          style={{ borderColor: palette.border }}
-          className="px-2.5 py-1 rounded border text-xs"
-          data-testid="speak-finish-early-button"
+
+        <div
+          style={{ backgroundColor: palette.border }}
+          className="w-full h-1.5 rounded-full overflow-hidden"
         >
-          終了して集計
-        </button>
+          <div
+            style={{
+              backgroundColor: palette.text,
+              width: `${Math.round(((currentIndex + 1) / Math.max(1, batch.length)) * 100)}%`,
+            }}
+            className="h-full transition-all duration-300"
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
