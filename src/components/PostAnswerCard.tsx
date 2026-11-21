@@ -147,7 +147,7 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
         borderColor: ratingColor,
         color: palette.text,
       }}
-      className="border-2 rounded-lg p-5 space-y-4"
+      className="border-2 rounded-lg p-5 space-y-4 animate-pop-in"
       data-testid="post-answer-card"
     >
       {/* 評価ヘッダー（色と秒数で表示・要件2-1-3） */}

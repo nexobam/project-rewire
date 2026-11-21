@@ -169,8 +169,8 @@ export const HomePage: React.FC<HomePageProps> = ({
         />
       )}
 
-      {/* PCでは2カラム表示（左：1タップ開始＆5学習モード、右：昇格ゲート＆ヒートマップカレンダー） */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* PCでは2カラム表示（左：1タップ開始＆学習モード、右：タブ統合パネル） */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-card-enter">
         {/* 左カラム */}
         <div className="space-y-5">
           {/* 親指が届くメインCTA：「迷ったらこれ（1タップですぐ開始）」 */}
@@ -202,10 +202,15 @@ export const HomePage: React.FC<HomePageProps> = ({
                 borderColor: palette.text,
                 borderBottomWidth: '3px',
               }}
-              className="w-full min-h-[56px] px-5 py-3.5 rounded-lg border font-bold text-base flex items-center justify-center gap-2 tactile-block"
+              className="group w-full min-h-[56px] px-5 py-3.5 rounded-lg border font-bold text-base flex items-center justify-center gap-2 tactile-block"
               data-testid="one-tap-start-button"
             >
-              <Play size={20} strokeWidth={1.75} color="currentColor" />
+              <Play
+                size={20}
+                strokeWidth={1.75}
+                color="currentColor"
+                className="transition-transform duration-150 group-hover:translate-x-0.5"
+              />
               <span>{recommendation.label}</span>
             </button>
           </div>

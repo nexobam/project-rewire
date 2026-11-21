@@ -85,7 +85,12 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-1.5 px-2.5 py-1 rounded border text-sm font-semibold"
             title="連続学習日数"
           >
-            <Flame size={16} strokeWidth={1.75} color="currentColor" />
+            <Flame
+              size={16}
+              strokeWidth={1.75}
+              color="currentColor"
+              className={streakDays > 0 ? 'animate-mic-pulse' : ''}
+            />
             <span data-testid="streak-days">{streakDays}日連続</span>
           </div>
 

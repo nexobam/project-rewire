@@ -432,7 +432,10 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div
+        key={currentQuestionKey ?? currentIndex}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start animate-card-enter"
+      >
         <div className="space-y-3">
           {/* 状況ビジュアルカード（回答前はアイコン＋3タグのみ、回答後に意味・カテゴリバッジ・正解英文を表示） */}
           <VisualCard
@@ -605,7 +608,28 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
                   className="w-full min-h-[56px] px-4 py-3 rounded-lg border-2 font-bold text-sm flex items-center justify-center gap-2 tactile-block select-none"
                   data-testid="push-to-talk-mic-button"
                 >
-                  <Mic size={20} strokeWidth={1.75} color="currentColor" />
+                  <Mic
+                    size={20}
+                    strokeWidth={1.75}
+                    color="currentColor"
+                    className={sttActive ? 'animate-mic-pulse' : ''}
+                  />
+                  {sttActive && (
+                    <span className="flex items-end gap-0.5 h-4" aria-hidden="true">
+                      <span
+                        style={{ backgroundColor: 'currentColor' }}
+                        className="w-1 h-4 rounded-full audio-wave-bar"
+                      />
+                      <span
+                        style={{ backgroundColor: 'currentColor' }}
+                        className="w-1 h-4 rounded-full audio-wave-bar"
+                      />
+                      <span
+                        style={{ backgroundColor: 'currentColor' }}
+                        className="w-1 h-4 rounded-full audio-wave-bar"
+                      />
+                    </span>
+                  )}
                   <span>
                     {sttActive
                       ? 'マイク聞き取り中...（離す／タップで停止）'

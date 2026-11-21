@@ -536,7 +536,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
             borderColor: palette.border,
             color: palette.text,
           }}
-          className="border rounded-xl p-6 space-y-5"
+          className="border rounded-xl p-6 space-y-5 animate-pop-in"
           data-testid="session-summary-card"
         >
           <div className="flex items-center gap-2 font-bold text-xl">
@@ -652,7 +652,16 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <span>連続クリア: {combo}</span>
+            <span
+              key={combo}
+              style={{
+                borderColor: combo >= 2 ? (palette.greenText ?? palette.text) : palette.border,
+                color: combo >= 2 ? (palette.greenText ?? palette.text) : palette.text,
+              }}
+              className={`px-2 py-0.5 rounded border font-bold ${combo >= 1 ? 'animate-combo-bump' : ''}`}
+            >
+              連続クリア: {combo}
+            </span>
             <button
               type="button"
               onClick={handleFinishSessionEarly}
@@ -680,7 +689,10 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
       </div>
 
       {/* PCでは2カラム表示（左：状況ビジュアルカード＋場面解説、右：インタラクション／回答後カード） */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div
+        key={currentQuestionKey ?? currentIndex}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start animate-card-enter"
+      >
         <div className="space-y-3">
           {exerciseType === 'picture_choice' && !answeredResult ? (
             <div
@@ -771,10 +783,26 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
                   backgroundColor: palette.card,
                   borderColor: palette.border,
                 }}
-                className="border rounded-lg p-6 text-center text-sm min-h-[160px] flex items-center justify-center"
+                className="border rounded-lg p-6 text-center text-sm min-h-[160px] flex flex-col items-center justify-center gap-3"
                 data-testid="audio-playing-mask"
               >
-                音声再生中（再生完了後に4枚の状況カードが表示されます）
+                <div className="flex items-end gap-1.5 h-6" aria-hidden="true">
+                  <span
+                    style={{ backgroundColor: palette.text }}
+                    className="w-1.5 h-6 rounded-full audio-wave-bar"
+                  />
+                  <span
+                    style={{ backgroundColor: palette.text }}
+                    className="w-1.5 h-6 rounded-full audio-wave-bar"
+                  />
+                  <span
+                    style={{ backgroundColor: palette.text }}
+                    className="w-1.5 h-6 rounded-full audio-wave-bar"
+                  />
+                </div>
+                <span className="font-semibold">
+                  音声再生中（聴き終わると4枚のカードが表示されます）
+                </span>
               </div>
             ) : (
               <div
