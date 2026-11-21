@@ -5,13 +5,11 @@ import {
   Flame,
   Home,
   MessageSquare,
-  Moon,
   Settings as SettingsIcon,
-  Sun,
   Ticket,
 } from 'lucide-react';
 import type { ThemePalette } from '../domain/contrast';
-import type { Level, Settings } from '../types';
+import type { Level } from '../types';
 
 export type NavTab = 'home' | 'coach' | 'settings';
 
@@ -20,11 +18,9 @@ export interface HeaderProps {
   lv1Phase: 'picture' | 'blocks';
   streakDays: number;
   restTickets: number;
-  themePreference: Settings['themePreference'];
   palette: ThemePalette;
   activeTab: NavTab;
   onChangeTab: (tab: NavTab) => void;
-  onCycleTheme: () => void;
 }
 
 const LEVEL_PHASE_LABELS: Record<Level, string> = {
@@ -40,11 +36,9 @@ export const Header: React.FC<HeaderProps> = ({
   lv1Phase,
   streakDays,
   restTickets,
-  themePreference,
   palette,
   activeTab,
   onChangeTab,
-  onCycleTheme,
 }) => {
   const phaseSubText =
     level === 1
@@ -104,22 +98,6 @@ export const Header: React.FC<HeaderProps> = ({
             <Ticket size={15} strokeWidth={1.75} color="currentColor" />
             <span>休票 {restTickets}/2</span>
           </div>
-
-          {/* テーマ手動切り替え（auto / light / dark） */}
-          <button
-            type="button"
-            onClick={onCycleTheme}
-            style={{ borderColor: palette.border, color: palette.text }}
-            className="flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-medium tactile-btn"
-            aria-label="テーマ切替"
-          >
-            {themePreference === 'dark' ? (
-              <Moon size={15} strokeWidth={1.75} color="currentColor" />
-            ) : (
-              <Sun size={15} strokeWidth={1.75} color="currentColor" />
-            )}
-            <span className="uppercase">{themePreference}</span>
-          </button>
 
           {/* ナビゲーションボタン */}
           <nav className="flex items-center gap-1">

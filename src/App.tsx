@@ -101,12 +101,6 @@ export const App: React.FC = () => {
     });
   }, [attempts, chunks, currentStudyDate, gateStatus, sessions, settings.level]);
 
-  const handleCycleTheme = () => {
-    const order: ('auto' | 'light' | 'dark')[] = ['auto', 'light', 'dark'];
-    const nextIdx = (order.indexOf(settings.themePreference) + 1) % order.length;
-    void updateSettings({ themePreference: order[nextIdx] });
-  };
-
   const handleOneTapBackup = async () => {
     const updated = await updateSettings({ lastBackupAt: Date.now() });
     setJustPromotedBanner(false);
@@ -233,11 +227,9 @@ export const App: React.FC = () => {
           lv1Phase={settings.lv1Phase}
           streakDays={streakDays}
           restTickets={settings.restTickets}
-          themePreference={settings.themePreference}
           palette={palette}
           activeTab={activeTab}
           onChangeTab={setActiveTab}
-          onCycleTheme={handleCycleTheme}
         />
         <DiagnosisPage
           palette={palette}
@@ -276,14 +268,12 @@ export const App: React.FC = () => {
         lv1Phase={settings.lv1Phase}
         streakDays={streakDays}
         restTickets={settings.restTickets}
-        themePreference={settings.themePreference}
         palette={palette}
         activeTab={activeTab}
         onChangeTab={(tab) => {
           setActiveMode(null);
           setActiveTab(tab);
         }}
-        onCycleTheme={handleCycleTheme}
       />
 
       {activeMode ? (
