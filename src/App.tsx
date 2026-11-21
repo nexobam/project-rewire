@@ -255,6 +255,10 @@ export const App: React.FC = () => {
     (s) => s.studyDate === currentStudyDate && s.mode === 'silent'
   );
 
+  const viewTransitionKey = activeMode
+    ? `mode_${activeMode.mode}_${activeMode.plannedMinutes}`
+    : `tab_${activeTab}`;
+
   return (
     <div
       style={{
@@ -276,6 +280,7 @@ export const App: React.FC = () => {
         }}
       />
 
+      <main key={viewTransitionKey} className="animate-page-enter">
       {activeMode ? (
         activeMode.mode === 'silent' || activeMode.mode === 'rehab' ? (
           <SilentModePage
@@ -385,6 +390,7 @@ export const App: React.FC = () => {
           onGenerateAiQuestionsNow={generateAiQuestionsNow}
         />
       )}
+      </main>
     </div>
   );
 };

@@ -218,3 +218,20 @@ body {
   opacity: 1;
   transform: translate3d(0, 0, 0) scale(1);
 }
+
+/* 画面遷移・タブ切り替え時のキレのあるリッチな入場モーション（約240ms・操作ブロックなし） */
+@keyframes rewirePageEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0) scale(0.988);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-page-enter {
+  will-change: opacity, transform;
+  animation: rewirePageEnter 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}

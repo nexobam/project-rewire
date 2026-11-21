@@ -114,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
                 backgroundColor:
                   activeTab === 'home' ? palette.background : 'transparent',
               }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-semibold tactile-btn"
+              className="flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-semibold tactile-btn transition-colors duration-150"
             >
               <Home size={15} strokeWidth={1.75} color="currentColor" />
               <span>ホーム</span>
@@ -127,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
                 backgroundColor:
                   activeTab === 'coach' ? palette.background : 'transparent',
               }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-semibold tactile-btn"
+              className="flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-semibold tactile-btn transition-colors duration-150"
             >
               <MessageSquare size={15} strokeWidth={1.75} color="currentColor" />
               <span>AI講師</span>
@@ -140,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({
                 backgroundColor:
                   activeTab === 'settings' ? palette.background : 'transparent',
               }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-semibold tactile-btn"
+              className="flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-semibold tactile-btn transition-colors duration-150"
             >
               <SettingsIcon size={15} strokeWidth={1.75} color="currentColor" />
               <span>設定</span>
