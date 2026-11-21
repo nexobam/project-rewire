@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Award, CheckCircle, Mic, Shield, Volume2, XCircle } from 'lucide-react';
+import { TimeLimitBar } from '../components/TimeLimitBar';
 import { WordOrderBoard } from '../components/WordOrderBoard';
 import { extractSituationMeaning } from '../domain/chunkExplanation';
 import type { ThemePalette } from '../domain/contrast';
@@ -13,6 +14,7 @@ import {
 import { shuffleArray, strictShuffleBlocks } from '../domain/shuffle';
 import { calculateSttMatch } from '../domain/sttMatcher';
 import {
+  calculateCompletionBudget,
   isAcceptableWordOrder,
   judgePictureChoiceTiming,
   judgeWordOrderTiming,
@@ -91,6 +93,9 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
     correctCount: number;
   } | null>(null);
 
+  const [timerStartMs, setTimerStartMs] = useState<number>(() =>
+    performance.now()
+  );
   const shownTimestampRef = useRef<number>(performance.now());
   const firstTapMsRef = useRef<number | null>(null);
   const sessionStartMsRef = useRef<number>(Date.now());
@@ -152,8 +157,10 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
       setShuffledSoundChoices(shuffleArray(baseSoundChoices));
 
       if (isSpeakingQuestion(q)) {
+        const now = performance.now();
         setIsAudioPlaying(false);
-        shownTimestampRef.current = performance.now();
+        shownTimestampRef.current = now;
+        setTimerStartMs(now);
         return;
       }
 
@@ -163,8 +170,10 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
         rate: settings.ttsRate,
         multiSpeakerRandom: settings.level >= 2,
         onEnd: () => {
+          const now = performance.now();
           setIsAudioPlaying(false);
-          shownTimestampRef.current = performance.now();
+          shownTimestampRef.current = now;
+          setTimerStartMs(now);
         },
       });
     },
@@ -487,6 +496,31 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
         </div>
         <span>合格基準: 8問以上を黄以内でクリア</span>
       </div>
+
+      {/* ボス戦用リアルタイム制限時間ゲージ（リスニング・語順パート） */}
+      {!isSpeakingQuestion(currentQ) &&
+        (() => {
+          const wordBudget = calculateCompletionBudget(
+            settings.perTapMs,
+            currentQ.chunk.blocks.length
+          );
+          const isListening =
+            currentQ.exerciseType === 'sound_change' ||
+            currentQ.exerciseType === 'listening_long';
+          const greenLimitMs = isListening ? 5500 : wordBudget;
+          const yellowLimitMs = isListening ? 8500 : wordBudget + 1500;
+          return (
+            <TimeLimitBar
+              palette={palette}
+              isAudioPlaying={isAudioPlaying}
+              isAnswered={false}
+              startTimeMs={timerStartMs}
+              greenLimitMs={greenLimitMs}
+              yellowLimitMs={yellowLimitMs}
+              questionKey={`${currentIndex}_${currentQ.chunk.id}`}
+            />
+          );
+        })()}
 
       {/* ボス戦はヒントなし（状況ビジュアルカードのタグヒントも出さず、音または発話ミッションで勝負・要件3） */}
       <div

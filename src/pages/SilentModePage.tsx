@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Award, CheckCircle, Headphones, Volume2 } from 'lucide-react';
 import { PostAnswerCard } from '../components/PostAnswerCard';
+import { TimeLimitBar } from '../components/TimeLimitBar';
 import { VisualCard } from '../components/VisualCard';
 import { WordOrderBoard } from '../components/WordOrderBoard';
 import {
@@ -14,6 +15,7 @@ import type { GateStatus } from '../domain/promotionGate';
 import { buildSessionBatch } from '../domain/scheduler';
 import { shuffleArray, strictShuffleBlocks } from '../domain/shuffle';
 import {
+  calculateCompletionBudget,
   isAcceptableWordOrder,
   judgePictureChoiceTiming,
   judgeWordOrderTiming,
@@ -123,6 +125,9 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
   const [maxCombo, setMaxCombo] = useState(0);
   const [sessionFinished, setSessionFinished] = useState(false);
 
+  const [timerStartMs, setTimerStartMs] = useState<number>(() =>
+    performance.now()
+  );
   const shownTimestampRef = useRef<number>(performance.now());
   const firstTapMsRef = useRef<number | null>(null);
   const sessionStartMsRef = useRef<number>(Date.now());
@@ -297,9 +302,11 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
         rate: settings.ttsRate,
         multiSpeakerRandom: settings.level >= 2,
         onEnd: () => {
+          const now = performance.now();
           setIsAudioPlaying(false);
           hasshownChoicesRef.current = true;
-          shownTimestampRef.current = performance.now();
+          shownTimestampRef.current = now;
+          setTimerStartMs(now);
         },
       });
     },
@@ -342,9 +349,11 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
       rate: settings.ttsRate,
       multiSpeakerRandom: settings.level >= 2,
       onEnd: () => {
+        const now = performance.now();
         setIsAudioPlaying(false);
         hasshownChoicesRef.current = true;
-        shownTimestampRef.current = performance.now();
+        shownTimestampRef.current = now;
+        setTimerStartMs(now);
       },
     });
   }, [
@@ -844,6 +853,41 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
           />
         </div>
       </div>
+
+      {/* リアルタイム制限時間進捗バー（緑→黄→赤の3ゾーン可視化） */}
+      {(() => {
+        const wordBudget = calculateCompletionBudget(
+          settings.perTapMs,
+          currentChunk.blocks.length
+        );
+        const greenLimitMs =
+          exerciseType === 'picture_choice'
+            ? 4500
+            : exerciseType === 'sound_change' ||
+                exerciseType === 'listening_long'
+              ? 5500
+              : wordBudget;
+        const yellowLimitMs =
+          exerciseType === 'picture_choice'
+            ? 7000
+            : exerciseType === 'sound_change' ||
+                exerciseType === 'listening_long'
+              ? 8500
+              : wordBudget + 1500;
+        return (
+          <TimeLimitBar
+            palette={palette}
+            isAudioPlaying={isAudioPlaying}
+            isAnswered={Boolean(answeredResult)}
+            startTimeMs={timerStartMs}
+            frozenElapsedMs={answeredResult?.completionMs ?? undefined}
+            greenLimitMs={greenLimitMs}
+            yellowLimitMs={yellowLimitMs}
+            questionKey={currentQuestionKey ?? currentIndex}
+            hasReplayPenalty={replayAfterShown > 0 || replayBeforeShown > 1}
+          />
+        );
+      })()}
 
       {/* PCでは2カラム表示（左：状況ビジュアルカード＋場面解説、右：インタラクション／回答後カード） */}
       <div
