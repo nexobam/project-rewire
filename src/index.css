@@ -133,11 +133,34 @@ body {
   animation-delay: 0.3s;
 }
 
+.audio-wave-bar:nth-child(4) {
+  animation-delay: 0.45s;
+}
+
+.audio-wave-bar:nth-child(5) {
+  animation-delay: 0.2s;
+}
+
+/* おすすめボタンの矢印やアイコンが軽く前後に弾むモーション */
+@keyframes rewireNudge {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+.animate-nudge {
+  animation: rewireNudge 1.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-card-enter,
   .animate-pop-in,
   .animate-combo-bump,
   .animate-mic-pulse,
+  .animate-nudge,
   .audio-wave-bar {
     animation: none !important;
   }

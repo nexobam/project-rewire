@@ -3,12 +3,14 @@
 import React from 'react';
 import {
   Activity,
+  ChevronRight,
   Headphones,
   Mic,
   Moon,
   Play,
   Radio,
   Sparkles,
+  Volume2,
 } from 'lucide-react';
 import { BackupBanner } from '../components/BackupBanner';
 import { HeatmapCalendar } from '../components/HeatmapCalendar';
@@ -16,6 +18,7 @@ import { PromotionProgress } from '../components/PromotionProgress';
 import type { ThemePalette } from '../domain/contrast';
 import type { GateStatus } from '../domain/promotionGate';
 import { isReviewDue } from '../domain/srs';
+import { speakEnglishText } from '../services/ttsService';
 import type {
   AiReport,
   Chunk,
@@ -134,6 +137,26 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [rightPanelTab, setRightPanelTab] = React.useState<
     'gate' | 'calendar' | 'library'
   >('gate');
+  const [tickerIndex, setTickerIndex] = React.useState(0);
+
+  const livePhrases = React.useMemo(
+    () => [
+      { en: "Let's lock in today.", ja: '今日も集中して英語回路を回そう' },
+      { en: 'Trust your ears, not translation.', ja: '訳さずに音の塊をそのまま掴もう' },
+      { en: 'Think in chunks, speak in two seconds.', ja: 'チャンクで捉えて2秒で口に出そう' },
+      { en: 'Miami Heat tempo. Keep the pace up.', ja: 'マイアミの速攻リズムでテンポよく進もう' },
+    ],
+    []
+  );
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setTickerIndex((prev) => (prev + 1) % livePhrases.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [livePhrases.length]);
+
+  const currentLivePhrase = livePhrases[tickerIndex];
 
   const activeChunks = chunks.filter((c) => !c.disabled);
   const seedCount = activeChunks.filter((c) => c.source === 'seed').length;
@@ -168,6 +191,68 @@ export const HomePage: React.FC<HomePageProps> = ({
           onDismissPromoted={onDismissPromoted}
         />
       )}
+
+      {/* ライブ・パルスバー（常時動く波形＋切り替わる英語フレーズ＋1タップ試聴） */}
+      <div
+        style={{
+          backgroundColor: palette.card,
+          borderColor: palette.border,
+          color: palette.text,
+        }}
+        className="mb-5 border rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 animate-card-enter"
+        data-testid="home-live-pulse-bar"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-end gap-1 h-5 shrink-0" aria-hidden="true">
+            <span
+              style={{ backgroundColor: palette.text }}
+              className="w-1 h-5 rounded-full audio-wave-bar"
+            />
+            <span
+              style={{ backgroundColor: palette.text }}
+              className="w-1 h-5 rounded-full audio-wave-bar"
+            />
+            <span
+              style={{ backgroundColor: palette.text }}
+              className="w-1 h-5 rounded-full audio-wave-bar"
+            />
+            <span
+              style={{ backgroundColor: palette.text }}
+              className="w-1 h-5 rounded-full audio-wave-bar"
+            />
+            <span
+              style={{ backgroundColor: palette.text }}
+              className="w-1 h-5 rounded-full audio-wave-bar"
+            />
+          </div>
+
+          <div
+            key={tickerIndex}
+            className="min-w-0 animate-card-enter"
+          >
+            <p className="text-sm font-bold truncate">{currentLivePhrase.en}</p>
+            <p className="text-[11px] opacity-75 truncate">
+              {currentLivePhrase.ja}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            void speakEnglishText({
+              text: currentLivePhrase.en,
+              rate: settings.ttsRate,
+            });
+          }}
+          style={{ borderColor: palette.border, borderBottomWidth: '2px' }}
+          className="px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 shrink-0 tactile-btn"
+          aria-label="今日のフレーズを聴く"
+        >
+          <Volume2 size={14} strokeWidth={1.75} color="currentColor" />
+          <span>聴く</span>
+        </button>
+      </div>
 
       {/* PCでは2カラム表示（左：1タップ開始＆学習モード、右：タブ統合パネル） */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-card-enter">
@@ -209,9 +294,15 @@ export const HomePage: React.FC<HomePageProps> = ({
                 size={20}
                 strokeWidth={1.75}
                 color="currentColor"
-                className="transition-transform duration-150 group-hover:translate-x-0.5"
+                className="animate-mic-pulse"
               />
               <span>{recommendation.label}</span>
+              <ChevronRight
+                size={18}
+                strokeWidth={2}
+                color="currentColor"
+                className="animate-nudge"
+              />
             </button>
           </div>
 
@@ -423,6 +514,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             ))}
           </div>
 
+          <div key={rightPanelTab} className="animate-card-enter">
           {rightPanelTab === 'gate' ? (
             <PromotionProgress
               gateStatus={gateStatus}
@@ -579,6 +671,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               )}
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>
