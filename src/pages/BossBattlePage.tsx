@@ -26,7 +26,6 @@ import {
 import {
   speakEnglishText,
   stopSpeechSynthesis,
-  unlockSpeechSynthesis,
 } from '../services/ttsService';
 import type {
   Attempt,
@@ -192,9 +191,9 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
   }, [currentQ, isAudioPlaying, settings.clickSound, settings.level, settings.ttsRate]);
 
   useEffect(() => {
-    unlockSpeechSynthesis();
     unlockAudioContext();
     return () => {
+      preparedQuestionKeyRef.current = null;
       sttControllerRef.current?.stop();
       stopSpeechSynthesis();
     };

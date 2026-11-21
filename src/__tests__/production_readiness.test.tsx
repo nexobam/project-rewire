@@ -447,4 +447,104 @@ describe('本番運用エッジケース & シナリオ検証', () => {
     expect(getM.stores.attempts).toEqual([{ id: 'm_att_1' }]);
     expect(getY.stores.attempts).toEqual([{ id: 'y_att_1' }]);
   });
+
+  it('SilentModePage で連続して問題を進めても、再生音声・選択肢の正解・回答後正解英文が常に100%一致すること', async () => {
+    const spokenTexts: string[] = [];
+    const originalSpeech = window.speechSynthesis;
+    const originalUtterance = globalThis.SpeechSynthesisUtterance;
+
+    class MockUtterance {
+      text: string;
+      lang = 'en-US';
+      rate = 1;
+      pitch = 1;
+      onstart: (() => void) | null = null;
+      onend: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      constructor(text: string) {
+        this.text = text;
+      }
+    }
+    globalThis.SpeechSynthesisUtterance =
+      MockUtterance as unknown as typeof SpeechSynthesisUtterance;
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: {
+        speaking: false,
+        pending: false,
+        getVoices: () => [{ lang: 'en-US', name: 'Samantha' }],
+        cancel: vi.fn(),
+        speak: vi.fn((utt: MockUtterance) => {
+          spokenTexts.push(utt.text);
+          setTimeout(() => {
+            utt.onstart?.();
+            utt.onend?.();
+          }, 0);
+        }),
+        addEventListener: vi.fn(),
+      },
+    });
+
+    try {
+      const lv1Chunks = ALL_SEED_CHUNKS.filter((c) => c.level === 1);
+      render(
+        <SilentModePage
+          plannedMinutes={3}
+          isSecondOrLaterToday={false}
+          settings={{ ...DEFAULT_SETTINGS, level: 1, lv1Phase: 'picture' }}
+          allChunks={lv1Chunks}
+          reviewStates={[]}
+          recentAttempts={[]}
+          currentStudyDate="2026-11-21"
+          gateStatus={{
+            level: 1,
+            coreTotal: 30,
+            coreMastered: 0,
+            coreRate: 0,
+            corePassed: false,
+            listeningSampled: 0,
+            listeningRate: 0,
+            listeningPassed: false,
+            speakingSampled: 0,
+            speakingGreenRate: 0,
+            speakingPassed: false,
+            bossUnlocked: false,
+          }}
+          palette={THEME_PALETTES.light}
+          onRecordAttempt={vi.fn(async () => {})}
+          onCompleteSession={vi.fn(async () => {})}
+          onReportUnnatural={vi.fn()}
+          onExitHome={vi.fn()}
+        />
+      );
+
+      for (let q = 0; q < 3; q++) {
+        await vi.waitFor(() => {
+          expect(screen.getByTestId('picture-choice-grid')).toBeInTheDocument();
+        });
+        const currentSpoken = spokenTexts[spokenTexts.length - 1];
+        expect(currentSpoken).toBeTruthy();
+
+        const grid = screen.getByTestId('picture-choice-grid');
+        const cardButtons = grid.querySelectorAll('[data-testid^="visual-card-"]');
+        expect(cardButtons.length).toBe(4);
+        fireEvent.click(cardButtons[0]);
+
+        await vi.waitFor(() => {
+          expect(screen.getByTestId('revealed-en-text')).toBeInTheDocument();
+        });
+        expect(screen.getByTestId('revealed-en-text')).toHaveTextContent(
+          currentSpoken
+        );
+
+        fireEvent.click(screen.getByTestId('next-question-button'));
+      }
+    } finally {
+      Object.defineProperty(window, 'speechSynthesis', {
+        configurable: true,
+        value: originalSpeech,
+      });
+      globalThis.SpeechSynthesisUtterance = originalUtterance;
+    }
+  });
 });

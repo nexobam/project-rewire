@@ -37,7 +37,6 @@ import {
 import {
   speakEnglishText,
   stopSpeechSynthesis,
-  unlockSpeechSynthesis,
 } from '../services/ttsService';
 import type {
   Attempt,
@@ -156,17 +155,22 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
     Math.max(0, Date.now() - sessionStartMsRef.current - pausedTotalMsRef.current);
 
   useEffect(() => {
-    unlockSpeechSynthesis();
     unlockAudioContext();
     if (settings.level >= 3) {
       startAmbientNoise();
     }
     return () => {
       stopAmbientNoise();
+    };
+  }, [settings.level]);
+
+  useEffect(() => {
+    return () => {
+      preparedQuestionKeyRef.current = null;
       sttControllerRef.current?.stop();
       stopSpeechSynthesis();
     };
-  }, [settings.level]);
+  }, []);
 
   // 問題開始：オウム返し禁止（回答前はお手本音声を流さず、発話ミッション・答え・音声対象をすべて currentChunk.enText に統一して不一致を防ぐ）
   const startSpeakQuestion = useCallback(() => {

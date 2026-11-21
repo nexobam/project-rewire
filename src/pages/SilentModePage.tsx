@@ -27,7 +27,6 @@ import {
 import {
   speakEnglishText,
   stopSpeechSynthesis,
-  unlockSpeechSynthesis,
 } from '../services/ttsService';
 import type {
   Attempt,
@@ -179,18 +178,24 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
     ? getExerciseType(currentIndex, currentChunk)
     : 'word_order';
 
-  // Lv.3以降はWeb Audio APIによる背景ノイズを生成（要件3, 6-10）
+  // Lv.3以降はWeb Audio APIによる背景ノイズを生成（音声アンロックは開始ボタンタップ時に実施済みのためここでは割り込ませない）
   useEffect(() => {
-    unlockSpeechSynthesis();
     unlockAudioContext();
     if (settings.level >= 3) {
       startAmbientNoise();
     }
     return () => {
       stopAmbientNoise();
-      stopSpeechSynthesis();
     };
   }, [settings.level]);
+
+  // コンポーネントのアンマウント時（StrictModeの再マウント含む）に再生状態をリセットし音声リークを防ぐ
+  useEffect(() => {
+    return () => {
+      preparedQuestionKeyRef.current = null;
+      stopSpeechSynthesis();
+    };
+  }, []);
 
   // 問題セットアップと音声再生（再生中は選択肢を非表示にし、再生が終わった瞬間に0msで計測開始・要件2-1-2, 2-1-3）
   const startQuestion = useCallback(
@@ -539,7 +544,14 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
       }
 
       if (currentIndex + 1 < batch.length) {
-        setCurrentIndex((prev) => prev + 1);
+        const nextIdx = currentIndex + 1;
+        const nextChunk = batch[nextIdx];
+        if (nextChunk) {
+          // iOS Safariのタップコンテキスト内で次問題の音声を同期再生する
+          preparedQuestionKeyRef.current = `${session.id}_b${batchGeneration}_q${nextIdx}_${nextChunk.id}`;
+          startQuestion(nextChunk);
+        }
+        setCurrentIndex(nextIdx);
       } else {
         // 15問バッチ完了：まだ残り時間がある場合は次バッチを補充
         const nextBatch = buildSessionBatch({
@@ -550,8 +562,14 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
           currentLevel: settings.level,
           mode: isRehab ? 'rehab' : 'silent',
         });
+        const nextGen = batchGeneration + 1;
+        const firstNext = nextBatch[0];
+        if (firstNext) {
+          preparedQuestionKeyRef.current = `${session.id}_b${nextGen}_q0_${firstNext.id}`;
+          startQuestion(firstNext);
+        }
         setBatch(nextBatch);
-        setBatchGeneration((prev) => prev + 1);
+        setBatchGeneration(nextGen);
         setCurrentIndex(0);
       }
     } finally {
@@ -861,7 +879,8 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
               onReportUnnatural={onReportUnnatural}
             />
           ) : exerciseType === 'picture_choice' ? (
-            isAudioPlaying ? (
+            isAudioPlaying ||
+            !pictureChoices.some((c) => c.id === currentChunk.id) ? (
               <div
                 style={{
                   backgroundColor: palette.card,
@@ -926,7 +945,8 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
                   <span>もう一度聴く</span>
                 </button>
               </div>
-              {isAudioPlaying ? (
+              {isAudioPlaying ||
+              !shuffledSoundChoices.includes(currentChunk.enText) ? (
                 <div
                   style={{
                     backgroundColor: palette.card,
