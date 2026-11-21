@@ -140,71 +140,76 @@
   {
     "id": "lv4_03",
     "level": 4,
-    "contentCategory": "heat",
-    "sceneCategory": "arena",
-    "grammarPattern": "native_banter_heat",
-    "enText": "Their defense switches everything on the perimeter.",
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "native_banter_daily",
+    "enText": "We should wrap up the meeting before noon.",
     "blocks": [
       {
         "id": "lv4_03_b0",
-        "text": "Their"
+        "text": "We"
       },
       {
         "id": "lv4_03_b1",
-        "text": "defense"
+        "text": "should"
       },
       {
         "id": "lv4_03_b2",
-        "text": "switches"
+        "text": "wrap"
       },
       {
         "id": "lv4_03_b3",
-        "text": "everything"
+        "text": "up"
       },
       {
         "id": "lv4_03_b4",
-        "text": "on"
-      },
-      {
-        "id": "lv4_03_b5",
         "text": "the"
       },
       {
+        "id": "lv4_03_b5",
+        "text": "meeting"
+      },
+      {
         "id": "lv4_03_b6",
-        "text": "perimeter."
+        "text": "before"
+      },
+      {
+        "id": "lv4_03_b7",
+        "text": "noon."
       }
     ],
     "acceptableOrders": [
       [
-        "Their",
-        "defense",
-        "switches",
-        "everything",
-        "on",
+        "We",
+        "should",
+        "wrap",
+        "up",
         "the",
-        "perimeter."
+        "meeting",
+        "before",
+        "noon."
       ]
     ],
     "speakOnly": false,
     "visual": {
       "icons": [
-        "Shield",
-        "Flame"
+        "Clock",
+        "Users"
       ],
       "tags": [
-        "アリーナ",
-        "解説者",
-        "分析"
+        "会議室",
+        "同僚",
+        "集中"
       ]
     },
-    "coreImageJa": "【言いたいこと】彼らの守備は外周すべてでスイッチ（受け渡し）してくる ／ 【英語の語順】Their defense switches everything（彼らの守備はすべてを受け渡す）→ on the perimeter.（外周エリアで）",
-    "pronunciationTip": "switches everything on はスウィッチズエヴリシンゴンと一息で駆け抜ける。",
+    "coreImageJa": "【言いたいこと】正午までに会議を締めくくったほうがいいね ／ 【英語の語順】We should wrap up（私たちは包み終えるべきだ）→ the meeting before noon.（会議を正午前に）",
+    "pronunciationTip": "wrap up the はラッパップザと p と u を繋いでリズムよく。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
     "disabled": false,
     "createdAt": "2026-01-01T00:00:00.000Z",
-    "promptAudioText": "Break down Miami's fourth quarter defensive scheme."
+    "promptAudioText": "We have another call right after lunch."
   },
   {
     "id": "lv4_04",

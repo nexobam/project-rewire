@@ -226,74 +226,74 @@
   {
     "id": "lv3_04",
     "level": 3,
-    "contentCategory": "heat",
-    "sceneCategory": "arena",
-    "grammarPattern": "paraphrase_win",
-    "enText": "Miami pulled off a huge road victory.",
+    "contentCategory": "daily",
+    "sceneCategory": "cafe",
+    "grammarPattern": "paraphrase_refuse",
+    "enText": "She turned down the job offer politely.",
     "blocks": [
       {
         "id": "lv3_04_b0",
-        "text": "Miami"
+        "text": "She"
       },
       {
         "id": "lv3_04_b1",
-        "text": "pulled"
+        "text": "turned"
       },
       {
         "id": "lv3_04_b2",
-        "text": "off"
+        "text": "down"
       },
       {
         "id": "lv3_04_b3",
-        "text": "a"
+        "text": "the"
       },
       {
         "id": "lv3_04_b4",
-        "text": "huge"
+        "text": "job"
       },
       {
         "id": "lv3_04_b5",
-        "text": "road"
+        "text": "offer"
       },
       {
         "id": "lv3_04_b6",
-        "text": "victory."
+        "text": "politely."
       }
     ],
     "acceptableOrders": [
       [
-        "Miami",
-        "pulled",
-        "off",
-        "a",
-        "huge",
-        "road",
-        "victory."
+        "She",
+        "turned",
+        "down",
+        "the",
+        "job",
+        "offer",
+        "politely."
       ]
     ],
     "speakOnly": false,
     "visual": {
       "icons": [
-        "Flame",
-        "Trophy"
+        "Briefcase",
+        "MessageSquare"
       ],
       "tags": [
-        "スポーツバー",
-        "観衆",
-        "興奮"
+        "カフェ",
+        "友人",
+        "相談"
       ]
     },
-    "coreImageJa": "【言いたいこと】マイアミがアウェーで大きな勝利をもぎ取った（win禁止） ／ 【英語の語順】Miami pulled off（マイアミが引き抜いて成し遂げた）→ a huge road victory.（敵地での大勝利を）",
-    "pronunciationTip": "pulled off a はプルドファと連結し、huge road の j と r を滑らかに。",
+    "coreImageJa": "【言いたいこと】彼女はその内定を丁重に断った（refuse禁止） ／ 【英語の語順】She turned down（彼女は下へ向きを変えた＝断った）→ the job offer politely.（仕事のオファーを丁寧に）",
+    "pronunciationTip": "turned down はターンダウンと d を重ねて滑らかに繋ぐ。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
     "disabled": false,
     "createdAt": "2026-01-01T00:00:00.000Z",
-    "promptAudioText": "What happened in the Boston game? (Avoid: win, won)",
+    "promptAudioText": "Did she accept the new position? (Avoid: refuse, refused)",
     "ngWords": [
-      "win",
-      "won"
+      "refuse",
+      "refused"
     ]
   },
   {

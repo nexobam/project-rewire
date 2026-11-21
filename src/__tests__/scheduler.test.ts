@@ -27,11 +27,11 @@ describe('scheduler - インターリービングとMiami Heat比率15%±5%制�
     }
   });
 
-  it('直近100問で Miami Heat の割合が 15%±5%（10〜20問）の範囲に収まること', () => {
+  it('全シードデータおよび直近100問の選出がすべて日常会話（daily 100%）であること', () => {
     const historyCategories: ('daily' | 'heat')[] = [];
     const recentAttempts: Attempt[] = [];
 
-    // 15問×7バッチ＝105問を連続選出し、直近100問のHeat比率を検証
+    // 15問×7バッチ＝105問を連続選出し、直近100問すべてが日常会話であることを検証
     for (let b = 0; b < 7; b++) {
       const batch = selectInterleavedBatch({
         candidates: LV1_CORE_CHUNKS,
@@ -63,8 +63,7 @@ describe('scheduler - インターリービングとMiami Heat比率15%±5%制�
     const last100 = historyCategories.slice(-100);
     expect(last100.length).toBe(100);
     const heatCount = last100.filter((c) => c === 'heat').length;
-    expect(heatCount).toBeGreaterThanOrEqual(10);
-    expect(heatCount).toBeLessThanOrEqual(20);
+    expect(heatCount).toBe(0);
   });
 
   it('新規問題が枯渇しても既存のチャンクから recomposed を生成して15問バッチを埋められること', () => {

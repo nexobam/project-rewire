@@ -209,70 +209,65 @@
   {
     "id": "lv2_04",
     "level": 2,
-    "contentCategory": "heat",
-    "sceneCategory": "arena",
-    "grammarPattern": "chunk_build_heat",
-    "enText": "Bam kicked it out to the open shooter.",
+    "contentCategory": "daily",
+    "sceneCategory": "home",
+    "grammarPattern": "chunk_build_daily",
+    "enText": "I ended up staying at work late.",
     "blocks": [
       {
         "id": "lv2_04_b0",
-        "text": "Bam"
+        "text": "I"
       },
       {
         "id": "lv2_04_b1",
-        "text": "kicked"
+        "text": "ended"
       },
       {
         "id": "lv2_04_b2",
-        "text": "it"
+        "text": "up"
       },
       {
         "id": "lv2_04_b3",
-        "text": "out"
+        "text": "staying"
       },
       {
         "id": "lv2_04_b4",
-        "text": "to"
+        "text": "at"
       },
       {
         "id": "lv2_04_b5",
-        "text": "the"
+        "text": "work"
       },
       {
         "id": "lv2_04_b6",
-        "text": "open"
-      },
-      {
-        "id": "lv2_04_b7",
-        "text": "shooter."
+        "text": "late."
       }
     ],
     "acceptableOrders": [
       [
-        "Bam",
-        "kicked",
-        "it",
-        "out",
-        "to",
-        "the",
-        "open",
-        "shooter."
+        "I",
+        "ended",
+        "up",
+        "staying",
+        "at",
+        "work",
+        "late."
       ]
     ],
     "speakOnly": false,
     "visual": {
       "icons": [
-        "Trophy",
-        "Target"
+        "Briefcase",
+        "Moon"
       ],
       "tags": [
-        "アリーナ",
-        "仲間",
-        "高揚"
+        "自宅",
+        "家族",
+        "疲労"
       ]
     },
-    "coreImageJa": "【言いたいこと】バムが外へパスを蹴り出して空いているシューターに繋いだ ／ 【英語の語順】Bam kicked it out（バムがボールを外へ弾き出した）→ to the open shooter.（フリーのシューターへ向けて）",
-    "pronunciationTip": "kicked it out はキッティラウッと子音と母音を滑らかに連結する。",
+    "coreImageJa": "【言いたいこと】結局、遅くまで職場に残ることになってしまった ／ 【英語の語順】I ended up（最終的に行き着いた）→ staying at work late.（職場に遅くまで残ることに）",
+    "pronunciationTip": "ended up はエンディダッと d と u を滑らかに連結する。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,

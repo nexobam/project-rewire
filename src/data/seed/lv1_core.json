@@ -282,71 +282,71 @@
   {
     "id": "lv1_05",
     "level": 1,
-    "contentCategory": "heat",
-    "sceneCategory": "arena",
-    "grammarPattern": "clutch_shot",
-    "enText": "Tyler knocked down a clutch three.",
+    "contentCategory": "daily",
+    "sceneCategory": "restaurant",
+    "grammarPattern": "polite_request",
+    "enText": "Could you pass me the salt?",
     "blocks": [
       {
         "id": "lv1_05_b0",
-        "text": "Tyler"
+        "text": "Could"
       },
       {
         "id": "lv1_05_b1",
-        "text": "knocked"
+        "text": "you"
       },
       {
         "id": "lv1_05_b2",
-        "text": "down"
+        "text": "pass"
       },
       {
         "id": "lv1_05_b3",
-        "text": "a"
+        "text": "me"
       },
       {
         "id": "lv1_05_b4",
-        "text": "clutch"
+        "text": "the"
       },
       {
         "id": "lv1_05_b5",
-        "text": "three."
+        "text": "salt?"
       }
     ],
     "acceptableOrders": [
       [
-        "Tyler",
-        "knocked",
-        "down",
-        "a",
-        "clutch",
-        "three."
+        "Could",
+        "you",
+        "pass",
+        "me",
+        "the",
+        "salt?"
       ]
     ],
     "speakOnly": false,
     "visual": {
       "icons": [
-        "Trophy",
-        "Flame"
+        "Utensils",
+        "Users"
       ],
       "tags": [
-        "アリーナ",
+        "レストラン",
         "友人",
-        "歓喜"
+        "食事"
       ]
     },
-    "coreImageJa": "【言いたいこと】タイラーが勝負所でスリーを決めた ／ 【英語の語順】Tyler knocked down（タイラーが撃ち抜いた）→ a clutch three.（勝負所の3ポイントを）",
-    "pronunciationTip": "knocked down a はノックダウナと k を止めて d へ一気に落とす。",
+    "coreImageJa": "【言いたいこと】塩を取ってもらえますか？ ／ 【英語の語順】Could you pass me（私に渡してくれますか）→ the salt?（その塩を）",
+    "pronunciationTip": "Could you はクジューと d と y が融合して滑らかに繋がる。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
     "disabled": false,
     "createdAt": "2026-01-01T00:00:00.000Z",
-    "promptAudioText": "What happened in the last ten seconds?",
+    "promptAudioText": "The soup tastes a little plain.",
     "soundChangeChoices": [
-      "Tyler knocked down a clutch three.",
-      "Tyler knocked out a clutch three.",
-      "Tyler locked down a clutch free.",
-      "Tyler knocked down a quick two."
+      "Could you pass me the salt?",
+      "Would you pass me the sauce?",
+      "Could you give me the seat?",
+      "Can you pass me the bill?"
     ]
   },
   {
@@ -632,71 +632,76 @@
   {
     "id": "lv1_10",
     "level": 1,
-    "contentCategory": "heat",
-    "sceneCategory": "lounge",
-    "grammarPattern": "spo_zone",
-    "enText": "Spo switched to a zone defense.",
+    "contentCategory": "daily",
+    "sceneCategory": "train",
+    "grammarPattern": "left_behind",
+    "enText": "I left my umbrella on the train.",
     "blocks": [
       {
         "id": "lv1_10_b0",
-        "text": "Spo"
+        "text": "I"
       },
       {
         "id": "lv1_10_b1",
-        "text": "switched"
+        "text": "left"
       },
       {
         "id": "lv1_10_b2",
-        "text": "to"
+        "text": "my"
       },
       {
         "id": "lv1_10_b3",
-        "text": "a"
+        "text": "umbrella"
       },
       {
         "id": "lv1_10_b4",
-        "text": "zone"
+        "text": "on"
       },
       {
         "id": "lv1_10_b5",
-        "text": "defense."
+        "text": "the"
+      },
+      {
+        "id": "lv1_10_b6",
+        "text": "train."
       }
     ],
     "acceptableOrders": [
       [
-        "Spo",
-        "switched",
-        "to",
-        "a",
-        "zone",
-        "defense."
+        "I",
+        "left",
+        "my",
+        "umbrella",
+        "on",
+        "the",
+        "train."
       ]
     ],
     "speakOnly": false,
     "visual": {
       "icons": [
-        "Shield",
-        "Users"
+        "Umbrella",
+        "Train"
       ],
       "tags": [
-        "リビング",
-        "仲間",
-        "感心"
+        "駅改札",
+        "駅員",
+        "困惑"
       ]
     },
-    "coreImageJa": "【言いたいこと】スポー監督がゾーンディフェンスに切り替えた ／ 【英語の語順】Spo switched（スポー監督が切り替えた）→ to a zone defense.（ゾーン守備へ）",
-    "pronunciationTip": "switched to a はスウィッチトゥアと t を重ねて一気に滑らせる。",
+    "coreImageJa": "【言いたいこと】電車の中に傘を忘れてしまいました ／ 【英語の語順】I left my umbrella（私は傘を置き去りにした）→ on the train.（電車の上・中に）",
+    "pronunciationTip": "left my はレフマイと t を飲み込み、on the はオンザと滑らかに繋げる。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
     "disabled": false,
     "createdAt": "2026-01-01T00:00:00.000Z",
-    "promptAudioText": "How did Miami stop their guards?",
+    "promptAudioText": "What seems to be the problem?",
     "soundChangeChoices": [
-      "Spo switched to a zone defense.",
-      "Spo wanted a zone defense.",
-      "Spo sticks to a zone defense.",
-      "Spo went to a zone defense."
+      "I left my umbrella on the train.",
+      "I lost my umbrella at the store.",
+      "I left my bag on the bus.",
+      "I kept my umbrella in the room."
     ]
   },
   {
@@ -982,10 +987,10 @@
   {
     "id": "lv1_15",
     "level": 1,
-    "contentCategory": "heat",
-    "sceneCategory": "arena",
-    "grammarPattern": "heat_culture",
-    "enText": "That hustle is pure Heat culture.",
+    "contentCategory": "daily",
+    "sceneCategory": "cafe",
+    "grammarPattern": "sounds_like",
+    "enText": "That sounds like a great idea.",
     "blocks": [
       {
         "id": "lv1_15_b0",
@@ -993,60 +998,60 @@
       },
       {
         "id": "lv1_15_b1",
-        "text": "hustle"
+        "text": "sounds"
       },
       {
         "id": "lv1_15_b2",
-        "text": "is"
+        "text": "like"
       },
       {
         "id": "lv1_15_b3",
-        "text": "pure"
+        "text": "a"
       },
       {
         "id": "lv1_15_b4",
-        "text": "Heat"
+        "text": "great"
       },
       {
         "id": "lv1_15_b5",
-        "text": "culture."
+        "text": "idea."
       }
     ],
     "acceptableOrders": [
       [
         "That",
-        "hustle",
-        "is",
-        "pure",
-        "Heat",
-        "culture."
+        "sounds",
+        "like",
+        "a",
+        "great",
+        "idea."
       ]
     ],
     "speakOnly": false,
     "visual": {
       "icons": [
-        "Flame",
-        "Award"
+        "ThumbsUp",
+        "Coffee"
       ],
       "tags": [
-        "コート脇",
-        "ファン",
-        "共鳴"
+        "カフェ",
+        "友人",
+        "賛成"
       ]
     },
-    "coreImageJa": "【言いたいこと】あの泥臭いハッスルこそ純粋なヒートカルチャーだ ／ 【英語の語順】That hustle is（あのハッスルは）→ pure Heat culture.（純粋なヒートの文化だ）",
-    "pronunciationTip": "That hustle is はザッハッソゥイズと t を止めながら子音を繋ぐ。",
+    "coreImageJa": "【言いたいこと】それ、すごくいいアイデアですね ／ 【英語の語順】That sounds（それは響く）→ like a great idea.（素晴らしい考えのように）",
+    "pronunciationTip": "sounds like a はサウンズライカと子音と母音を滑らかに連結する。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
     "disabled": false,
     "createdAt": "2026-01-01T00:00:00.000Z",
-    "promptAudioText": "Did you see him dive for that loose ball?",
+    "promptAudioText": "Why don't we try that new bakery?",
     "soundChangeChoices": [
-      "That hustle is pure Heat culture.",
-      "This muscle is pure Heat culture.",
-      "That hustle was pure street culture.",
-      "That puzzle is pure Heat culture."
+      "That sounds like a great idea.",
+      "That looks like a good plan.",
+      "It sounds like a bad idea.",
+      "That seems like a great place."
     ]
   },
   {
@@ -1337,71 +1342,76 @@
   {
     "id": "lv1_20",
     "level": 1,
-    "contentCategory": "heat",
-    "sceneCategory": "lounge",
-    "grammarPattern": "playoff_jimmy",
-    "enText": "Playoff Jimmy always finds a way.",
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "take_break",
+    "enText": "Let us take a short break now.",
     "blocks": [
       {
         "id": "lv1_20_b0",
-        "text": "Playoff"
+        "text": "Let"
       },
       {
         "id": "lv1_20_b1",
-        "text": "Jimmy"
+        "text": "us"
       },
       {
         "id": "lv1_20_b2",
-        "text": "always"
+        "text": "take"
       },
       {
         "id": "lv1_20_b3",
-        "text": "finds"
-      },
-      {
-        "id": "lv1_20_b4",
         "text": "a"
       },
       {
+        "id": "lv1_20_b4",
+        "text": "short"
+      },
+      {
         "id": "lv1_20_b5",
-        "text": "way."
+        "text": "break"
+      },
+      {
+        "id": "lv1_20_b6",
+        "text": "now."
       }
     ],
     "acceptableOrders": [
       [
-        "Playoff",
-        "Jimmy",
-        "always",
-        "finds",
+        "Let",
+        "us",
+        "take",
         "a",
-        "way."
+        "short",
+        "break",
+        "now."
       ]
     ],
     "speakOnly": false,
     "visual": {
       "icons": [
-        "Trophy",
-        "Compass"
+        "Clock",
+        "Coffee"
       ],
       "tags": [
-        "自宅ソファ",
-        "友人",
-        "確信"
+        "会議室",
+        "同僚",
+        "安堵"
       ]
     },
-    "coreImageJa": "【言いたいこと】プレーオフのジミーは必ず勝つ道を見つけ出す ／ 【英語の語順】Playoff Jimmy always finds（プレーオフのジミーは常に見つける）→ a way.（突破口を）",
-    "pronunciationTip": "finds a way はファインザウェイと d を落として z と a を直結させる。",
+    "coreImageJa": "【言いたいこと】そろそろ短い休憩を取りましょう ／ 【英語の語順】Let us take（一緒に取ろう）→ a short break now.（短い休憩を今）",
+    "pronunciationTip": "take a はテイカと k と a を繋げ、short break の t は軽く止める。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
     "disabled": false,
     "createdAt": "2026-01-01T00:00:00.000Z",
-    "promptAudioText": "Do you think Miami can win this series?",
+    "promptAudioText": "We have been working for two hours straight.",
     "soundChangeChoices": [
-      "Playoff Jimmy always finds a way.",
-      "Playoff Jimmy almost finds a way.",
-      "Regular Jimmy always finds a day.",
-      "Playoff Jimmy always found a way."
+      "Let us take a short break now.",
+      "Let us make a quick call now.",
+      "Let me take a long break soon.",
+      "Let us take a coffee break later."
     ]
   },
   {
@@ -2042,71 +2052,76 @@
   {
     "id": "lv1_30",
     "level": 1,
-    "contentCategory": "heat",
-    "sceneCategory": "arena",
-    "grammarPattern": "fourth_quarter",
-    "enText": "Miami owns the fourth quarter tonight.",
+    "contentCategory": "daily",
+    "sceneCategory": "shopping",
+    "grammarPattern": "pick_up",
+    "enText": "I have to pick up some groceries.",
     "blocks": [
       {
         "id": "lv1_30_b0",
-        "text": "Miami"
+        "text": "I"
       },
       {
         "id": "lv1_30_b1",
-        "text": "owns"
+        "text": "have"
       },
       {
         "id": "lv1_30_b2",
-        "text": "the"
+        "text": "to"
       },
       {
         "id": "lv1_30_b3",
-        "text": "fourth"
+        "text": "pick"
       },
       {
         "id": "lv1_30_b4",
-        "text": "quarter"
+        "text": "up"
       },
       {
         "id": "lv1_30_b5",
-        "text": "tonight."
+        "text": "some"
+      },
+      {
+        "id": "lv1_30_b6",
+        "text": "groceries."
       }
     ],
     "acceptableOrders": [
       [
-        "Miami",
-        "owns",
-        "the",
-        "fourth",
-        "quarter",
-        "tonight."
+        "I",
+        "have",
+        "to",
+        "pick",
+        "up",
+        "some",
+        "groceries."
       ]
     ],
     "speakOnly": false,
     "visual": {
       "icons": [
-        "Flame",
-        "Clock"
+        "ShoppingBag",
+        "Home"
       ],
       "tags": [
-        "アリーナ",
-        "ファン",
-        "圧倒"
+        "スーパー",
+        "家族",
+        "日常"
       ]
     },
-    "coreImageJa": "【言いたいこと】今夜の第4クォーターはマイアミが完全に支配している ／ 【英語の語順】Miami owns（マイアミが所有・支配している）→ the fourth quarter tonight.（今夜の第4Qを）",
-    "pronunciationTip": "fourth quarter はフォースクォーターと息を切らずに繋げる。",
+    "coreImageJa": "【言いたいこと】食料品を少し買って帰らなきゃ ／ 【英語の語順】I have to pick up（つまんで持ち帰る必要がある）→ some groceries.（いくつかの食料品を）",
+    "pronunciationTip": "have to はハフトゥ、pick up はピカッと k と u を滑らかに繋ぐ。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
     "disabled": false,
     "createdAt": "2026-01-01T00:00:00.000Z",
-    "promptAudioText": "Look at that defensive intensity!",
+    "promptAudioText": "Are you coming straight home after work?",
     "soundChangeChoices": [
-      "Miami owns the fourth quarter tonight.",
-      "Miami won the fourth quarter tonight.",
-      "Miami owes the first quarter tonight.",
-      "Boston owns the fourth quarter tonight."
+      "I have to pick up some groceries.",
+      "I need to drop off some packages.",
+      "I want to pick out some clothes.",
+      "I have to clean up the kitchen."
     ]
   }
 ]
