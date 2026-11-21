@@ -3,11 +3,14 @@
 import React, { useMemo, useState } from 'react';
 import {
   CheckCircle,
+  ChevronDown,
+  ChevronUp,
   HelpCircle,
   MessageSquare,
   RefreshCw,
   Send,
   Sparkles,
+  Trash2,
   Volume2,
 } from 'lucide-react';
 import { ALL_SEED_CHUNKS } from '../data/seed';
@@ -24,6 +27,8 @@ export interface CoachChatPageProps {
   messages: CoachMessage[];
   palette: ThemePalette;
   onUpsertMessage: (msg: CoachMessage) => Promise<void>;
+  onDeleteMessage?: (id: string) => Promise<void>;
+  onClearMessages?: () => Promise<void>;
   chunks?: Chunk[];
   attempts?: Attempt[];
   cloudEnabled?: boolean;
@@ -51,6 +56,8 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
   messages,
   palette,
   onUpsertMessage,
+  onDeleteMessage,
+  onClearMessages,
   chunks = ALL_SEED_CHUNKS,
   attempts = [],
   cloudEnabled,
@@ -58,6 +65,22 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
 }) => {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  // タップで回答部分を折りたたむ（非表示にする）ためのメッセージIDセット
+  const [collapsedAnswerIds, setCollapsedAnswerIds] = useState<Set<string>>(
+    () => new Set()
+  );
+
+  const toggleAnswerVisibility = (id: string) => {
+    setCollapsedAnswerIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const pendingOfflineMessages = messages.filter(
     (m) => m.status === 'pending_offline'
@@ -397,86 +420,170 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
           </button>
         </form>
 
-        {/* チャット履歴一覧（すべて安全なテキストノードとして描画・XSS完全防御） */}
+        {/* チャット履歴一覧（タップで回答の開閉・個別削除・全削除に対応・XSS完全防御） */}
         <div
           className="space-y-3 pt-3 border-t"
           style={{ borderColor: palette.border }}
         >
+          {messages.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="font-bold opacity-80">
+                質問履歴（{messages.length}件・回答をタップすると閉じられます）
+              </span>
+              {onClearMessages && (
+                <button
+                  type="button"
+                  onClick={() => void onClearMessages()}
+                  style={{
+                    borderColor: palette.border,
+                    color: palette.crimsonText ?? palette.text,
+                  }}
+                  className="px-2.5 py-1 rounded border font-semibold flex items-center gap-1 tactile-btn"
+                  data-testid="clear-coach-history-button"
+                >
+                  <Trash2 size={13} strokeWidth={1.75} color="currentColor" />
+                  <span>履歴をすべて消す</span>
+                </button>
+              )}
+            </div>
+          )}
+
           {messages.length === 0 ? (
             <p className="text-xs opacity-70 text-center py-6">
               まだ質問履歴はありません。上のフレーズボタンやテンプレートをタップすると、専属AI講師がすぐに解説します。
             </p>
           ) : (
-            [...messages].reverse().map((msg) => (
-              <div
-                key={msg.id}
-                style={{
-                  backgroundColor: palette.background,
-                  borderColor: palette.border,
-                }}
-                className="p-4 rounded-lg border space-y-2.5 text-xs"
-                data-testid="coach-message-item"
-              >
-                <div className="flex items-center justify-between gap-2 font-bold text-sm">
-                  <span>あなたの質問: {msg.question}</span>
-                  <span className="text-[11px] opacity-70 shrink-0">
-                    {msg.status === 'pending_offline'
-                      ? 'オフライン保存済み（未送信）'
-                      : 'AI講師 回答済み'}
-                  </span>
+            [...messages].reverse().map((msg) => {
+              const isCollapsed = collapsedAnswerIds.has(msg.id);
+              return (
+                <div
+                  key={msg.id}
+                  style={{
+                    backgroundColor: palette.background,
+                    borderColor: palette.border,
+                  }}
+                  className="p-4 rounded-lg border space-y-2.5 text-xs"
+                  data-testid="coach-message-item"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleAnswerVisibility(msg.id)}
+                      className="flex-1 text-left font-bold text-sm flex items-start gap-1.5"
+                      data-testid={`toggle-coach-answer-${msg.id}`}
+                    >
+                      {isCollapsed ? (
+                        <ChevronDown
+                          size={16}
+                          strokeWidth={1.75}
+                          color="currentColor"
+                          className="mt-0.5 shrink-0"
+                        />
+                      ) : (
+                        <ChevronUp
+                          size={16}
+                          strokeWidth={1.75}
+                          color="currentColor"
+                          className="mt-0.5 shrink-0"
+                        />
+                      )}
+                      <span>あなたの質問: {msg.question}</span>
+                    </button>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-[11px] opacity-70">
+                        {msg.status === 'pending_offline'
+                          ? 'オフライン保存済み'
+                          : isCollapsed
+                            ? '回答非表示'
+                            : '回答済み'}
+                      </span>
+                      {onDeleteMessage && (
+                        <button
+                          type="button"
+                          onClick={() => void onDeleteMessage(msg.id)}
+                          style={{ borderColor: palette.border }}
+                          className="p-1.5 rounded border opacity-80 hover:opacity-100 tactile-btn"
+                          aria-label="この履歴を削除"
+                          data-testid={`delete-coach-message-${msg.id}`}
+                        >
+                          <Trash2
+                            size={13}
+                            strokeWidth={1.75}
+                            color="currentColor"
+                          />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {!isCollapsed && (msg.answer || (msg.examples && msg.examples.length > 0)) && (
+                    <div
+                      onClick={() => toggleAnswerVisibility(msg.id)}
+                      className="space-y-2.5 cursor-pointer"
+                      title="タップで回答を閉じる"
+                      data-testid={`coach-answer-body-${msg.id}`}
+                    >
+                      {msg.answer && (
+                        <div className="leading-relaxed whitespace-pre-line text-sm">
+                          <strong>AI講師の解説（タップで閉じる）：</strong>
+                          <p className="mt-1">{msg.answer}</p>
+                        </div>
+                      )}
+                      {msg.examples && msg.examples.length > 0 && (
+                        <div className="space-y-1.5 pt-1">
+                          <p className="font-bold">
+                            実践で使える例文（音声再生付き）：
+                          </p>
+                          <ul className="space-y-1.5">
+                            {msg.examples.map((ex, i) => {
+                              const englishOnly = ex
+                                .split('（')[0]
+                                .split('(')[0]
+                                .trim();
+                              return (
+                                <li
+                                  key={i}
+                                  style={{
+                                    backgroundColor: palette.card,
+                                    borderColor: palette.border,
+                                  }}
+                                  className="p-2.5 rounded border flex items-center justify-between gap-2"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <span className="font-semibold text-xs">
+                                    {ex}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      void speakEnglishText({
+                                        text: englishOnly,
+                                        rate: settings.ttsRate,
+                                      });
+                                    }}
+                                    style={{ borderColor: palette.border }}
+                                    className="px-2 py-1 rounded border text-[11px] font-bold flex items-center gap-1 shrink-0 tactile-btn"
+                                    aria-label="例文の音声を再生"
+                                  >
+                                    <Volume2
+                                      size={13}
+                                      strokeWidth={1.75}
+                                      color="currentColor"
+                                    />
+                                    <span>音声</span>
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {msg.answer && (
-                  <div className="leading-relaxed whitespace-pre-line text-sm">
-                    <strong>AI講師の解説：</strong>
-                    <p className="mt-1">{msg.answer}</p>
-                  </div>
-                )}
-                {msg.examples && msg.examples.length > 0 && (
-                  <div className="space-y-1.5 pt-1">
-                    <p className="font-bold">実践で使える例文（音声再生付き）：</p>
-                    <ul className="space-y-1.5">
-                      {msg.examples.map((ex, i) => {
-                        const englishOnly = ex
-                          .split('（')[0]
-                          .split('(')[0]
-                          .trim();
-                        return (
-                          <li
-                            key={i}
-                            style={{
-                              backgroundColor: palette.card,
-                              borderColor: palette.border,
-                            }}
-                            className="p-2.5 rounded border flex items-center justify-between gap-2"
-                          >
-                            <span className="font-semibold text-xs">{ex}</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                void speakEnglishText({
-                                  text: englishOnly,
-                                  rate: settings.ttsRate,
-                                });
-                              }}
-                              style={{ borderColor: palette.border }}
-                              className="px-2 py-1 rounded border text-[11px] font-bold flex items-center gap-1 shrink-0 tactile-btn"
-                              aria-label="例文の音声を再生"
-                            >
-                              <Volume2
-                                size={13}
-                                strokeWidth={1.75}
-                                color="currentColor"
-                              />
-                              <span>音声</span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

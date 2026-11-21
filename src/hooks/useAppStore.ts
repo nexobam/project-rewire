@@ -6,6 +6,8 @@ import {
   type ValidatedBackupBundle,
 } from '../db/backup';
 import {
+  clearCoachMessagesFromDb,
+  deleteCoachMessageFromDb,
   initializeAndLoadAppData,
   saveAiReportToDb,
   saveChunksToDb,
@@ -486,6 +488,24 @@ export function useAppStore() {
     [coachMessages]
   );
 
+  // AI講師質問メッセージの1件削除
+  const deleteCoachMessage = useCallback(
+    async (id: string) => {
+      await deleteCoachMessageFromDb(id);
+      const nextList = coachMessages.filter((m) => m.id !== id);
+      setCoachMessages(nextList);
+      void pushCloudStores({ coachMessages: nextList });
+    },
+    [coachMessages]
+  );
+
+  // AI講師質問履歴の全削除
+  const clearCoachMessages = useCallback(async () => {
+    await clearCoachMessagesFromDb();
+    setCoachMessages([]);
+    void pushCloudStores({ coachMessages: [] });
+  }, []);
+
   // 手動で今すぐAI社員に新問題を5問生成させるアクション
   const generateAiQuestionsNow = useCallback(async (): Promise<{
     addedCount: number;
@@ -679,6 +699,8 @@ export function useAppStore() {
     promoteToLevel,
     saveLiveLogResult,
     upsertCoachMessage,
+    deleteCoachMessage,
+    clearCoachMessages,
     generateAiQuestionsNow,
     applyImportedBackup,
   };

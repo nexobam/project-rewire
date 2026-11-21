@@ -48,6 +48,8 @@ export const App: React.FC = () => {
     promoteToLevel,
     saveLiveLogResult,
     upsertCoachMessage,
+    deleteCoachMessage,
+    clearCoachMessages,
     generateAiQuestionsNow,
   } = useAppStore();
 
@@ -360,6 +362,8 @@ export const App: React.FC = () => {
           messages={coachMessages}
           palette={palette}
           onUpsertMessage={upsertCoachMessage}
+          onDeleteMessage={deleteCoachMessage}
+          onClearMessages={clearCoachMessages}
           chunks={chunks}
           attempts={attempts}
           cloudEnabled={cloudEnabled}
@@ -369,8 +373,6 @@ export const App: React.FC = () => {
         <SettingsPage
           settings={settings}
           palette={palette}
-          cloudEnabled={cloudEnabled}
-          serverHasGeminiKey={serverHasGeminiKey}
           onUpdateSettings={updateSettings}
           onStartRecalibration={() => setIsRecalibrating(true)}
         />

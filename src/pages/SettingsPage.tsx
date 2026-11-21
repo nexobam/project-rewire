@@ -2,7 +2,6 @@
 
 import React from 'react';
 import {
-  Cloud,
   RefreshCw,
   Settings as SettingsIcon,
   Sliders,
@@ -10,7 +9,6 @@ import {
 } from 'lucide-react';
 import type { ThemePalette } from '../domain/contrast';
 import { clampPerTapMs } from '../domain/timingJudge';
-import { getCachedCloudStatus } from '../services/cloudSyncService';
 import {
   MAX_TTS_RATE,
   MIN_TTS_RATE,
@@ -21,8 +19,6 @@ import type { Settings } from '../types';
 export interface SettingsPageProps {
   settings: Settings;
   palette: ThemePalette;
-  cloudEnabled?: boolean;
-  serverHasGeminiKey?: boolean;
   onUpdateSettings: (patch: Partial<Settings>) => Promise<Settings>;
   onStartRecalibration: () => void;
 }
@@ -30,16 +26,9 @@ export interface SettingsPageProps {
 export const SettingsPage: React.FC<SettingsPageProps> = ({
   settings,
   palette,
-  cloudEnabled,
-  serverHasGeminiKey,
   onUpdateSettings,
   onStartRecalibration,
 }) => {
-  const cachedCloud = getCachedCloudStatus();
-  const isCloudActive = Boolean(cloudEnabled ?? cachedCloud.cloudAvailable);
-  const isServerAiActive = Boolean(
-    serverHasGeminiKey ?? cachedCloud.serverHasGeminiKey
-  );
 
   const levelPhaseSummary =
     settings.level === 1
@@ -332,33 +321,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             </button>
           </div>
         )}
-      </div>
-
-      {/* 3. クラウド自動保存 ＆ 専属AI講師の接続ステータス（設定不要・自動連携） */}
-      <div
-        style={{
-          backgroundColor: palette.card,
-          borderColor: palette.border,
-          color: palette.text,
-        }}
-        className="border rounded-xl p-5 space-y-2.5 text-xs"
-        data-testid="cloud-ai-status-card"
-      >
-        <div className="flex items-center gap-2 font-bold text-sm">
-          <Cloud size={17} strokeWidth={1.75} color="currentColor" />
-          <span>クラウド自動保存 ＆ 専属AI講師ステータス</span>
-        </div>
-        <p className="opacity-85">
-          ・学習記録・問題バンク：1問ごとにクラウド（D1）および端末へ自動保存されています（手動バックアップ不要）。
-        </p>
-        <p className="opacity-85">
-          ・専属AI講師（Gemini AI）：
-          {isCloudActive && isServerAiActive
-            ? 'サーバー連携済みのため、APIキー設定不要でそのままご利用いただけます。'
-            : 'オンライン時にサーバーと自動連携します。'}
-          （本日のAI講師呼び出し：{settings.apiCallCount ?? 0} /{' '}
-          {settings.dailyApiCallLimit} 回）
-        </p>
       </div>
     </div>
   );

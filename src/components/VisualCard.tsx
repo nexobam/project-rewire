@@ -11,6 +11,7 @@ export interface VisualCardProps {
   palette: ThemePalette;
   allEnglishMode?: boolean;
   showEnglishSubtitle?: boolean;
+  showSituationMeaning?: boolean;
   compact?: boolean;
   onClick?: () => void;
   selected?: boolean;
@@ -21,6 +22,7 @@ export const VisualCard: React.FC<VisualCardProps> = ({
   palette,
   allEnglishMode = false,
   showEnglishSubtitle = false,
+  showSituationMeaning = false,
   compact = false,
   onClick,
   selected = false,
@@ -141,19 +143,23 @@ export const VisualCard: React.FC<VisualCardProps> = ({
             </span>
           </div>
 
-          <div
-            style={{
-              backgroundColor: palette.background,
-              borderColor: palette.border,
-            }}
-            className="p-2.5 rounded border"
-            data-testid={`visual-card-intent-${chunk.id}`}
-          >
-            <span className="text-[11px] font-bold opacity-75 block mb-0.5">
-              この場面で言っていること（状況・意図）
-            </span>
-            <p className="text-sm font-bold leading-snug">{situationMeaning}</p>
-          </div>
+          {showSituationMeaning && (
+            <div
+              style={{
+                backgroundColor: palette.background,
+                borderColor: palette.border,
+              }}
+              className="p-2.5 rounded border"
+              data-testid={`visual-card-intent-${chunk.id}`}
+            >
+              <span className="text-[11px] font-bold opacity-75 block mb-0.5">
+                この場面で言っていること（状況・意図）
+              </span>
+              <p className="text-sm font-bold leading-snug">
+                {situationMeaning}
+              </p>
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-xs font-semibold uppercase tracking-wider opacity-75">

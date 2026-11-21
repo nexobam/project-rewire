@@ -85,19 +85,20 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
       expect(expectedChunk).toBeDefined();
       const expectedMeaning = extractSituationMeaning(expectedChunk!);
 
-      // 状況カードに「この場面で言っていること（状況・意図）」が表示されていること
-      const correctCardIntent = await waitFor(() =>
-        screen.getByTestId(`visual-card-intent-${expectedChunk!.id}`)
-      );
-      expect(correctCardIntent).toHaveTextContent(expectedMeaning);
-
+      // 絵カード4択のときだけカード内に「この場面で言っていること（状況・意図）」が表示され、音変化リスニングでは回答前非表示（ネタバレ防止）であること
       if (screen.queryByTestId('picture-choice-grid')) {
-        // 絵カード4択：正解カードをクリック
+        const correctCardIntent = await waitFor(() =>
+          screen.getByTestId(`visual-card-intent-${expectedChunk!.id}`)
+        );
+        expect(correctCardIntent).toHaveTextContent(expectedMeaning);
         const correctCard = screen.getByTestId(
           `visual-card-${expectedChunk!.id}`
         );
         fireEvent.click(correctCard);
       } else {
+        expect(
+          screen.queryByTestId(`visual-card-intent-${expectedChunk!.id}`)
+        ).not.toBeInTheDocument();
         // 音変化リスニング：聴こえた英文と同一の選択肢ボタンをクリック
         const soundChoiceBtn = screen.getByRole('button', {
           name: currentSpokenEn,
@@ -173,10 +174,10 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
     const currentChunk = chunkMapByEn.get(currentSpokenEn)!;
     expect(currentChunk).toBeDefined();
 
-    // 左側のVisualCardに「この場面で言っていること（状況・意図）」が表示されていること
+    // 回答前はネタバレ防止のため、左側のVisualCardに「この場面で言っていること」が表示されないこと
     expect(
-      screen.getByTestId(`visual-card-intent-${currentChunk.id}`)
-    ).toHaveTextContent(extractSituationMeaning(currentChunk));
+      screen.queryByTestId(`visual-card-intent-${currentChunk.id}`)
+    ).not.toBeInTheDocument();
 
     // ブロックを順番にタップして回答を完了する
     for (const block of currentChunk.blocks) {
@@ -369,9 +370,9 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
     expect(res2.answer).not.toBe(res3.answer);
     expect(res1.answer).toContain('Let me get a cold brew.');
 
-    // 2. CoachChatPage UIで学習中フレーズの1タップ質問セクションとよく聞かれる質問テンプレートが表示されること
-    const savedMessages: CoachMessage[] = [];
-    render(
+    // 2. CoachChatPage UIで1タップ質問、タップで回答を閉じる操作、履歴の全削除ができること
+    let savedMessages: CoachMessage[] = [];
+    const { rerender } = render(
       <CoachChatPage
         settings={{ ...DEFAULT_SETTINGS, level: 1 }}
         messages={savedMessages}
@@ -380,7 +381,13 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
         cloudEnabled={true}
         serverHasGeminiKey={true}
         onUpsertMessage={async (m) => {
-          savedMessages.push(m);
+          savedMessages = [...savedMessages, m];
+        }}
+        onDeleteMessage={async (id) => {
+          savedMessages = savedMessages.filter((m) => m.id !== id);
+        }}
+        onClearMessages={async () => {
+          savedMessages = [];
         }}
       />
     );
@@ -396,7 +403,38 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
     await waitFor(() => expect(savedMessages.length).toBe(1));
     expect(savedMessages[0].answer).toContain('Let me get');
 
-    // 3. SettingsPage UIで不要なJSON設定や手動フェーズ切替がなく、制限時間プリセット・速度試聴・自動ステップアップ表示が動作すること
+    // 再レンダリングして履歴表示・タップで回答を閉じる・全削除ボタンを確認
+    rerender(
+      <CoachChatPage
+        settings={{ ...DEFAULT_SETTINGS, level: 1 }}
+        messages={savedMessages}
+        palette={THEME_PALETTES.light}
+        chunks={ALL_SEED_CHUNKS}
+        cloudEnabled={true}
+        serverHasGeminiKey={true}
+        onUpsertMessage={async (m) => {
+          savedMessages = [...savedMessages, m];
+        }}
+        onDeleteMessage={async (id) => {
+          savedMessages = savedMessages.filter((m) => m.id !== id);
+        }}
+        onClearMessages={async () => {
+          savedMessages = [];
+        }}
+      />
+    );
+
+    const msgId = savedMessages[0].id;
+    expect(screen.getByTestId(`coach-answer-body-${msgId}`)).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId(`coach-answer-body-${msgId}`));
+    expect(
+      screen.queryByTestId(`coach-answer-body-${msgId}`)
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('clear-coach-history-button'));
+    await waitFor(() => expect(savedMessages.length).toBe(0));
+
+    // 3. SettingsPage UIで不要なJSON設定・AI設定・手動フェーズ切替がなく、制限時間プリセット・速度試聴が動作すること
     const onUpdate = vi.fn(async (patch) => ({
       ...DEFAULT_SETTINGS,
       ...patch,
@@ -405,15 +443,16 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
       <SettingsPage
         settings={{ ...DEFAULT_SETTINGS, level: 1, lv1Phase: 'picture' }}
         palette={THEME_PALETTES.light}
-        cloudEnabled={true}
-        serverHasGeminiKey={true}
         onUpdateSettings={onUpdate}
         onStartRecalibration={vi.fn()}
       />
     );
 
     expect(screen.queryByTestId('export-backup-button')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('select-lv1-phase-blocks')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('api-key-input')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('select-lv1-phase-blocks')
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId('learning-phase-status')).toHaveTextContent(
       'アプリ側で自動判定'
     );

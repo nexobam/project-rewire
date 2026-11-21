@@ -365,3 +365,19 @@ export async function saveCoachMessageToDb(msg: CoachMessage): Promise<void> {
   const db = await getDatabase();
   await db.put('coachMessages', msg);
 }
+
+/**
+ * AIコーチ質問メッセージを1件削除する
+ */
+export async function deleteCoachMessageFromDb(id: string): Promise<void> {
+  const db = await getDatabase();
+  await db.delete('coachMessages', id);
+}
+
+/**
+ * AIコーチ質問履歴をすべて削除する
+ */
+export async function clearCoachMessagesFromDb(): Promise<void> {
+  const db = await getDatabase();
+  await db.clear('coachMessages');
+}
