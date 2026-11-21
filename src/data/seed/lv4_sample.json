@@ -1,0 +1,347 @@
+[
+  {
+    "id": "lv4_01",
+    "level": 4,
+    "contentCategory": "daily",
+    "sceneCategory": "lounge",
+    "grammarPattern": "native_banter_1",
+    "enText": "No wonder he looked so hyped up.",
+    "blocks": [
+      {
+        "id": "lv4_01_b0",
+        "text": "No"
+      },
+      {
+        "id": "lv4_01_b1",
+        "text": "wonder"
+      },
+      {
+        "id": "lv4_01_b2",
+        "text": "he"
+      },
+      {
+        "id": "lv4_01_b3",
+        "text": "looked"
+      },
+      {
+        "id": "lv4_01_b4",
+        "text": "so"
+      },
+      {
+        "id": "lv4_01_b5",
+        "text": "hyped"
+      },
+      {
+        "id": "lv4_01_b6",
+        "text": "up."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "No",
+        "wonder",
+        "he",
+        "looked",
+        "so",
+        "hyped",
+        "up."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Zap",
+        "Users"
+      ],
+      "tags": [
+        "ラウンジ",
+        "友人",
+        "納得"
+      ]
+    },
+    "coreImageJa": "相手の高ぶっていた様子と背景の理由がパチッと繋がって驚きが消える感覚。",
+    "pronunciationTip": "No wonder he はノーワンダーヒーと h を弱めて滑らかに繋げる。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "He just got promoted this morning!"
+  },
+  {
+    "id": "lv4_02",
+    "level": 4,
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "native_banter_2",
+    "enText": "Let us play it by ear tomorrow.",
+    "blocks": [
+      {
+        "id": "lv4_02_b0",
+        "text": "Let"
+      },
+      {
+        "id": "lv4_02_b1",
+        "text": "us"
+      },
+      {
+        "id": "lv4_02_b2",
+        "text": "play"
+      },
+      {
+        "id": "lv4_02_b3",
+        "text": "it"
+      },
+      {
+        "id": "lv4_02_b4",
+        "text": "by"
+      },
+      {
+        "id": "lv4_02_b5",
+        "text": "ear"
+      },
+      {
+        "id": "lv4_02_b6",
+        "text": "tomorrow."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Let",
+        "us",
+        "play",
+        "it",
+        "by",
+        "ear",
+        "tomorrow."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Headphones",
+        "Compass"
+      ],
+      "tags": [
+        "オフィス",
+        "同僚",
+        "柔軟"
+      ]
+    },
+    "coreImageJa": "楽譜を見ずにその場の音の響き（状況）を耳で聴きながら即興で動く軽やかさ。",
+    "pronunciationTip": "play it by ear はプレイッバイイヤーと母音同士を滑らかに渡す。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "What is the exact plan for the client visit?"
+  },
+  {
+    "id": "lv4_03",
+    "level": 4,
+    "contentCategory": "heat",
+    "sceneCategory": "arena",
+    "grammarPattern": "native_banter_heat",
+    "enText": "Their defense switches everything on the perimeter.",
+    "blocks": [
+      {
+        "id": "lv4_03_b0",
+        "text": "Their"
+      },
+      {
+        "id": "lv4_03_b1",
+        "text": "defense"
+      },
+      {
+        "id": "lv4_03_b2",
+        "text": "switches"
+      },
+      {
+        "id": "lv4_03_b3",
+        "text": "everything"
+      },
+      {
+        "id": "lv4_03_b4",
+        "text": "on"
+      },
+      {
+        "id": "lv4_03_b5",
+        "text": "the"
+      },
+      {
+        "id": "lv4_03_b6",
+        "text": "perimeter."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Their",
+        "defense",
+        "switches",
+        "everything",
+        "on",
+        "the",
+        "perimeter."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Shield",
+        "Flame"
+      ],
+      "tags": [
+        "アリーナ",
+        "解説者",
+        "分析"
+      ]
+    },
+    "coreImageJa": "スリーポイントラインの外周で選手たちが歯車のように瞬時にマークを受け渡す連動。",
+    "pronunciationTip": "switches everything on はスウィッチズエヴリシンゴンと一息で駆け抜ける。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Break down Miami fourth quarter defensive scheme."
+  },
+  {
+    "id": "lv4_04",
+    "level": 4,
+    "contentCategory": "daily",
+    "sceneCategory": "cafe",
+    "grammarPattern": "native_banter_3",
+    "enText": "That project fell through at the end.",
+    "blocks": [
+      {
+        "id": "lv4_04_b0",
+        "text": "That"
+      },
+      {
+        "id": "lv4_04_b1",
+        "text": "project"
+      },
+      {
+        "id": "lv4_04_b2",
+        "text": "fell"
+      },
+      {
+        "id": "lv4_04_b3",
+        "text": "through"
+      },
+      {
+        "id": "lv4_04_b4",
+        "text": "at"
+      },
+      {
+        "id": "lv4_04_b5",
+        "text": "the"
+      },
+      {
+        "id": "lv4_04_b6",
+        "text": "end."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "That",
+        "project",
+        "fell",
+        "through",
+        "at",
+        "the",
+        "end."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "AlertCircle",
+        "Briefcase"
+      ],
+      "tags": [
+        "カフェ",
+        "同僚",
+        "冷静"
+      ]
+    },
+    "coreImageJa": "支えていた床板が最後に抜けて、計画が下へストンと落ちて消える空間感覚。",
+    "pronunciationTip": "fell through at はフェルスルーアッと th から r へ舌を素早く引く。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Whatever happened to that partnership deal?"
+  },
+  {
+    "id": "lv4_05",
+    "level": 4,
+    "contentCategory": "daily",
+    "sceneCategory": "street",
+    "grammarPattern": "native_banter_4",
+    "enText": "You hit the nail on the head.",
+    "blocks": [
+      {
+        "id": "lv4_05_b0",
+        "text": "You"
+      },
+      {
+        "id": "lv4_05_b1",
+        "text": "hit"
+      },
+      {
+        "id": "lv4_05_b2",
+        "text": "the"
+      },
+      {
+        "id": "lv4_05_b3",
+        "text": "nail"
+      },
+      {
+        "id": "lv4_05_b4",
+        "text": "on"
+      },
+      {
+        "id": "lv4_05_b5",
+        "text": "the"
+      },
+      {
+        "id": "lv4_05_b6",
+        "text": "head."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "You",
+        "hit",
+        "the",
+        "nail",
+        "on",
+        "the",
+        "head."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Target",
+        "CheckCircle"
+      ],
+      "tags": [
+        "街角",
+        "友人",
+        "称賛"
+      ]
+    },
+    "coreImageJa": "曖昧な議論のど真ん中にある釘の頭を寸分の狂いもなく真上から打ち抜く快感。",
+    "pronunciationTip": "hit the の t を止め、nail on the をネイロンザと滑らかに連結する。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "I feel like the real issue is communication speed."
+  }
+]

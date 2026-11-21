@@ -1,0 +1,347 @@
+[
+  {
+    "id": "lv2_01",
+    "level": 2,
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "chunk_build_reason",
+    "enText": "I left early to catch the express.",
+    "blocks": [
+      {
+        "id": "lv2_01_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv2_01_b1",
+        "text": "left"
+      },
+      {
+        "id": "lv2_01_b2",
+        "text": "early"
+      },
+      {
+        "id": "lv2_01_b3",
+        "text": "to"
+      },
+      {
+        "id": "lv2_01_b4",
+        "text": "catch"
+      },
+      {
+        "id": "lv2_01_b5",
+        "text": "the"
+      },
+      {
+        "id": "lv2_01_b6",
+        "text": "express."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "left",
+        "early",
+        "to",
+        "catch",
+        "the",
+        "express."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Train",
+        "Briefcase"
+      ],
+      "tags": [
+        "オフィス",
+        "同僚",
+        "明快"
+      ]
+    },
+    "coreImageJa": "まず『早めに出た』と核を置き、その背中から目的地へ向かう矢印（to catch...）を継ぎ足す。",
+    "pronunciationTip": "left early はレフターリー、catch the はキャッチザと息を止めずに繋ぐ。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Why did you leave at five yesterday?"
+  },
+  {
+    "id": "lv2_02",
+    "level": 2,
+    "contentCategory": "daily",
+    "sceneCategory": "cafe",
+    "grammarPattern": "chunk_build_that",
+    "enText": "I noticed that the cafe was packed.",
+    "blocks": [
+      {
+        "id": "lv2_02_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv2_02_b1",
+        "text": "noticed"
+      },
+      {
+        "id": "lv2_02_b2",
+        "text": "that"
+      },
+      {
+        "id": "lv2_02_b3",
+        "text": "the"
+      },
+      {
+        "id": "lv2_02_b4",
+        "text": "cafe"
+      },
+      {
+        "id": "lv2_02_b5",
+        "text": "was"
+      },
+      {
+        "id": "lv2_02_b6",
+        "text": "packed."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "noticed",
+        "that",
+        "the",
+        "cafe",
+        "was",
+        "packed."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Coffee",
+        "Users"
+      ],
+      "tags": [
+        "カフェ前",
+        "友人",
+        "観察"
+      ]
+    },
+    "coreImageJa": "『気づいた』という視線の先に、店内に人がぎっしり詰まった光景をそのまま広げる。",
+    "pronunciationTip": "noticed that の d と th を重ね、was packed の s と p を素早く渡す。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Did you end up working at the coffee shop?"
+  },
+  {
+    "id": "lv2_03",
+    "level": 2,
+    "contentCategory": "daily",
+    "sceneCategory": "home",
+    "grammarPattern": "chunk_build_when",
+    "enText": "Call me whenever you finish your work.",
+    "blocks": [
+      {
+        "id": "lv2_03_b0",
+        "text": "Call"
+      },
+      {
+        "id": "lv2_03_b1",
+        "text": "me"
+      },
+      {
+        "id": "lv2_03_b2",
+        "text": "whenever"
+      },
+      {
+        "id": "lv2_03_b3",
+        "text": "you"
+      },
+      {
+        "id": "lv2_03_b4",
+        "text": "finish"
+      },
+      {
+        "id": "lv2_03_b5",
+        "text": "your"
+      },
+      {
+        "id": "lv2_03_b6",
+        "text": "work."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Call",
+        "me",
+        "whenever",
+        "you",
+        "finish",
+        "your",
+        "work."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Phone",
+        "Laptop"
+      ],
+      "tags": [
+        "自宅",
+        "パートナー",
+        "安心"
+      ]
+    },
+    "coreImageJa": "『電話して』を最初に投げ、その後ろに『仕事が終わる任意の時点』の輪を広げる。",
+    "pronunciationTip": "Call me の l を響かせ、finish your はフィニッシュアーと滑らかに。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "I still have a couple of reports left."
+  },
+  {
+    "id": "lv2_04",
+    "level": 2,
+    "contentCategory": "heat",
+    "sceneCategory": "arena",
+    "grammarPattern": "chunk_build_heat",
+    "enText": "Bam passed out to open the shooter.",
+    "blocks": [
+      {
+        "id": "lv2_04_b0",
+        "text": "Bam"
+      },
+      {
+        "id": "lv2_04_b1",
+        "text": "passed"
+      },
+      {
+        "id": "lv2_04_b2",
+        "text": "out"
+      },
+      {
+        "id": "lv2_04_b3",
+        "text": "to"
+      },
+      {
+        "id": "lv2_04_b4",
+        "text": "open"
+      },
+      {
+        "id": "lv2_04_b5",
+        "text": "the"
+      },
+      {
+        "id": "lv2_04_b6",
+        "text": "shooter."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Bam",
+        "passed",
+        "out",
+        "to",
+        "open",
+        "the",
+        "shooter."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Trophy",
+        "Target"
+      ],
+      "tags": [
+        "アリーナ",
+        "仲間",
+        "高揚"
+      ]
+    },
+    "coreImageJa": "インサイドから外へボールを弾き出し、その動きがシューターの空間をパッと開く連鎖。",
+    "pronunciationTip": "passed out to はパスターウトゥと3語を一塊のパス軌道のように繋ぐ。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "How did they get that wide open corner three?"
+  },
+  {
+    "id": "lv2_05",
+    "level": 2,
+    "contentCategory": "daily",
+    "sceneCategory": "station",
+    "grammarPattern": "chunk_build_even",
+    "enText": "We walked home even though it rained.",
+    "blocks": [
+      {
+        "id": "lv2_05_b0",
+        "text": "We"
+      },
+      {
+        "id": "lv2_05_b1",
+        "text": "walked"
+      },
+      {
+        "id": "lv2_05_b2",
+        "text": "home"
+      },
+      {
+        "id": "lv2_05_b3",
+        "text": "even"
+      },
+      {
+        "id": "lv2_05_b4",
+        "text": "though"
+      },
+      {
+        "id": "lv2_05_b5",
+        "text": "it"
+      },
+      {
+        "id": "lv2_05_b6",
+        "text": "rained."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "We",
+        "walked",
+        "home",
+        "even",
+        "though",
+        "it",
+        "rained."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "CloudRain",
+        "Navigation"
+      ],
+      "tags": [
+        "帰り道",
+        "友人",
+        "爽快"
+      ]
+    },
+    "coreImageJa": "『歩いて帰った』と言い切った後に、雨の情景を背景として添える二段構造。",
+    "pronunciationTip": "walked home の ed は軽く、even though it はイーヴンゾウイッと連結する。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "How did you get back after the last train?"
+  }
+]

@@ -1,0 +1,328 @@
+// Project Rewire ルートアプリケーションコンポーネント
+
+import React, { useMemo, useState } from 'react';
+import { Header, type NavTab } from './components/Header';
+import { exportBackupJson } from './db/backup';
+import {
+  calculatePromotionEta,
+  countNewlyMasteredInLast7Days,
+  evaluatePromotionGate,
+} from './domain/promotionGate';
+import { getStudyDate } from './domain/studyDate';
+import { useAppStore } from './hooks/useAppStore';
+import { useTheme } from './hooks/useTheme';
+import { BossBattlePage } from './pages/BossBattlePage';
+import { CoachChatPage } from './pages/CoachChatPage';
+import { DiagnosisPage } from './pages/DiagnosisPage';
+import { HomePage, type ActiveModeLaunch } from './pages/HomePage';
+import { LiveModePage } from './pages/LiveModePage';
+import { SettingsPage } from './pages/SettingsPage';
+import { SilentModePage } from './pages/SilentModePage';
+import { SleepModePage } from './pages/SleepModePage';
+import { SpeakModePage } from './pages/SpeakModePage';
+import { playTactileClick, unlockAudioContext } from './services/audioService';
+import { unlockSpeechSynthesis } from './services/ttsService';
+
+export const App: React.FC = () => {
+  const {
+    loading,
+    settings,
+    chunks,
+    reviewStates,
+    attempts,
+    sessions,
+    aiReports,
+    coachMessages,
+    streakDays,
+    suggestRehab,
+    justPromotedBanner,
+    setJustPromotedBanner,
+    updateSettings,
+    recordQuestionAttempt,
+    completeSessionWithAiReport,
+    markChunkUnnatural,
+    promoteToLevel,
+    saveLiveLogResult,
+    upsertCoachMessage,
+    applyImportedBackup,
+  } = useAppStore();
+
+  const [activeTab, setActiveTab] = useState<NavTab>('home');
+  const [activeMode, setActiveMode] = useState<ActiveModeLaunch | null>(null);
+  const [isRecalibrating, setIsRecalibrating] = useState(false);
+
+  const isSleepModeActive = activeMode?.mode === 'sleep';
+  const { palette } = useTheme(settings.themePreference, isSleepModeActive);
+
+  const currentStudyDate = getStudyDate();
+
+  // 昇格ゲートとETAの計算（即時・確定的・要件3, 5）
+  const gateStatus = useMemo(
+    () =>
+      evaluatePromotionGate({
+        level: Math.max(1, settings.level) as 1 | 2 | 3 | 4,
+        chunks,
+        reviewStates,
+        attempts,
+      }),
+    [attempts, chunks, reviewStates, settings.level]
+  );
+
+  const etaResult = useMemo(() => {
+    const activeDatesSet = new Set(
+      sessions.filter((s) => s.activeSeconds > 0).map((s) => s.studyDate)
+    );
+    const coreChunks = chunks.filter(
+      (c) => c.level === Math.max(1, settings.level) && c.isCore && !c.disabled
+    );
+    const newlyMastered7d = countNewlyMasteredInLast7Days({
+      coreChunks,
+      attempts,
+      currentStudyDate,
+    });
+    const targetCoreCount = Math.ceil(gateStatus.coreTotal * 0.8);
+    const remainingCoreChunks = Math.max(
+      0,
+      targetCoreCount - gateStatus.coreMastered
+    );
+
+    return calculatePromotionEta({
+      remainingCoreChunks,
+      activeStudyDatesCount: activeDatesSet.size,
+      newlyMasteredInLast7Days: newlyMastered7d,
+    });
+  }, [attempts, chunks, currentStudyDate, gateStatus, sessions, settings.level]);
+
+  const handleCycleTheme = () => {
+    const order: ('auto' | 'light' | 'dark')[] = ['auto', 'light', 'dark'];
+    const nextIdx = (order.indexOf(settings.themePreference) + 1) % order.length;
+    void updateSettings({ themePreference: order[nextIdx] });
+  };
+
+  const handleOneTapBackup = async () => {
+    const updated = await updateSettings({ lastBackupAt: Date.now() });
+    setJustPromotedBanner(false);
+    const jsonStr = await exportBackupJson({
+      settings: updated,
+      chunks,
+      reviewStates,
+      attempts,
+      sessions,
+      aiReports,
+      coachMessages,
+    });
+    if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `project-rewire-backup-${currentStudyDate}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  const handleStartMode = (launch: ActiveModeLaunch) => {
+    // 開始ボタンのタップイベント内で speechSynthesis と AudioContext を初期化する（要件6-1）
+    unlockSpeechSynthesis();
+    unlockAudioContext();
+    playTactileClick(settings.clickSound);
+    setActiveMode(launch);
+  };
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          backgroundColor: palette.background,
+          color: palette.text,
+        }}
+        className="min-h-screen flex items-center justify-center text-sm font-semibold"
+      >
+        Project Rewire を起動中...
+      </div>
+    );
+  }
+
+  // 初回起動時（level === 0）または設定画面からの perTapMs 再測定時
+  if (settings.level === 0 || isRecalibrating) {
+    return (
+      <div
+        style={{
+          backgroundColor: palette.background,
+          color: palette.text,
+        }}
+        className="min-h-screen"
+      >
+        <Header
+          level={settings.level}
+          lv1Phase={settings.lv1Phase}
+          streakDays={streakDays}
+          restTickets={settings.restTickets}
+          themePreference={settings.themePreference}
+          palette={palette}
+          activeTab={activeTab}
+          onChangeTab={setActiveTab}
+          onCycleTheme={handleCycleTheme}
+        />
+        <DiagnosisPage
+          palette={palette}
+          ttsRate={settings.ttsRate}
+          clickSound={settings.clickSound}
+          isRecalibration={isRecalibrating}
+          onCompleteDiagnosis={async (measuredPerTapMs) => {
+            await updateSettings({
+              perTapMs: measuredPerTapMs,
+              level: settings.level === 0 ? 1 : settings.level,
+            });
+            setIsRecalibrating(false);
+          }}
+          onCancel={
+            isRecalibrating ? () => setIsRecalibrating(false) : undefined
+          }
+        />
+      </div>
+    );
+  }
+
+  const didSilentToday = sessions.some(
+    (s) => s.studyDate === currentStudyDate && s.mode === 'silent'
+  );
+
+  return (
+    <div
+      style={{
+        backgroundColor: palette.background,
+        color: palette.text,
+      }}
+      className="min-h-screen"
+    >
+      <Header
+        level={settings.level}
+        lv1Phase={settings.lv1Phase}
+        streakDays={streakDays}
+        restTickets={settings.restTickets}
+        themePreference={settings.themePreference}
+        palette={palette}
+        activeTab={activeTab}
+        onChangeTab={(tab) => {
+          setActiveMode(null);
+          setActiveTab(tab);
+        }}
+        onCycleTheme={handleCycleTheme}
+      />
+
+      {activeMode ? (
+        activeMode.mode === 'silent' || activeMode.mode === 'rehab' ? (
+          <SilentModePage
+            plannedMinutes={activeMode.plannedMinutes}
+            isRehab={activeMode.mode === 'rehab'}
+            isSecondOrLaterToday={didSilentToday}
+            settings={settings}
+            allChunks={chunks}
+            reviewStates={reviewStates}
+            recentAttempts={attempts}
+            currentStudyDate={currentStudyDate}
+            gateStatus={gateStatus}
+            palette={palette}
+            onRecordAttempt={recordQuestionAttempt}
+            onCompleteSession={completeSessionWithAiReport}
+            onReportUnnatural={(chunkId) => void markChunkUnnatural(chunkId)}
+            onExitHome={() => setActiveMode(null)}
+          />
+        ) : activeMode.mode === 'speak' ? (
+          <SpeakModePage
+            plannedMinutes={activeMode.plannedMinutes}
+            settings={settings}
+            allChunks={chunks}
+            reviewStates={reviewStates}
+            recentAttempts={attempts}
+            currentStudyDate={currentStudyDate}
+            gateStatus={gateStatus}
+            palette={palette}
+            onRecordAttempt={recordQuestionAttempt}
+            onCompleteSession={completeSessionWithAiReport}
+            onReportUnnatural={(chunkId) => void markChunkUnnatural(chunkId)}
+            onExitHome={() => setActiveMode(null)}
+          />
+        ) : activeMode.mode === 'live' ? (
+          <LiveModePage
+            settings={settings}
+            chunks={chunks}
+            attempts={attempts}
+            gateStatus={gateStatus}
+            currentStudyDate={currentStudyDate}
+            palette={palette}
+            onSaveLiveResult={saveLiveLogResult}
+            onExitHome={() => setActiveMode(null)}
+          />
+        ) : activeMode.mode === 'sleep' ? (
+          <SleepModePage
+            allChunks={chunks}
+            recentAttempts={attempts}
+            currentStudyDate={currentStudyDate}
+            ttsRate={settings.ttsRate}
+            clickSound={settings.clickSound}
+            palette={palette}
+            onRecordSleepAttempt={recordQuestionAttempt}
+            onCompleteSession={completeSessionWithAiReport}
+            onExitHome={() => setActiveMode(null)}
+          />
+        ) : activeMode.mode === 'boss' ? (
+          <BossBattlePage
+            settings={settings}
+            allChunks={chunks}
+            currentStudyDate={currentStudyDate}
+            palette={palette}
+            onRecordAttempt={recordQuestionAttempt}
+            onPassBoss={promoteToLevel}
+            onFailBoss={async (cooldownUntil) => {
+              await updateSettings({ bossCooldownUntil: cooldownUntil });
+            }}
+            onExitHome={() => setActiveMode(null)}
+          />
+        ) : null
+      ) : activeTab === 'coach' ? (
+        <CoachChatPage
+          settings={settings}
+          messages={coachMessages}
+          palette={palette}
+          onUpsertMessage={upsertCoachMessage}
+        />
+      ) : activeTab === 'settings' ? (
+        <SettingsPage
+          settings={settings}
+          chunks={chunks}
+          reviewStates={reviewStates}
+          attempts={attempts}
+          sessions={sessions}
+          aiReports={aiReports}
+          coachMessages={coachMessages}
+          palette={palette}
+          onUpdateSettings={updateSettings}
+          onStartRecalibration={() => setIsRecalibrating(true)}
+          onApplyImportedBackup={applyImportedBackup}
+        />
+      ) : (
+        <HomePage
+          settings={settings}
+          chunks={chunks}
+          reviewStates={reviewStates}
+          sessions={sessions}
+          aiReports={aiReports}
+          gateStatus={gateStatus}
+          etaText={etaResult.displayText}
+          suggestRehab={suggestRehab}
+          justPromotedBanner={justPromotedBanner}
+          currentStudyDate={currentStudyDate}
+          palette={palette}
+          onStartMode={handleStartMode}
+          onOpenCoach={() => setActiveTab('coach')}
+          onOneTapBackup={() => void handleOneTapBackup()}
+          onDismissPromoted={() => setJustPromotedBanner(false)}
+        />
+      )}
+    </div>
+  );
+};
+export default App;

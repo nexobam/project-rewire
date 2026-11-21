@@ -1,0 +1,2160 @@
+[
+  {
+    "id": "lv1_01",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "cafe",
+    "grammarPattern": "can_i_get",
+    "enText": "Can I get an iced latte?",
+    "blocks": [
+      {
+        "id": "lv1_01_b0",
+        "text": "Can"
+      },
+      {
+        "id": "lv1_01_b1",
+        "text": "I"
+      },
+      {
+        "id": "lv1_01_b2",
+        "text": "get"
+      },
+      {
+        "id": "lv1_01_b3",
+        "text": "an"
+      },
+      {
+        "id": "lv1_01_b4",
+        "text": "iced"
+      },
+      {
+        "id": "lv1_01_b5",
+        "text": "latte?"
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Can",
+        "I",
+        "get",
+        "an",
+        "iced",
+        "latte?"
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Coffee",
+        "CreditCard"
+      ],
+      "tags": [
+        "カフェ",
+        "店員",
+        "日常"
+      ]
+    },
+    "coreImageJa": "カウンター越しの空間から一杯を自分の手元へ引き寄せる軽快な要求。",
+    "pronunciationTip": "Can I get an はキャナイゲランと4語を一つのリズム塊で弾く。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Hi there what can I get started for you?",
+    "soundChangeChoices": [
+      "Can I get an iced latte?",
+      "Can I got an iced latte?",
+      "Could I get a hot latte?",
+      "Can you get an iced latte?"
+    ]
+  },
+  {
+    "id": "lv1_02",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "train",
+    "grammarPattern": "about_to",
+    "enText": "My train is about to leave.",
+    "blocks": [
+      {
+        "id": "lv1_02_b0",
+        "text": "My"
+      },
+      {
+        "id": "lv1_02_b1",
+        "text": "train"
+      },
+      {
+        "id": "lv1_02_b2",
+        "text": "is"
+      },
+      {
+        "id": "lv1_02_b3",
+        "text": "about"
+      },
+      {
+        "id": "lv1_02_b4",
+        "text": "to"
+      },
+      {
+        "id": "lv1_02_b5",
+        "text": "leave."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "My",
+        "train",
+        "is",
+        "about",
+        "to",
+        "leave."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Train",
+        "Clock"
+      ],
+      "tags": [
+        "駅ホーム",
+        "車掌",
+        "切迫"
+      ]
+    },
+    "coreImageJa": "発車という境界線のすぐ手前ギリギリに車体が差し掛かっている緊張感。",
+    "pronunciationTip": "about to はアバウトゥと t を重ねて1回だけ弾く。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Are you on the platform yet?",
+    "soundChangeChoices": [
+      "My train is about to leave.",
+      "My train was about to arrive.",
+      "The train is about to leave.",
+      "My plane is about to leave."
+    ]
+  },
+  {
+    "id": "lv1_03",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "let_you_know",
+    "enText": "I will let you know tomorrow.",
+    "blocks": [
+      {
+        "id": "lv1_03_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv1_03_b1",
+        "text": "will"
+      },
+      {
+        "id": "lv1_03_b2",
+        "text": "let"
+      },
+      {
+        "id": "lv1_03_b3",
+        "text": "you"
+      },
+      {
+        "id": "lv1_03_b4",
+        "text": "know"
+      },
+      {
+        "id": "lv1_03_b5",
+        "text": "tomorrow."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "will",
+        "let",
+        "you",
+        "know",
+        "tomorrow."
+      ],
+      [
+        "tomorrow.",
+        "I",
+        "will",
+        "let",
+        "you",
+        "know"
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Mail",
+        "Calendar"
+      ],
+      "tags": [
+        "オフィス",
+        "取引先",
+        "誠実"
+      ]
+    },
+    "coreImageJa": "情報が流れる水門を明日の時点で開いて相手へ届ける約束。",
+    "pronunciationTip": "let you はレッチュと変化させ、know tomorrow を滑らかに続ける。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Do you have the final numbers?",
+    "soundChangeChoices": [
+      "I will let you know tomorrow.",
+      "I will let him know tomorrow.",
+      "I would let you now tomorrow.",
+      "We will let you know today."
+    ]
+  },
+  {
+    "id": "lv1_04",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "home",
+    "grammarPattern": "run_out_of",
+    "enText": "We just ran out of milk.",
+    "blocks": [
+      {
+        "id": "lv1_04_b0",
+        "text": "We"
+      },
+      {
+        "id": "lv1_04_b1",
+        "text": "just"
+      },
+      {
+        "id": "lv1_04_b2",
+        "text": "ran"
+      },
+      {
+        "id": "lv1_04_b3",
+        "text": "out"
+      },
+      {
+        "id": "lv1_04_b4",
+        "text": "of"
+      },
+      {
+        "id": "lv1_04_b5",
+        "text": "milk."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "We",
+        "just",
+        "ran",
+        "out",
+        "of",
+        "milk."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Home",
+        "ShoppingBag"
+      ],
+      "tags": [
+        "台所",
+        "家族",
+        "気づき"
+      ]
+    },
+    "coreImageJa": "容器の中にあった白い液体が外へ走り出て空っぽになった空間。",
+    "pronunciationTip": "ran out of はラナウロヴと鼻音と母音・フラップTを一気に繋げる。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Is there any milk in the fridge?",
+    "soundChangeChoices": [
+      "We just ran out of milk.",
+      "We just run out of milk.",
+      "They just ran out of water.",
+      "We almost ran out of milk."
+    ]
+  },
+  {
+    "id": "lv1_05",
+    "level": 1,
+    "contentCategory": "heat",
+    "sceneCategory": "arena",
+    "grammarPattern": "clutch_shot",
+    "enText": "Tyler knocked down a clutch three.",
+    "blocks": [
+      {
+        "id": "lv1_05_b0",
+        "text": "Tyler"
+      },
+      {
+        "id": "lv1_05_b1",
+        "text": "knocked"
+      },
+      {
+        "id": "lv1_05_b2",
+        "text": "down"
+      },
+      {
+        "id": "lv1_05_b3",
+        "text": "a"
+      },
+      {
+        "id": "lv1_05_b4",
+        "text": "clutch"
+      },
+      {
+        "id": "lv1_05_b5",
+        "text": "three."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Tyler",
+        "knocked",
+        "down",
+        "a",
+        "clutch",
+        "three."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Trophy",
+        "Flame"
+      ],
+      "tags": [
+        "アリーナ",
+        "友人",
+        "歓喜"
+      ]
+    },
+    "coreImageJa": "高い弧を描いたボールが勝負所でネットを上から叩き抜く鋭い衝撃。",
+    "pronunciationTip": "knocked down a はノックダウナと k を止めて d へ一気に落とす。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "What happened in the last ten seconds?",
+    "soundChangeChoices": [
+      "Tyler knocked down a clutch three.",
+      "Tyler knocked out a clutch three.",
+      "Tyler locked down a clutch free.",
+      "Tyler knocked down a quick two."
+    ]
+  },
+  {
+    "id": "lv1_06",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "street",
+    "grammarPattern": "on_my_way",
+    "enText": "I am on my way there.",
+    "blocks": [
+      {
+        "id": "lv1_06_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv1_06_b1",
+        "text": "am"
+      },
+      {
+        "id": "lv1_06_b2",
+        "text": "on"
+      },
+      {
+        "id": "lv1_06_b3",
+        "text": "my"
+      },
+      {
+        "id": "lv1_06_b4",
+        "text": "way"
+      },
+      {
+        "id": "lv1_06_b5",
+        "text": "there."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "am",
+        "on",
+        "my",
+        "way",
+        "there."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Navigation",
+        "Smartphone"
+      ],
+      "tags": [
+        "歩道",
+        "友人",
+        "前進"
+      ]
+    },
+    "coreImageJa": "目的地へ続く一本のルートの上に自分の足がすでに乗っている状態。",
+    "pronunciationTip": "on my way はオンマイウェイと唇を閉じた鼻音から母音へ滑らせる。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "How far away are you?",
+    "soundChangeChoices": [
+      "I am on my way there.",
+      "I was on my way here.",
+      "I am in my way there.",
+      "We are on our way there."
+    ]
+  },
+  {
+    "id": "lv1_07",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "supposed_to",
+    "enText": "It is supposed to rain tonight.",
+    "blocks": [
+      {
+        "id": "lv1_07_b0",
+        "text": "It"
+      },
+      {
+        "id": "lv1_07_b1",
+        "text": "is"
+      },
+      {
+        "id": "lv1_07_b2",
+        "text": "supposed"
+      },
+      {
+        "id": "lv1_07_b3",
+        "text": "to"
+      },
+      {
+        "id": "lv1_07_b4",
+        "text": "rain"
+      },
+      {
+        "id": "lv1_07_b5",
+        "text": "tonight."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "It",
+        "is",
+        "supposed",
+        "to",
+        "rain",
+        "tonight."
+      ],
+      [
+        "tonight.",
+        "It",
+        "is",
+        "supposed",
+        "to",
+        "rain"
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "CloudRain",
+        "Umbrella"
+      ],
+      "tags": [
+        "窓際",
+        "同僚",
+        "警戒"
+      ]
+    },
+    "coreImageJa": "天気予報という周囲の共通ルートが空から雨を連れてくる予定軌道。",
+    "pronunciationTip": "supposed to はサポーストゥと濁らず無声音で素早く抜ける。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Did you bring an umbrella today?",
+    "soundChangeChoices": [
+      "It is supposed to rain tonight.",
+      "It was supposed to rain tonight.",
+      "It is suppose to snow tonight.",
+      "That is supposed to rain tonight."
+    ]
+  },
+  {
+    "id": "lv1_08",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "restaurant",
+    "grammarPattern": "grab_a_bite",
+    "enText": "Let us grab a quick bite.",
+    "blocks": [
+      {
+        "id": "lv1_08_b0",
+        "text": "Let"
+      },
+      {
+        "id": "lv1_08_b1",
+        "text": "us"
+      },
+      {
+        "id": "lv1_08_b2",
+        "text": "grab"
+      },
+      {
+        "id": "lv1_08_b3",
+        "text": "a"
+      },
+      {
+        "id": "lv1_08_b4",
+        "text": "quick"
+      },
+      {
+        "id": "lv1_08_b5",
+        "text": "bite."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Let",
+        "us",
+        "grab",
+        "a",
+        "quick",
+        "bite."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Utensils",
+        "Clock"
+      ],
+      "tags": [
+        "オフィス街",
+        "同僚",
+        "空腹"
+      ]
+    },
+    "coreImageJa": "移動の合間にサッと手で軽食をつかみ取って口に入れるスピード感。",
+    "pronunciationTip": "Let us はレッツ、grab a はグラバと連結してリズミカルに。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "We only have twenty minutes before the call.",
+    "soundChangeChoices": [
+      "Let us grab a quick bite.",
+      "Let me grab a quick bike.",
+      "Let us have a quick bite.",
+      "Let us grab a big bite."
+    ]
+  },
+  {
+    "id": "lv1_09",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "phone",
+    "grammarPattern": "break_up",
+    "enText": "Your voice is breaking up now.",
+    "blocks": [
+      {
+        "id": "lv1_09_b0",
+        "text": "Your"
+      },
+      {
+        "id": "lv1_09_b1",
+        "text": "voice"
+      },
+      {
+        "id": "lv1_09_b2",
+        "text": "is"
+      },
+      {
+        "id": "lv1_09_b3",
+        "text": "breaking"
+      },
+      {
+        "id": "lv1_09_b4",
+        "text": "up"
+      },
+      {
+        "id": "lv1_09_b5",
+        "text": "now."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Your",
+        "voice",
+        "is",
+        "breaking",
+        "up",
+        "now."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Phone",
+        "AlertCircle"
+      ],
+      "tags": [
+        "通話中",
+        "相手",
+        "困惑"
+      ]
+    },
+    "coreImageJa": "一本の音の線が途中でブツブツと破片にちぎれて空間に散る様子。",
+    "pronunciationTip": "breaking up はブレイキナップと ng の後ろに up を直結させる。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Can you hear what I just said?",
+    "soundChangeChoices": [
+      "Your voice is breaking up now.",
+      "Your phone is breaking down now.",
+      "My voice is breaking up now.",
+      "Your voice was waking up now."
+    ]
+  },
+  {
+    "id": "lv1_10",
+    "level": 1,
+    "contentCategory": "heat",
+    "sceneCategory": "lounge",
+    "grammarPattern": "spo_zone",
+    "enText": "Spo switched to a zone defense.",
+    "blocks": [
+      {
+        "id": "lv1_10_b0",
+        "text": "Spo"
+      },
+      {
+        "id": "lv1_10_b1",
+        "text": "switched"
+      },
+      {
+        "id": "lv1_10_b2",
+        "text": "to"
+      },
+      {
+        "id": "lv1_10_b3",
+        "text": "a"
+      },
+      {
+        "id": "lv1_10_b4",
+        "text": "zone"
+      },
+      {
+        "id": "lv1_10_b5",
+        "text": "defense."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Spo",
+        "switched",
+        "to",
+        "a",
+        "zone",
+        "defense."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Shield",
+        "Users"
+      ],
+      "tags": [
+        "リビング",
+        "仲間",
+        "感心"
+      ]
+    },
+    "coreImageJa": "コートの5人が連動する見えない網の空間へカチッと陣形を切り替える動き。",
+    "pronunciationTip": "switched to a はスウィッチトゥアと t を重ねて一気に滑らせる。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "How did Miami stop their guards?",
+    "soundChangeChoices": [
+      "Spo switched to a zone defense.",
+      "Spo wished to a zone defense.",
+      "Spo switched on a man defense.",
+      "They switched to a zone offense."
+    ]
+  },
+  {
+    "id": "lv1_11",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "home",
+    "grammarPattern": "take_it_easy",
+    "enText": "You should take it easy today.",
+    "blocks": [
+      {
+        "id": "lv1_11_b0",
+        "text": "You"
+      },
+      {
+        "id": "lv1_11_b1",
+        "text": "should"
+      },
+      {
+        "id": "lv1_11_b2",
+        "text": "take"
+      },
+      {
+        "id": "lv1_11_b3",
+        "text": "it"
+      },
+      {
+        "id": "lv1_11_b4",
+        "text": "easy"
+      },
+      {
+        "id": "lv1_11_b5",
+        "text": "today."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "You",
+        "should",
+        "take",
+        "it",
+        "easy",
+        "today."
+      ],
+      [
+        "today.",
+        "You",
+        "should",
+        "take",
+        "it",
+        "easy"
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Sun",
+        "Heart"
+      ],
+      "tags": [
+        "リビング",
+        "家族",
+        "思いやり"
+      ]
+    },
+    "coreImageJa": "張り詰めた力を抜いて、目の前の時間をふんわり優しく手に取る感覚。",
+    "pronunciationTip": "take it easy はテイキリーズィーと2つの t を軟らかく弾いて繋ぐ。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "I still have a slight headache.",
+    "soundChangeChoices": [
+      "You should take it easy today.",
+      "You could make it easy today.",
+      "I should take it easy today.",
+      "You should take it early today."
+    ]
+  },
+  {
+    "id": "lv1_12",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "wrap_up",
+    "enText": "Let us wrap up this meeting.",
+    "blocks": [
+      {
+        "id": "lv1_12_b0",
+        "text": "Let"
+      },
+      {
+        "id": "lv1_12_b1",
+        "text": "us"
+      },
+      {
+        "id": "lv1_12_b2",
+        "text": "wrap"
+      },
+      {
+        "id": "lv1_12_b3",
+        "text": "up"
+      },
+      {
+        "id": "lv1_12_b4",
+        "text": "this"
+      },
+      {
+        "id": "lv1_12_b5",
+        "text": "meeting."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Let",
+        "us",
+        "wrap",
+        "up",
+        "this",
+        "meeting."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Briefcase",
+        "CheckCircle"
+      ],
+      "tags": [
+        "会議室",
+        "チーム",
+        "達成"
+      ]
+    },
+    "coreImageJa": "広げた議論の風呂敷をキュッと包んで綺麗に結び目を作る動作。",
+    "pronunciationTip": "wrap up はラッパップと w を発音せず p と u を小気味よく連結する。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "We have covered all the agenda items.",
+    "soundChangeChoices": [
+      "Let us wrap up this meeting.",
+      "Let me wrap up that meeting.",
+      "Let us wake up this meeting.",
+      "Let us暖 up this meeting."
+    ]
+  },
+  {
+    "id": "lv1_13",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "shop",
+    "grammarPattern": "try_on",
+    "enText": "Can I try this jacket on?",
+    "blocks": [
+      {
+        "id": "lv1_13_b0",
+        "text": "Can"
+      },
+      {
+        "id": "lv1_13_b1",
+        "text": "I"
+      },
+      {
+        "id": "lv1_13_b2",
+        "text": "try"
+      },
+      {
+        "id": "lv1_13_b3",
+        "text": "this"
+      },
+      {
+        "id": "lv1_13_b4",
+        "text": "jacket"
+      },
+      {
+        "id": "lv1_13_b5",
+        "text": "on?"
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Can",
+        "I",
+        "try",
+        "this",
+        "jacket",
+        "on?"
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "ShoppingBag",
+        "User"
+      ],
+      "tags": [
+        "試着室前",
+        "店員",
+        "興味"
+      ]
+    },
+    "coreImageJa": "ハンガーの服を自分の体の上に重ねて接触させ、感触を確かめる動き。",
+    "pronunciationTip": "try this の th は舌先を軽く歯に当て、jacket on はジャケロンと繋ぐ。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "That color looks great on you.",
+    "soundChangeChoices": [
+      "Can I try this jacket on?",
+      "Can I buy this jacket now?",
+      "Could I try that jacket on?",
+      "Can you try this jacket on?"
+    ]
+  },
+  {
+    "id": "lv1_14",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "cafe",
+    "grammarPattern": "for_here",
+    "enText": "I will have it for here.",
+    "blocks": [
+      {
+        "id": "lv1_14_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv1_14_b1",
+        "text": "will"
+      },
+      {
+        "id": "lv1_14_b2",
+        "text": "have"
+      },
+      {
+        "id": "lv1_14_b3",
+        "text": "it"
+      },
+      {
+        "id": "lv1_14_b4",
+        "text": "for"
+      },
+      {
+        "id": "lv1_14_b5",
+        "text": "here."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "will",
+        "have",
+        "it",
+        "for",
+        "here."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Coffee",
+        "MapPin"
+      ],
+      "tags": [
+        "レジ前",
+        "店員",
+        "落ち着き"
+      ]
+    },
+    "coreImageJa": "カップを手にした自分がそのままこの店内の空間に留まるイメージ。",
+    "pronunciationTip": "have it はハヴィッ、for here はフォーヒアと f の息を強く出しすぎない。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "For here or to go?",
+    "soundChangeChoices": [
+      "I will have it for here.",
+      "I would have it from here.",
+      "I will take it to go.",
+      "We will have it for here."
+    ]
+  },
+  {
+    "id": "lv1_15",
+    "level": 1,
+    "contentCategory": "heat",
+    "sceneCategory": "arena",
+    "grammarPattern": "heat_culture",
+    "enText": "That hustle is pure Heat culture.",
+    "blocks": [
+      {
+        "id": "lv1_15_b0",
+        "text": "That"
+      },
+      {
+        "id": "lv1_15_b1",
+        "text": "hustle"
+      },
+      {
+        "id": "lv1_15_b2",
+        "text": "is"
+      },
+      {
+        "id": "lv1_15_b3",
+        "text": "pure"
+      },
+      {
+        "id": "lv1_15_b4",
+        "text": "Heat"
+      },
+      {
+        "id": "lv1_15_b5",
+        "text": "culture."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "That",
+        "hustle",
+        "is",
+        "pure",
+        "Heat",
+        "culture."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Flame",
+        "Award"
+      ],
+      "tags": [
+        "コート脇",
+        "ファン",
+        "共鳴"
+      ]
+    },
+    "coreImageJa": "ルーズボールに頭から飛び込む熱量がチームの魂そのものとして結晶化した姿。",
+    "pronunciationTip": "That hustle is はザッハッスィズと t と l を最小限の舌の動きで処理。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Did you see him dive for that loose ball?",
+    "soundChangeChoices": [
+      "That hustle is pure Heat culture.",
+      "This muscle is pure Heat culture.",
+      "That hustle was pure street culture.",
+      "That puzzle is pure Heat culture."
+    ]
+  },
+  {
+    "id": "lv1_16",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "train",
+    "grammarPattern": "get_off",
+    "enText": "I get off at the next stop.",
+    "blocks": [
+      {
+        "id": "lv1_16_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv1_16_b1",
+        "text": "get"
+      },
+      {
+        "id": "lv1_16_b2",
+        "text": "off"
+      },
+      {
+        "id": "lv1_16_b3",
+        "text": "at"
+      },
+      {
+        "id": "lv1_16_b4",
+        "text": "the"
+      },
+      {
+        "id": "lv1_16_b5",
+        "text": "next"
+      },
+      {
+        "id": "lv1_16_b6",
+        "text": "stop."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "get",
+        "off",
+        "at",
+        "the",
+        "next",
+        "stop."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Train",
+        "MapPin"
+      ],
+      "tags": [
+        "電車内",
+        "乗客",
+        "準備"
+      ]
+    },
+    "coreImageJa": "動いている車両の床から次の駅でポンと外へ足が離れる瞬間。",
+    "pronunciationTip": "get off at はゲロファッと2つのフラップ・連結を一息で転がす。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Excuse me are you getting off soon?",
+    "soundChangeChoices": [
+      "I get off at the next stop.",
+      "I got off at the last stop.",
+      "We get on at the next stop.",
+      "I get off in the next shop."
+    ]
+  },
+  {
+    "id": "lv1_17",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "catch_up",
+    "enText": "Let us catch up over coffee.",
+    "blocks": [
+      {
+        "id": "lv1_17_b0",
+        "text": "Let"
+      },
+      {
+        "id": "lv1_17_b1",
+        "text": "us"
+      },
+      {
+        "id": "lv1_17_b2",
+        "text": "catch"
+      },
+      {
+        "id": "lv1_17_b3",
+        "text": "up"
+      },
+      {
+        "id": "lv1_17_b4",
+        "text": "over"
+      },
+      {
+        "id": "lv1_17_b5",
+        "text": "coffee."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Let",
+        "us",
+        "catch",
+        "up",
+        "over",
+        "coffee."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Coffee",
+        "MessageSquare"
+      ],
+      "tags": [
+        "給湯室",
+        "同僚",
+        "親密"
+      ]
+    },
+    "coreImageJa": "離れていた時間の空白をコーヒーを挟んで一気に追いつき埋める動き。",
+    "pronunciationTip": "catch up over はキャッチャッポーヴァーと ch・u・p・o を滑らかに結ぶ。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "It has been ages since we talked!",
+    "soundChangeChoices": [
+      "Let us catch up over coffee.",
+      "Let me catch up with coffee.",
+      "Let us match up over coffee.",
+      "Let us catch on over coffee."
+    ]
+  },
+  {
+    "id": "lv1_18",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "home",
+    "grammarPattern": "turn_down",
+    "enText": "Could you turn down the volume?",
+    "blocks": [
+      {
+        "id": "lv1_18_b0",
+        "text": "Could"
+      },
+      {
+        "id": "lv1_18_b1",
+        "text": "you"
+      },
+      {
+        "id": "lv1_18_b2",
+        "text": "turn"
+      },
+      {
+        "id": "lv1_18_b3",
+        "text": "down"
+      },
+      {
+        "id": "lv1_18_b4",
+        "text": "the"
+      },
+      {
+        "id": "lv1_18_b5",
+        "text": "volume?"
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Could",
+        "you",
+        "turn",
+        "down",
+        "the",
+        "volume?"
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Tv",
+        "Headphones"
+      ],
+      "tags": [
+        "リビング",
+        "家族",
+        "集中"
+      ]
+    },
+    "coreImageJa": "空間を満たしている音のつまみを下方向へ回して圧力を下げる操作。",
+    "pronunciationTip": "Could you はクッジュー、turn down はターダウンと n を軽く鼻へ抜く。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Is the TV too loud for you?",
+    "soundChangeChoices": [
+      "Could you turn down the volume?",
+      "Would you turn up the volume?",
+      "Could you turn off the volume?",
+      "Could we turn down the value?"
+    ]
+  },
+  {
+    "id": "lv1_19",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "street",
+    "grammarPattern": "look_forward",
+    "enText": "I am looking forward to Friday.",
+    "blocks": [
+      {
+        "id": "lv1_19_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv1_19_b1",
+        "text": "am"
+      },
+      {
+        "id": "lv1_19_b2",
+        "text": "looking"
+      },
+      {
+        "id": "lv1_19_b3",
+        "text": "forward"
+      },
+      {
+        "id": "lv1_19_b4",
+        "text": "to"
+      },
+      {
+        "id": "lv1_19_b5",
+        "text": "Friday."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "am",
+        "looking",
+        "forward",
+        "to",
+        "Friday."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Calendar",
+        "Sun"
+      ],
+      "tags": [
+        "帰り道",
+        "友人",
+        "期待"
+      ]
+    },
+    "coreImageJa": "心と視線が金曜日の方向へ前のめりにぐっと身を乗り出している姿勢。",
+    "pronunciationTip": "forward to はフォーワートゥと d と t を一体化させて発音する。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "This week feels so long.",
+    "soundChangeChoices": [
+      "I am looking forward to Friday.",
+      "I was looking forward to Sunday.",
+      "I am looking backward to Friday.",
+      "We are looking forward to Friday."
+    ]
+  },
+  {
+    "id": "lv1_20",
+    "level": 1,
+    "contentCategory": "heat",
+    "sceneCategory": "lounge",
+    "grammarPattern": "playoff_jimmy",
+    "enText": "Playoff Jimmy always finds a way.",
+    "blocks": [
+      {
+        "id": "lv1_20_b0",
+        "text": "Playoff"
+      },
+      {
+        "id": "lv1_20_b1",
+        "text": "Jimmy"
+      },
+      {
+        "id": "lv1_20_b2",
+        "text": "always"
+      },
+      {
+        "id": "lv1_20_b3",
+        "text": "finds"
+      },
+      {
+        "id": "lv1_20_b4",
+        "text": "a"
+      },
+      {
+        "id": "lv1_20_b5",
+        "text": "way."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Playoff",
+        "Jimmy",
+        "always",
+        "finds",
+        "a",
+        "way."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Trophy",
+        "Compass"
+      ],
+      "tags": [
+        "自宅ソファ",
+        "友人",
+        "確信"
+      ]
+    },
+    "coreImageJa": "どんな壁が立ち塞がっても勝利へ抜ける細い隙間をこじ開ける突破力。",
+    "pronunciationTip": "finds a way はファインザウェイと d を落として z と a を直結させる。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Do you think Miami can win this series?",
+    "soundChangeChoices": [
+      "Playoff Jimmy always finds a way.",
+      "Playoff Jimmy almost finds a way.",
+      "Regular Jimmy always finds a day.",
+      "Playoff Jimmy always found a way."
+    ]
+  },
+  {
+    "id": "lv1_21",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "restaurant",
+    "grammarPattern": "split_bill",
+    "enText": "Shall we just split the bill?",
+    "blocks": [
+      {
+        "id": "lv1_21_b0",
+        "text": "Shall"
+      },
+      {
+        "id": "lv1_21_b1",
+        "text": "we"
+      },
+      {
+        "id": "lv1_21_b2",
+        "text": "just"
+      },
+      {
+        "id": "lv1_21_b3",
+        "text": "split"
+      },
+      {
+        "id": "lv1_21_b4",
+        "text": "the"
+      },
+      {
+        "id": "lv1_21_b5",
+        "text": "bill?"
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Shall",
+        "we",
+        "just",
+        "split",
+        "the",
+        "bill?"
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "CreditCard",
+        "Users"
+      ],
+      "tags": [
+        "会計テーブル",
+        "友人",
+        "対等"
+      ]
+    },
+    "coreImageJa": "一枚の伝票を真ん中でスパッと半分に分けて軽やかにシェアする感覚。",
+    "pronunciationTip": "split the はスプリッザと t を止めたまま舌先を歯の間へ滑らせる。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Here comes the check.",
+    "soundChangeChoices": [
+      "Shall we just split the bill?",
+      "Should we just spill the bill?",
+      "Can we just pay the bill?",
+      "Shall we just split the meal?"
+    ]
+  },
+  {
+    "id": "lv1_22",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "keep_in_mind",
+    "enText": "I will keep that in mind.",
+    "blocks": [
+      {
+        "id": "lv1_22_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv1_22_b1",
+        "text": "will"
+      },
+      {
+        "id": "lv1_22_b2",
+        "text": "keep"
+      },
+      {
+        "id": "lv1_22_b3",
+        "text": "that"
+      },
+      {
+        "id": "lv1_22_b4",
+        "text": "in"
+      },
+      {
+        "id": "lv1_22_b5",
+        "text": "mind."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "will",
+        "keep",
+        "that",
+        "in",
+        "mind."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "BookOpen",
+        "CheckCircle"
+      ],
+      "tags": [
+        "デスク",
+        "上司",
+        "受容"
+      ]
+    },
+    "coreImageJa": "受け取った大事なポイントを頭の中の棚にしっかり留め置くイメージ。",
+    "pronunciationTip": "keep that in はキープザッティンと p を閉じ、t と i を弾いて繋ぐ。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Remember the client prefers short emails.",
+    "soundChangeChoices": [
+      "I will keep that in mind.",
+      "I would keep this in mind.",
+      "I will put that in mind.",
+      "We will keep that on mind."
+    ]
+  },
+  {
+    "id": "lv1_23",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "home",
+    "grammarPattern": "sleep_on_it",
+    "enText": "Let me sleep on it tonight.",
+    "blocks": [
+      {
+        "id": "lv1_23_b0",
+        "text": "Let"
+      },
+      {
+        "id": "lv1_23_b1",
+        "text": "me"
+      },
+      {
+        "id": "lv1_23_b2",
+        "text": "sleep"
+      },
+      {
+        "id": "lv1_23_b3",
+        "text": "on"
+      },
+      {
+        "id": "lv1_23_b4",
+        "text": "it"
+      },
+      {
+        "id": "lv1_23_b5",
+        "text": "tonight."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Let",
+        "me",
+        "sleep",
+        "on",
+        "it",
+        "tonight."
+      ],
+      [
+        "tonight.",
+        "Let",
+        "me",
+        "sleep",
+        "on",
+        "it"
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Moon",
+        "Home"
+      ],
+      "tags": [
+        "寝室",
+        "パートナー",
+        "熟考"
+      ]
+    },
+    "coreImageJa": "決断の上に一晩の眠りを重ねて、翌朝自然に答えが浮かぶのを待つ感覚。",
+    "pronunciationTip": "sleep on it はスリーポニッと p・o・n・i を一続きの音として鳴らす。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Are you going to accept the offer?",
+    "soundChangeChoices": [
+      "Let me sleep on it tonight.",
+      "Let us sleep in it tonight.",
+      "Let me keep on it tonight.",
+      "Let him sleep on it tonight."
+    ]
+  },
+  {
+    "id": "lv1_24",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "airport",
+    "grammarPattern": "check_in",
+    "enText": "We need to check in early.",
+    "blocks": [
+      {
+        "id": "lv1_24_b0",
+        "text": "We"
+      },
+      {
+        "id": "lv1_24_b1",
+        "text": "need"
+      },
+      {
+        "id": "lv1_24_b2",
+        "text": "to"
+      },
+      {
+        "id": "lv1_24_b3",
+        "text": "check"
+      },
+      {
+        "id": "lv1_24_b4",
+        "text": "in"
+      },
+      {
+        "id": "lv1_24_b5",
+        "text": "early."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "We",
+        "need",
+        "to",
+        "check",
+        "in",
+        "early."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Plane",
+        "Clock"
+      ],
+      "tags": [
+        "空港ロビー",
+        "同行者",
+        "段取り"
+      ]
+    },
+    "coreImageJa": "出発ゲートへ向かう手続きの枠の中へ余裕をもって体を入れる動き。",
+    "pronunciationTip": "need to はニートゥ、check in early はチェッキナーリーと3語を連結。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "What time should we get to the airport?",
+    "soundChangeChoices": [
+      "We need to check in early.",
+      "We needed to check out early.",
+      "You need to check in early.",
+      "We need to step in early."
+    ]
+  },
+  {
+    "id": "lv1_25",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "cafe",
+    "grammarPattern": "my_treat",
+    "enText": "Coffee is on me this time.",
+    "blocks": [
+      {
+        "id": "lv1_25_b0",
+        "text": "Coffee"
+      },
+      {
+        "id": "lv1_25_b1",
+        "text": "is"
+      },
+      {
+        "id": "lv1_25_b2",
+        "text": "on"
+      },
+      {
+        "id": "lv1_25_b3",
+        "text": "me"
+      },
+      {
+        "id": "lv1_25_b4",
+        "text": "this"
+      },
+      {
+        "id": "lv1_25_b5",
+        "text": "time."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Coffee",
+        "is",
+        "on",
+        "me",
+        "this",
+        "time."
+      ],
+      [
+        "this",
+        "time.",
+        "Coffee",
+        "is",
+        "on",
+        "me"
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Coffee",
+        "Gift"
+      ],
+      "tags": [
+        "カフェ",
+        "後輩",
+        "気前良さ"
+      ]
+    },
+    "coreImageJa": "代金の重みが自分の肩の上に気持ちよく乗っている頼もしい空間配置。",
+    "pronunciationTip": "is on me はイゾンミーと s・o・n を滑らかな有声音で渡す。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "How much do I owe you?",
+    "soundChangeChoices": [
+      "Coffee is on me this time.",
+      "Lunch is on you this time.",
+      "Coffee was on me last time.",
+      "Coffee is in me this time."
+    ]
+  },
+  {
+    "id": "lv1_26",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "out_of_order",
+    "enText": "The printer is out of order.",
+    "blocks": [
+      {
+        "id": "lv1_26_b0",
+        "text": "The"
+      },
+      {
+        "id": "lv1_26_b1",
+        "text": "printer"
+      },
+      {
+        "id": "lv1_26_b2",
+        "text": "is"
+      },
+      {
+        "id": "lv1_26_b3",
+        "text": "out"
+      },
+      {
+        "id": "lv1_26_b4",
+        "text": "of"
+      },
+      {
+        "id": "lv1_26_b5",
+        "text": "order."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "The",
+        "printer",
+        "is",
+        "out",
+        "of",
+        "order."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Wrench",
+        "AlertCircle"
+      ],
+      "tags": [
+        "コピー室",
+        "同僚",
+        "不便"
+      ]
+    },
+    "coreImageJa": "本来整っているべき機械の歯車の列から外れて止まっている状態。",
+    "pronunciationTip": "out of order はアウロヴォーダーとフラップTと v を連続して滑らせる。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Why is everyone waiting by the desk?",
+    "soundChangeChoices": [
+      "The printer is out of order.",
+      "The elevator is out of order.",
+      "The printer was out of paper.",
+      "That printer is out of border."
+    ]
+  },
+  {
+    "id": "lv1_27",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "street",
+    "grammarPattern": "make_it",
+    "enText": "I can make it by seven.",
+    "blocks": [
+      {
+        "id": "lv1_27_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv1_27_b1",
+        "text": "can"
+      },
+      {
+        "id": "lv1_27_b2",
+        "text": "make"
+      },
+      {
+        "id": "lv1_27_b3",
+        "text": "it"
+      },
+      {
+        "id": "lv1_27_b4",
+        "text": "by"
+      },
+      {
+        "id": "lv1_27_b5",
+        "text": "seven."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "can",
+        "make",
+        "it",
+        "by",
+        "seven."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Clock",
+        "CheckCircle"
+      ],
+      "tags": [
+        "駅前",
+        "友人",
+        "確約"
+      ]
+    },
+    "coreImageJa": "7時というゴールテープの地点まで自分の体をきっちり到達させる軌道。",
+    "pronunciationTip": "make it by はメイキッバイと k・i を繋ぎ t を喉で止めて b へ渡す。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Dinner starts at seven sharp.",
+    "soundChangeChoices": [
+      "I can make it by seven.",
+      "I cannot make it at seven.",
+      "We can take it by seven.",
+      "I could make it by eleven."
+    ]
+  },
+  {
+    "id": "lv1_28",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "home",
+    "grammarPattern": "get_used_to",
+    "enText": "You will get used to it.",
+    "blocks": [
+      {
+        "id": "lv1_28_b0",
+        "text": "You"
+      },
+      {
+        "id": "lv1_28_b1",
+        "text": "will"
+      },
+      {
+        "id": "lv1_28_b2",
+        "text": "get"
+      },
+      {
+        "id": "lv1_28_b3",
+        "text": "used"
+      },
+      {
+        "id": "lv1_28_b4",
+        "text": "to"
+      },
+      {
+        "id": "lv1_28_b5",
+        "text": "it."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "You",
+        "will",
+        "get",
+        "used",
+        "to",
+        "it."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Sun",
+        "ThumbsUp"
+      ],
+      "tags": [
+        "リビング",
+        "友人",
+        "励まし"
+      ]
+    },
+    "coreImageJa": "最初は違和感のあった環境へ徐々に体が馴染んでぴったりフィットする変化。",
+    "pronunciationTip": "used to it はユーストゥイッと無声音から母音へ一息で滑り込む。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "The new keyboard feels weird.",
+    "soundChangeChoices": [
+      "You will get used to it.",
+      "You would get use to it.",
+      "I will get used to them.",
+      "You will get close to it."
+    ]
+  },
+  {
+    "id": "lv1_29",
+    "level": 1,
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "up_to_speed",
+    "enText": "Let me get you up to speed.",
+    "blocks": [
+      {
+        "id": "lv1_29_b0",
+        "text": "Let"
+      },
+      {
+        "id": "lv1_29_b1",
+        "text": "me"
+      },
+      {
+        "id": "lv1_29_b2",
+        "text": "get"
+      },
+      {
+        "id": "lv1_29_b3",
+        "text": "you"
+      },
+      {
+        "id": "lv1_29_b4",
+        "text": "up"
+      },
+      {
+        "id": "lv1_29_b5",
+        "text": "to"
+      },
+      {
+        "id": "lv1_29_b6",
+        "text": "speed."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Let",
+        "me",
+        "get",
+        "you",
+        "up",
+        "to",
+        "speed."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Zap",
+        "Briefcase"
+      ],
+      "tags": [
+        "デスク",
+        "新メンバー",
+        "支援"
+      ]
+    },
+    "coreImageJa": "すでに走っているプロジェクトの速度まで相手の速度を引き上げて並走する感覚。",
+    "pronunciationTip": "get you up はゲッチュアップと連結し、up to の p を軽く止める。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "What did I miss while I was away?",
+    "soundChangeChoices": [
+      "Let me get you up to speed.",
+      "Let us get him up to speed.",
+      "Let me put you up to speed.",
+      "Let me get you out of speed."
+    ]
+  },
+  {
+    "id": "lv1_30",
+    "level": 1,
+    "contentCategory": "heat",
+    "sceneCategory": "arena",
+    "grammarPattern": "fourth_quarter",
+    "enText": "Miami owns the fourth quarter tonight.",
+    "blocks": [
+      {
+        "id": "lv1_30_b0",
+        "text": "Miami"
+      },
+      {
+        "id": "lv1_30_b1",
+        "text": "owns"
+      },
+      {
+        "id": "lv1_30_b2",
+        "text": "the"
+      },
+      {
+        "id": "lv1_30_b3",
+        "text": "fourth"
+      },
+      {
+        "id": "lv1_30_b4",
+        "text": "quarter"
+      },
+      {
+        "id": "lv1_30_b5",
+        "text": "tonight."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Miami",
+        "owns",
+        "the",
+        "fourth",
+        "quarter",
+        "tonight."
+      ],
+      [
+        "tonight.",
+        "Miami",
+        "owns",
+        "the",
+        "fourth",
+        "quarter"
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Flame",
+        "Clock"
+      ],
+      "tags": [
+        "アリーナ",
+        "ファン",
+        "圧倒"
+      ]
+    },
+    "coreImageJa": "最終クォーターという時間と空間を丸ごと自分たちの所有物として支配する迫力。",
+    "pronunciationTip": "fourth quarter はフォースクォーラーと th から kw へ素早く唇を丸める。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Look at that defensive intensity!",
+    "soundChangeChoices": [
+      "Miami owns the fourth quarter tonight.",
+      "Miami won the fourth quarter tonight.",
+      "Miami owes the first quarter tonight.",
+      "Boston owns the fourth quarter tonight."
+    ]
+  }
+]

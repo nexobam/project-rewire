@@ -1,0 +1,367 @@
+[
+  {
+    "id": "lv3_01",
+    "level": 3,
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "paraphrase_postpone",
+    "enText": "Can we push the meeting to Friday?",
+    "blocks": [
+      {
+        "id": "lv3_01_b0",
+        "text": "Can"
+      },
+      {
+        "id": "lv3_01_b1",
+        "text": "we"
+      },
+      {
+        "id": "lv3_01_b2",
+        "text": "push"
+      },
+      {
+        "id": "lv3_01_b3",
+        "text": "the"
+      },
+      {
+        "id": "lv3_01_b4",
+        "text": "meeting"
+      },
+      {
+        "id": "lv3_01_b5",
+        "text": "to"
+      },
+      {
+        "id": "lv3_01_b6",
+        "text": "Friday?"
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Can",
+        "we",
+        "push",
+        "the",
+        "meeting",
+        "to",
+        "Friday?"
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Calendar",
+        "Clock"
+      ],
+      "tags": [
+        "会議室",
+        "取引先",
+        "交渉"
+      ]
+    },
+    "coreImageJa": "予定という箱を手でグッと金曜日の位置まで押し動かす空間イメージ（postponeを使わず表現）。",
+    "pronunciationTip": "push the はプッシュザ、meeting to はミーティングトゥと鼻音から渡す。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Can we move our Thursday sync? (Avoid: postpone, delay)",
+    "ngWords": [
+      "postpone",
+      "delay"
+    ]
+  },
+  {
+    "id": "lv3_02",
+    "level": 3,
+    "contentCategory": "daily",
+    "sceneCategory": "cafe",
+    "grammarPattern": "paraphrase_expensive",
+    "enText": "That jacket costs way too much money.",
+    "blocks": [
+      {
+        "id": "lv3_02_b0",
+        "text": "That"
+      },
+      {
+        "id": "lv3_02_b1",
+        "text": "jacket"
+      },
+      {
+        "id": "lv3_02_b2",
+        "text": "costs"
+      },
+      {
+        "id": "lv3_02_b3",
+        "text": "way"
+      },
+      {
+        "id": "lv3_02_b4",
+        "text": "too"
+      },
+      {
+        "id": "lv3_02_b5",
+        "text": "much"
+      },
+      {
+        "id": "lv3_02_b6",
+        "text": "money."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "That",
+        "jacket",
+        "costs",
+        "way",
+        "too",
+        "much",
+        "money."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "ShoppingBag",
+        "CreditCard"
+      ],
+      "tags": [
+        "カフェ",
+        "友人",
+        "驚き"
+      ]
+    },
+    "coreImageJa": "値札の重みが自分の許容ラインをはるかに突き抜けている感覚（expensiveを使わず表現）。",
+    "pronunciationTip": "costs way はコスツウェイ、too much を強調してピッチを上げる。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Why did you put the coat back? (Avoid: expensive, pricey)",
+    "ngWords": [
+      "expensive",
+      "pricey"
+    ]
+  },
+  {
+    "id": "lv3_03",
+    "level": 3,
+    "contentCategory": "daily",
+    "sceneCategory": "street",
+    "grammarPattern": "paraphrase_understand",
+    "enText": "I see exactly where you come from.",
+    "blocks": [
+      {
+        "id": "lv3_03_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv3_03_b1",
+        "text": "see"
+      },
+      {
+        "id": "lv3_03_b2",
+        "text": "exactly"
+      },
+      {
+        "id": "lv3_03_b3",
+        "text": "where"
+      },
+      {
+        "id": "lv3_03_b4",
+        "text": "you"
+      },
+      {
+        "id": "lv3_03_b5",
+        "text": "come"
+      },
+      {
+        "id": "lv3_03_b6",
+        "text": "from."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "see",
+        "exactly",
+        "where",
+        "you",
+        "come",
+        "from."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "MessageSquare",
+        "Users"
+      ],
+      "tags": [
+        "街角",
+        "同僚",
+        "共感"
+      ]
+    },
+    "coreImageJa": "相手の言葉が生まれてきた立ち位置・景色が自分の目にもくっきり見えている感覚（understand禁止）。",
+    "pronunciationTip": "where you はウェアユー、come from の m をしっかり閉じて余韻を残す。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Do you get why I hesitated? (Avoid: understand, agree)",
+    "ngWords": [
+      "understand",
+      "agree"
+    ]
+  },
+  {
+    "id": "lv3_04",
+    "level": 3,
+    "contentCategory": "heat",
+    "sceneCategory": "arena",
+    "grammarPattern": "paraphrase_win",
+    "enText": "Miami pulled off a huge road victory.",
+    "blocks": [
+      {
+        "id": "lv3_04_b0",
+        "text": "Miami"
+      },
+      {
+        "id": "lv3_04_b1",
+        "text": "pulled"
+      },
+      {
+        "id": "lv3_04_b2",
+        "text": "off"
+      },
+      {
+        "id": "lv3_04_b3",
+        "text": "a"
+      },
+      {
+        "id": "lv3_04_b4",
+        "text": "huge"
+      },
+      {
+        "id": "lv3_04_b5",
+        "text": "road"
+      },
+      {
+        "id": "lv3_04_b6",
+        "text": "victory."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Miami",
+        "pulled",
+        "off",
+        "a",
+        "huge",
+        "road",
+        "victory."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Flame",
+        "Trophy"
+      ],
+      "tags": [
+        "スポーツバー",
+        "観衆",
+        "興奮"
+      ]
+    },
+    "coreImageJa": "敵地での困難な勝利を力強く引き剥がして手中に収める躍動感（winを使わず表現）。",
+    "pronunciationTip": "pulled off a はプルドファと連結し、huge road の j と r を滑らかに。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "What happened in the Boston game? (Avoid: win, won)",
+    "ngWords": [
+      "win",
+      "won"
+    ]
+  },
+  {
+    "id": "lv3_05",
+    "level": 3,
+    "contentCategory": "daily",
+    "sceneCategory": "home",
+    "grammarPattern": "paraphrase_tired",
+    "enText": "I am completely out of energy tonight.",
+    "blocks": [
+      {
+        "id": "lv3_05_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv3_05_b1",
+        "text": "am"
+      },
+      {
+        "id": "lv3_05_b2",
+        "text": "completely"
+      },
+      {
+        "id": "lv3_05_b3",
+        "text": "out"
+      },
+      {
+        "id": "lv3_05_b4",
+        "text": "of"
+      },
+      {
+        "id": "lv3_05_b5",
+        "text": "energy"
+      },
+      {
+        "id": "lv3_05_b6",
+        "text": "tonight."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "am",
+        "completely",
+        "out",
+        "of",
+        "energy",
+        "tonight."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Moon",
+        "Activity"
+      ],
+      "tags": [
+        "自宅",
+        "家族",
+        "消耗"
+      ]
+    },
+    "coreImageJa": "体の中のバッテリー残量が外へ抜けきって空になっている状態（tiredを使わず表現）。",
+    "pronunciationTip": "out of energy はアウロヴェナジーとフラップTと v・e を一息で繋ぐ。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": true,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Want to go for a run? (Avoid: tired, exhausted)",
+    "ngWords": [
+      "tired",
+      "exhausted"
+    ]
+  }
+]

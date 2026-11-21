@@ -1,0 +1,1076 @@
+[
+  {
+    "id": "lv0_01",
+    "level": 0,
+    "contentCategory": "daily",
+    "sceneCategory": "cafe",
+    "grammarPattern": "let_me_v",
+    "enText": "Let me get a cold brew.",
+    "blocks": [
+      {
+        "id": "lv0_01_b0",
+        "text": "Let"
+      },
+      {
+        "id": "lv0_01_b1",
+        "text": "me"
+      },
+      {
+        "id": "lv0_01_b2",
+        "text": "get"
+      },
+      {
+        "id": "lv0_01_b3",
+        "text": "a"
+      },
+      {
+        "id": "lv0_01_b4",
+        "text": "cold"
+      },
+      {
+        "id": "lv0_01_b5",
+        "text": "brew."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Let",
+        "me",
+        "get",
+        "a",
+        "cold",
+        "brew."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Coffee",
+        "User"
+      ],
+      "tags": [
+        "カフェ",
+        "店員",
+        "余裕"
+      ]
+    },
+    "coreImageJa": "自分の領域にスッと引き寄せる感覚。相手に許可ではなく自分の行動の流れを宣言する。",
+    "pronunciationTip": "Let me はレミ、get a はゲラと舌先を弾いて一息で繋げる。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "What can I get for you?",
+    "soundChangeChoices": [
+      "Let me get a cold brew.",
+      "Let him get a cold brew.",
+      "Let me got a cold brew.",
+      "Make me get a cold brew."
+    ]
+  },
+  {
+    "id": "lv0_02",
+    "level": 0,
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "im_gonna_v",
+    "enText": "I am gonna head out now.",
+    "blocks": [
+      {
+        "id": "lv0_02_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv0_02_b1",
+        "text": "am"
+      },
+      {
+        "id": "lv0_02_b2",
+        "text": "gonna"
+      },
+      {
+        "id": "lv0_02_b3",
+        "text": "head"
+      },
+      {
+        "id": "lv0_02_b4",
+        "text": "out"
+      },
+      {
+        "id": "lv0_02_b5",
+        "text": "now."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "am",
+        "gonna",
+        "head",
+        "out",
+        "now."
+      ],
+      [
+        "now.",
+        "I",
+        "am",
+        "gonna",
+        "head",
+        "out"
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Briefcase",
+        "Clock"
+      ],
+      "tags": [
+        "オフィス",
+        "同僚",
+        "解放感"
+      ]
+    },
+    "coreImageJa": "意識の矢印がすでに出口へ向かって動き出している空間イメージ。",
+    "pronunciationTip": "head out はヘッダウと連結し、最後の t は破裂させず止める。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Are you still at your desk?",
+    "soundChangeChoices": [
+      "I am gonna head out now.",
+      "I am going to head in now.",
+      "I was gonna head out now.",
+      "I am gonna hand out now."
+    ]
+  },
+  {
+    "id": "lv0_03",
+    "level": 0,
+    "contentCategory": "daily",
+    "sceneCategory": "train",
+    "grammarPattern": "running_adj",
+    "enText": "I am running a bit late.",
+    "blocks": [
+      {
+        "id": "lv0_03_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv0_03_b1",
+        "text": "am"
+      },
+      {
+        "id": "lv0_03_b2",
+        "text": "running"
+      },
+      {
+        "id": "lv0_03_b3",
+        "text": "a"
+      },
+      {
+        "id": "lv0_03_b4",
+        "text": "bit"
+      },
+      {
+        "id": "lv0_03_b5",
+        "text": "late."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "am",
+        "running",
+        "a",
+        "bit",
+        "late."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Train",
+        "Clock"
+      ],
+      "tags": [
+        "駅ホーム",
+        "友人",
+        "焦り"
+      ]
+    },
+    "coreImageJa": "時間の流れの中を走って追いかけているが、少し後ろにズレている感覚。",
+    "pronunciationTip": "running a はラニンガ、bit late の t は喉の奥で止めて飲み込む。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Where are you right now?",
+    "soundChangeChoices": [
+      "I am running a bit late.",
+      "I am running a big race.",
+      "I was running a bit late.",
+      "I am walking a bit late."
+    ]
+  },
+  {
+    "id": "lv0_04",
+    "level": 0,
+    "contentCategory": "heat",
+    "sceneCategory": "arena",
+    "grammarPattern": "on_fire",
+    "enText": "Jimmy is taking over the game.",
+    "blocks": [
+      {
+        "id": "lv0_04_b0",
+        "text": "Jimmy"
+      },
+      {
+        "id": "lv0_04_b1",
+        "text": "is"
+      },
+      {
+        "id": "lv0_04_b2",
+        "text": "taking"
+      },
+      {
+        "id": "lv0_04_b3",
+        "text": "over"
+      },
+      {
+        "id": "lv0_04_b4",
+        "text": "the"
+      },
+      {
+        "id": "lv0_04_b5",
+        "text": "game."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Jimmy",
+        "is",
+        "taking",
+        "over",
+        "the",
+        "game."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Flame",
+        "Trophy"
+      ],
+      "tags": [
+        "アリーナ",
+        "観衆",
+        "熱狂"
+      ]
+    },
+    "coreImageJa": "コート全体の支配権を上からガバッと覆い尽くすダイナミックな動き。",
+    "pronunciationTip": "taking over はテイキンオーバーと鼻音から母音へ滑らかに渡す。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Did you see that fourth quarter?",
+    "soundChangeChoices": [
+      "Jimmy is taking over the game.",
+      "Jimmy is taking off the game.",
+      "Jimmy was talking over the game.",
+      "Jimmy is making over the game."
+    ]
+  },
+  {
+    "id": "lv0_05",
+    "level": 0,
+    "contentCategory": "daily",
+    "sceneCategory": "restaurant",
+    "grammarPattern": "sounds_adj",
+    "enText": "That sounds pretty good to me.",
+    "blocks": [
+      {
+        "id": "lv0_05_b0",
+        "text": "That"
+      },
+      {
+        "id": "lv0_05_b1",
+        "text": "sounds"
+      },
+      {
+        "id": "lv0_05_b2",
+        "text": "pretty"
+      },
+      {
+        "id": "lv0_05_b3",
+        "text": "good"
+      },
+      {
+        "id": "lv0_05_b4",
+        "text": "to"
+      },
+      {
+        "id": "lv0_05_b5",
+        "text": "me."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "That",
+        "sounds",
+        "pretty",
+        "good",
+        "to",
+        "me."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Utensils",
+        "ThumbsUp"
+      ],
+      "tags": [
+        "ダイナー",
+        "友人",
+        "納得"
+      ]
+    },
+    "coreImageJa": "相手から届いた音の響きが、自分の感覚に心地よくピタッと収まるイメージ。",
+    "pronunciationTip": "sounds の d は消え、pretty good はプリディグッと軽やかに弾む。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "How about tacos for lunch?",
+    "soundChangeChoices": [
+      "That sounds pretty good to me.",
+      "That found pretty good to me.",
+      "That sounds pretty bad to me.",
+      "This sounds pretty good to you."
+    ]
+  },
+  {
+    "id": "lv0_06",
+    "level": 0,
+    "contentCategory": "daily",
+    "sceneCategory": "home",
+    "grammarPattern": "feel_like",
+    "enText": "I do not feel like cooking.",
+    "blocks": [
+      {
+        "id": "lv0_06_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv0_06_b1",
+        "text": "do"
+      },
+      {
+        "id": "lv0_06_b2",
+        "text": "not"
+      },
+      {
+        "id": "lv0_06_b3",
+        "text": "feel"
+      },
+      {
+        "id": "lv0_06_b4",
+        "text": "like"
+      },
+      {
+        "id": "lv0_06_b5",
+        "text": "cooking."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "do",
+        "not",
+        "feel",
+        "like",
+        "cooking."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Home",
+        "Utensils"
+      ],
+      "tags": [
+        "自宅キッチン",
+        "家族",
+        "疲労"
+      ]
+    },
+    "coreImageJa": "心の手触りが料理という動作に向かって伸びていかない脱力感。",
+    "pronunciationTip": "do not はドンと短く切り、feel like の l を重ねてフィーライクと繋ぐ。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "What are we making tonight?",
+    "soundChangeChoices": [
+      "I do not feel like cooking.",
+      "I did not feel like looking.",
+      "I do not feel like working.",
+      "I do not fall like cooking."
+    ]
+  },
+  {
+    "id": "lv0_07",
+    "level": 0,
+    "contentCategory": "daily",
+    "sceneCategory": "street",
+    "grammarPattern": "used_to",
+    "enText": "I used to live around here.",
+    "blocks": [
+      {
+        "id": "lv0_07_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv0_07_b1",
+        "text": "used"
+      },
+      {
+        "id": "lv0_07_b2",
+        "text": "to"
+      },
+      {
+        "id": "lv0_07_b3",
+        "text": "live"
+      },
+      {
+        "id": "lv0_07_b4",
+        "text": "around"
+      },
+      {
+        "id": "lv0_07_b5",
+        "text": "here."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "used",
+        "to",
+        "live",
+        "around",
+        "here."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "MapPin",
+        "Home"
+      ],
+      "tags": [
+        "街角",
+        "知人",
+        "懐古"
+      ]
+    },
+    "coreImageJa": "過去のある期間、この空間に根を張っていたが今は切り離されている距離感。",
+    "pronunciationTip": "used to はユーストゥと濁らず無声音で一気に駆け抜ける。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Do you know this neighborhood?",
+    "soundChangeChoices": [
+      "I used to live around here.",
+      "I use to leave around here.",
+      "I used to love around here.",
+      "We used to live around there."
+    ]
+  },
+  {
+    "id": "lv0_08",
+    "level": 0,
+    "contentCategory": "heat",
+    "sceneCategory": "lounge",
+    "grammarPattern": "lock_down",
+    "enText": "Bam locked down the paint tonight.",
+    "blocks": [
+      {
+        "id": "lv0_08_b0",
+        "text": "Bam"
+      },
+      {
+        "id": "lv0_08_b1",
+        "text": "locked"
+      },
+      {
+        "id": "lv0_08_b2",
+        "text": "down"
+      },
+      {
+        "id": "lv0_08_b3",
+        "text": "the"
+      },
+      {
+        "id": "lv0_08_b4",
+        "text": "paint"
+      },
+      {
+        "id": "lv0_08_b5",
+        "text": "tonight."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Bam",
+        "locked",
+        "down",
+        "the",
+        "paint",
+        "tonight."
+      ],
+      [
+        "tonight.",
+        "Bam",
+        "locked",
+        "down",
+        "the",
+        "paint"
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Shield",
+        "Trophy"
+      ],
+      "tags": [
+        "スポーツバー",
+        "仲間",
+        "誇り"
+      ]
+    },
+    "coreImageJa": "ゴール下の空間に重い鍵をかけて相手を一歩も入れない鉄壁の塊。",
+    "pronunciationTip": "locked down はロックダウンと k と d の間で一瞬息を止めて破裂させる。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "How was the Heat defense?",
+    "soundChangeChoices": [
+      "Bam locked down the paint tonight.",
+      "Bam looked down the paint tonight.",
+      "Bam knocked down the point tonight.",
+      "Bam locked up the game tonight."
+    ]
+  },
+  {
+    "id": "lv0_09",
+    "level": 0,
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "make_sure",
+    "enText": "Let me double check the schedule.",
+    "blocks": [
+      {
+        "id": "lv0_09_b0",
+        "text": "Let"
+      },
+      {
+        "id": "lv0_09_b1",
+        "text": "me"
+      },
+      {
+        "id": "lv0_09_b2",
+        "text": "double"
+      },
+      {
+        "id": "lv0_09_b3",
+        "text": "check"
+      },
+      {
+        "id": "lv0_09_b4",
+        "text": "the"
+      },
+      {
+        "id": "lv0_09_b5",
+        "text": "schedule."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "Let",
+        "me",
+        "double",
+        "check",
+        "the",
+        "schedule."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Calendar",
+        "Laptop"
+      ],
+      "tags": [
+        "会議室",
+        "上司",
+        "慎重"
+      ]
+    },
+    "coreImageJa": "不確かな予定表の上にもう一度視線を重ねて輪郭をくっきりさせる動き。",
+    "pronunciationTip": "double check はダボチェッと l を暗い母音にして素早く繋ぐ。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Are you free on Thursday afternoon?",
+    "soundChangeChoices": [
+      "Let me double check the schedule.",
+      "Let me double click the schedule.",
+      "Let us double check the schedule.",
+      "Let me trouble check the schedule."
+    ]
+  },
+  {
+    "id": "lv0_10",
+    "level": 0,
+    "contentCategory": "daily",
+    "sceneCategory": "shop",
+    "grammarPattern": "looking_for",
+    "enText": "I am just looking around thanks.",
+    "blocks": [
+      {
+        "id": "lv0_10_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv0_10_b1",
+        "text": "am"
+      },
+      {
+        "id": "lv0_10_b2",
+        "text": "just"
+      },
+      {
+        "id": "lv0_10_b3",
+        "text": "looking"
+      },
+      {
+        "id": "lv0_10_b4",
+        "text": "around"
+      },
+      {
+        "id": "lv0_10_b5",
+        "text": "thanks."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "am",
+        "just",
+        "looking",
+        "around",
+        "thanks."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "ShoppingBag",
+        "User"
+      ],
+      "tags": [
+        "洋服店",
+        "店員",
+        "気楽"
+      ]
+    },
+    "coreImageJa": "視線だけを空間にふわっと泳がせて、まだ何にも手を伸ばさない距離感。",
+    "pronunciationTip": "looking around はルッキナラウンと ng と a を滑らかに連結する。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Can I help you find anything?",
+    "soundChangeChoices": [
+      "I am just looking around thanks.",
+      "I am just walking around thanks.",
+      "I was just looking around thanks.",
+      "I am just booking a round thanks."
+    ]
+  },
+  {
+    "id": "lv0_11",
+    "level": 0,
+    "contentCategory": "daily",
+    "sceneCategory": "phone",
+    "grammarPattern": "call_back",
+    "enText": "I will call you right back.",
+    "blocks": [
+      {
+        "id": "lv0_11_b0",
+        "text": "I"
+      },
+      {
+        "id": "lv0_11_b1",
+        "text": "will"
+      },
+      {
+        "id": "lv0_11_b2",
+        "text": "call"
+      },
+      {
+        "id": "lv0_11_b3",
+        "text": "you"
+      },
+      {
+        "id": "lv0_11_b4",
+        "text": "right"
+      },
+      {
+        "id": "lv0_11_b5",
+        "text": "back."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "I",
+        "will",
+        "call",
+        "you",
+        "right",
+        "back."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Phone",
+        "Clock"
+      ],
+      "tags": [
+        "移動中",
+        "同僚",
+        "多忙"
+      ]
+    },
+    "coreImageJa": "いったん切れた線の先端を、すぐさま相手の元へ折り返し投げ返す弾力。",
+    "pronunciationTip": "I will はアイル、right back の t は寸止めしてライバッと跳ねる。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Hey do you have a minute?",
+    "soundChangeChoices": [
+      "I will call you right back.",
+      "I would call you right back.",
+      "I will tell you right back.",
+      "I will call him right back."
+    ]
+  },
+  {
+    "id": "lv0_12",
+    "level": 0,
+    "contentCategory": "daily",
+    "sceneCategory": "station",
+    "grammarPattern": "figure_out",
+    "enText": "We can figure it out later.",
+    "blocks": [
+      {
+        "id": "lv0_12_b0",
+        "text": "We"
+      },
+      {
+        "id": "lv0_12_b1",
+        "text": "can"
+      },
+      {
+        "id": "lv0_12_b2",
+        "text": "figure"
+      },
+      {
+        "id": "lv0_12_b3",
+        "text": "it"
+      },
+      {
+        "id": "lv0_12_b4",
+        "text": "out"
+      },
+      {
+        "id": "lv0_12_b5",
+        "text": "later."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "We",
+        "can",
+        "figure",
+        "it",
+        "out",
+        "later."
+      ],
+      [
+        "later.",
+        "We",
+        "can",
+        "figure",
+        "it",
+        "out"
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Compass",
+        "Users"
+      ],
+      "tags": [
+        "改札前",
+        "同僚",
+        "冷静"
+      ]
+    },
+    "coreImageJa": "絡まった糸を今はそのままにして、先の時間軸で解きほぐす余白。",
+    "pronunciationTip": "figure it out はフィギュリラウと3語を一塊の波として発音する。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "What should we do about the slides?",
+    "soundChangeChoices": [
+      "We can figure it out later.",
+      "We can fill it out later.",
+      "They can figure it out later.",
+      "We could figure it out sooner."
+    ]
+  },
+  {
+    "id": "lv0_13",
+    "level": 0,
+    "contentCategory": "heat",
+    "sceneCategory": "arena",
+    "grammarPattern": "come_back",
+    "enText": "The Heat never give up easily.",
+    "blocks": [
+      {
+        "id": "lv0_13_b0",
+        "text": "The"
+      },
+      {
+        "id": "lv0_13_b1",
+        "text": "Heat"
+      },
+      {
+        "id": "lv0_13_b2",
+        "text": "never"
+      },
+      {
+        "id": "lv0_13_b3",
+        "text": "give"
+      },
+      {
+        "id": "lv0_13_b4",
+        "text": "up"
+      },
+      {
+        "id": "lv0_13_b5",
+        "text": "easily."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "The",
+        "Heat",
+        "never",
+        "give",
+        "up",
+        "easily."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Flame",
+        "Heart"
+      ],
+      "tags": [
+        "観戦席",
+        "友人",
+        "信頼"
+      ]
+    },
+    "coreImageJa": "どれだけ押し込まれても下から熱い炎が押し返し続ける粘り強い圧力。",
+    "pronunciationTip": "give up easily はギヴァッピーズィリーと v・u・p・ea を一息で繋ぐ。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "They are down by twelve points.",
+    "soundChangeChoices": [
+      "The Heat never give up easily.",
+      "The Heat ever give up easily.",
+      "The Heat never gave up easily.",
+      "The team never give in easily."
+    ]
+  },
+  {
+    "id": "lv0_14",
+    "level": 0,
+    "contentCategory": "daily",
+    "sceneCategory": "cafe",
+    "grammarPattern": "up_to",
+    "enText": "It is totally up to you.",
+    "blocks": [
+      {
+        "id": "lv0_14_b0",
+        "text": "It"
+      },
+      {
+        "id": "lv0_14_b1",
+        "text": "is"
+      },
+      {
+        "id": "lv0_14_b2",
+        "text": "totally"
+      },
+      {
+        "id": "lv0_14_b3",
+        "text": "up"
+      },
+      {
+        "id": "lv0_14_b4",
+        "text": "to"
+      },
+      {
+        "id": "lv0_14_b5",
+        "text": "you."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "It",
+        "is",
+        "totally",
+        "up",
+        "to",
+        "you."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "Coffee",
+        "Users"
+      ],
+      "tags": [
+        "テラス席",
+        "友人",
+        "委任"
+      ]
+    },
+    "coreImageJa": "決定権というボールを相手の手のひらの上にポンと預ける軽やかさ。",
+    "pronunciationTip": "It is はイッツ、up to you はアプトゥユーと p を軽く止めて渡す。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "Where do you want to sit?",
+    "soundChangeChoices": [
+      "It is totally up to you.",
+      "It was totally up to you.",
+      "It is totally out to you.",
+      "It isally up for you."
+    ]
+  },
+  {
+    "id": "lv0_15",
+    "level": 0,
+    "contentCategory": "daily",
+    "sceneCategory": "office",
+    "grammarPattern": "make_sense",
+    "enText": "That makes a lot of sense.",
+    "blocks": [
+      {
+        "id": "lv0_15_b0",
+        "text": "That"
+      },
+      {
+        "id": "lv0_15_b1",
+        "text": "makes"
+      },
+      {
+        "id": "lv0_15_b2",
+        "text": "a"
+      },
+      {
+        "id": "lv0_15_b3",
+        "text": "lot"
+      },
+      {
+        "id": "lv0_15_b4",
+        "text": "of"
+      },
+      {
+        "id": "lv0_15_b5",
+        "text": "sense."
+      }
+    ],
+    "acceptableOrders": [
+      [
+        "That",
+        "makes",
+        "a",
+        "lot",
+        "of",
+        "sense."
+      ]
+    ],
+    "speakOnly": false,
+    "visual": {
+      "icons": [
+        "CheckCircle",
+        "MessageSquare"
+      ],
+      "tags": [
+        "デスク",
+        "先輩",
+        "腑に落ちる"
+      ]
+    },
+    "coreImageJa": "バラバラだったパズルのピースがカチッと音を立てて一つの像を結ぶ感覚。",
+    "pronunciationTip": "makes a はメイクサ、lot of はラロヴとフラップTで滑らかに転がす。",
+    "hasSoundChange": true,
+    "source": "seed",
+    "isCore": false,
+    "disabled": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "promptAudioText": "That is why the server slowed down.",
+    "soundChangeChoices": [
+      "That makes a lot of sense.",
+      "That made a lot of sense.",
+      "This makes a lot of cents.",
+      "That takes a lot of sense."
+    ]
+  }
+]
