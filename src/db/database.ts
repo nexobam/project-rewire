@@ -233,47 +233,25 @@ export function upgradeSeedChunksWithLatestExplanations(chunks: Chunk[]): {
       const curOrderJson = JSON.stringify(c.acceptableOrders);
       const seedChoicesJson = JSON.stringify(latestSeed.soundChangeChoices ?? null);
       const curChoicesJson = JSON.stringify(c.soundChangeChoices ?? null);
-      const seedVisualJson = JSON.stringify(latestSeed.visual);
-      const curVisualJson = JSON.stringify(c.visual);
       if (
         c.enText !== latestSeed.enText ||
-        c.contentCategory !== latestSeed.contentCategory ||
-        c.sceneCategory !== latestSeed.sceneCategory ||
-        c.grammarPattern !== latestSeed.grammarPattern ||
         c.coreImageJa !== latestSeed.coreImageJa ||
         c.pronunciationTip !== latestSeed.pronunciationTip ||
-        c.promptAudioText !== latestSeed.promptAudioText ||
         seedOrderJson !== curOrderJson ||
-        seedChoicesJson !== curChoicesJson ||
-        seedVisualJson !== curVisualJson
+        seedChoicesJson !== curChoicesJson
       ) {
         changed = true;
         return {
           ...c,
-          contentCategory: latestSeed.contentCategory,
-          sceneCategory: latestSeed.sceneCategory,
-          grammarPattern: latestSeed.grammarPattern,
           enText: latestSeed.enText,
           blocks: latestSeed.blocks,
           acceptableOrders: latestSeed.acceptableOrders,
-          visual: latestSeed.visual,
           soundChangeChoices: latestSeed.soundChangeChoices,
-          promptAudioText: latestSeed.promptAudioText,
-          ngWords: latestSeed.ngWords,
           coreImageJa: latestSeed.coreImageJa,
           pronunciationTip: latestSeed.pronunciationTip,
         };
       }
       return c;
-    }
-
-    // 日常会話特化方針に伴い、シード以外の過去保存済みバスケ(heat)問題は無効化して出題を停止
-    if (c.contentCategory === 'heat' && !c.disabled) {
-      changed = true;
-      return {
-        ...c,
-        disabled: true,
-      };
     }
 
     const knownMock = KNOWN_MOCK_AI_EXPLANATIONS[c.enText.trim()];

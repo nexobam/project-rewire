@@ -226,74 +226,74 @@
   {
     "id": "lv3_04",
     "level": 3,
-    "contentCategory": "daily",
-    "sceneCategory": "cafe",
-    "grammarPattern": "paraphrase_refuse",
-    "enText": "She turned down the job offer politely.",
+    "contentCategory": "heat",
+    "sceneCategory": "arena",
+    "grammarPattern": "paraphrase_win",
+    "enText": "Miami pulled off a huge road victory.",
     "blocks": [
       {
         "id": "lv3_04_b0",
-        "text": "She"
+        "text": "Miami"
       },
       {
         "id": "lv3_04_b1",
-        "text": "turned"
+        "text": "pulled"
       },
       {
         "id": "lv3_04_b2",
-        "text": "down"
+        "text": "off"
       },
       {
         "id": "lv3_04_b3",
-        "text": "the"
+        "text": "a"
       },
       {
         "id": "lv3_04_b4",
-        "text": "job"
+        "text": "huge"
       },
       {
         "id": "lv3_04_b5",
-        "text": "offer"
+        "text": "road"
       },
       {
         "id": "lv3_04_b6",
-        "text": "politely."
+        "text": "victory."
       }
     ],
     "acceptableOrders": [
       [
-        "She",
-        "turned",
-        "down",
-        "the",
-        "job",
-        "offer",
-        "politely."
+        "Miami",
+        "pulled",
+        "off",
+        "a",
+        "huge",
+        "road",
+        "victory."
       ]
     ],
     "speakOnly": false,
     "visual": {
       "icons": [
-        "Briefcase",
-        "MessageSquare"
+        "Flame",
+        "Trophy"
       ],
       "tags": [
-        "カフェ",
-        "友人",
-        "相談"
+        "スポーツバー",
+        "観衆",
+        "興奮"
       ]
     },
-    "coreImageJa": "【言いたいこと】彼女はその内定を丁重に断った（refuse禁止） ／ 【英語の語順】She turned down（彼女は下へ向きを変えた＝断った）→ the job offer politely.（仕事のオファーを丁寧に）",
-    "pronunciationTip": "turned down はターンダウンと d を重ねて滑らかに繋ぐ。",
+    "coreImageJa": "【言いたいこと】マイアミがアウェーで大きな勝利をもぎ取った（win禁止） ／ 【英語の語順】Miami pulled off（マイアミが引き抜いて成し遂げた）→ a huge road victory.（敵地での大勝利を）",
+    "pronunciationTip": "pulled off a はプルドファと連結し、huge road の j と r を滑らかに。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
     "disabled": false,
     "createdAt": "2026-01-01T00:00:00.000Z",
-    "promptAudioText": "Did she accept the new position? (Avoid: refuse, refused)",
+    "promptAudioText": "What happened in the Boston game? (Avoid: win, won)",
     "ngWords": [
-      "refuse",
-      "refused"
+      "win",
+      "won"
     ]
   },
   {

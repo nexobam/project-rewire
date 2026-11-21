@@ -212,71 +212,71 @@
   {
     "id": "lv0_04",
     "level": 0,
-    "contentCategory": "daily",
-    "sceneCategory": "train",
-    "grammarPattern": "running_late",
-    "enText": "I am running a bit late.",
+    "contentCategory": "heat",
+    "sceneCategory": "arena",
+    "grammarPattern": "on_fire",
+    "enText": "Jimmy is taking over the game.",
     "blocks": [
       {
         "id": "lv0_04_b0",
-        "text": "I"
+        "text": "Jimmy"
       },
       {
         "id": "lv0_04_b1",
-        "text": "am"
+        "text": "is"
       },
       {
         "id": "lv0_04_b2",
-        "text": "running"
+        "text": "taking"
       },
       {
         "id": "lv0_04_b3",
-        "text": "a"
+        "text": "over"
       },
       {
         "id": "lv0_04_b4",
-        "text": "bit"
+        "text": "the"
       },
       {
         "id": "lv0_04_b5",
-        "text": "late."
+        "text": "game."
       }
     ],
     "acceptableOrders": [
       [
-        "I",
-        "am",
-        "running",
-        "a",
-        "bit",
-        "late."
+        "Jimmy",
+        "is",
+        "taking",
+        "over",
+        "the",
+        "game."
       ]
     ],
     "speakOnly": false,
     "visual": {
       "icons": [
-        "Clock",
-        "Train"
+        "Flame",
+        "Trophy"
       ],
       "tags": [
-        "駅前",
-        "友人",
-        "焦り"
+        "アリーナ",
+        "観衆",
+        "熱狂"
       ]
     },
-    "coreImageJa": "【言いたいこと】少し遅れています ／ 【英語の語順】I am running（私は走っている・進んでいる）→ a bit late.（少し遅れて）",
-    "pronunciationTip": "running a bit はラニンガビッと ng と a を滑らかに繋ぎ、t は軽く止める。",
+    "coreImageJa": "【言いたいこと】ジミーが試合を完全に支配している ／ 【英語の語順】Jimmy is taking over（ジミーが乗っ取っている）→ the game.（試合を）",
+    "pronunciationTip": "taking over はテイキンオーバーと鼻音から母音へ滑らかに渡す。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": false,
     "disabled": false,
     "createdAt": "2026-01-01T00:00:00.000Z",
-    "promptAudioText": "Are you almost at the station?",
+    "promptAudioText": "Did you see that fourth quarter?",
     "soundChangeChoices": [
-      "I am running a bit late.",
-      "I am coming a bit late.",
-      "I was running a bit lately.",
-      "I am leaving a bit late."
+      "Jimmy is taking over the game.",
+      "Jimmy is taking off the game.",
+      "Jimmy was talking over the game.",
+      "Jimmy is making over the game."
     ]
   },
   {
@@ -492,71 +492,71 @@
   {
     "id": "lv0_08",
     "level": 0,
-    "contentCategory": "daily",
-    "sceneCategory": "office",
-    "grammarPattern": "check_schedule",
-    "enText": "Let me check my schedule first.",
+    "contentCategory": "heat",
+    "sceneCategory": "lounge",
+    "grammarPattern": "lock_down",
+    "enText": "Bam locked down the paint tonight.",
     "blocks": [
       {
         "id": "lv0_08_b0",
-        "text": "Let"
+        "text": "Bam"
       },
       {
         "id": "lv0_08_b1",
-        "text": "me"
+        "text": "locked"
       },
       {
         "id": "lv0_08_b2",
-        "text": "check"
+        "text": "down"
       },
       {
         "id": "lv0_08_b3",
-        "text": "my"
+        "text": "the"
       },
       {
         "id": "lv0_08_b4",
-        "text": "schedule"
+        "text": "paint"
       },
       {
         "id": "lv0_08_b5",
-        "text": "first."
+        "text": "tonight."
       }
     ],
     "acceptableOrders": [
       [
-        "Let",
-        "me",
-        "check",
-        "my",
-        "schedule",
-        "first."
+        "Bam",
+        "locked",
+        "down",
+        "the",
+        "paint",
+        "tonight."
       ]
     ],
     "speakOnly": false,
     "visual": {
       "icons": [
-        "Calendar",
-        "Briefcase"
+        "Shield",
+        "Trophy"
       ],
       "tags": [
-        "オフィス",
-        "同僚",
-        "確認"
+        "スポーツバー",
+        "仲間",
+        "誇り"
       ]
     },
-    "coreImageJa": "【言いたいこと】まず私の予定を確認させてください ／ 【英語の語順】Let me check（私に確認させて）→ my schedule first.（自分の予定をまず）",
-    "pronunciationTip": "Let me はレミと t を落として軽く繋ぎ、check my の k も弱める。",
+    "coreImageJa": "【言いたいこと】今夜バムがゴール下を完全封鎖した ／ 【英語の語順】Bam locked down（バムが鍵をかけて封じた）→ the paint（ゴール下エリアを）→ tonight.（今夜）",
+    "pronunciationTip": "locked down はロックダウンと k と d の間で一瞬息を止めて破裂させる。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": false,
     "disabled": false,
     "createdAt": "2026-01-01T00:00:00.000Z",
-    "promptAudioText": "Can we meet tomorrow afternoon?",
+    "promptAudioText": "How was the Heat defense?",
     "soundChangeChoices": [
-      "Let me check my schedule first.",
-      "Let me change my schedule first.",
-      "Let him check my schedule first.",
-      "Let me check the calendar first."
+      "Bam locked down the paint tonight.",
+      "Bam looked down the paint tonight.",
+      "Bam knocked down the point tonight.",
+      "Bam locked up the game tonight."
     ]
   },
   {
@@ -842,71 +842,71 @@
   {
     "id": "lv0_13",
     "level": 0,
-    "contentCategory": "daily",
-    "sceneCategory": "cafe",
-    "grammarPattern": "grab_coffee",
-    "enText": "I will grab a coffee nearby.",
+    "contentCategory": "heat",
+    "sceneCategory": "arena",
+    "grammarPattern": "come_back",
+    "enText": "The Heat never give up easily.",
     "blocks": [
       {
         "id": "lv0_13_b0",
-        "text": "I"
+        "text": "The"
       },
       {
         "id": "lv0_13_b1",
-        "text": "will"
+        "text": "Heat"
       },
       {
         "id": "lv0_13_b2",
-        "text": "grab"
+        "text": "never"
       },
       {
         "id": "lv0_13_b3",
-        "text": "a"
+        "text": "give"
       },
       {
         "id": "lv0_13_b4",
-        "text": "coffee"
+        "text": "up"
       },
       {
         "id": "lv0_13_b5",
-        "text": "nearby."
+        "text": "easily."
       }
     ],
     "acceptableOrders": [
       [
-        "I",
-        "will",
-        "grab",
-        "a",
-        "coffee",
-        "nearby."
+        "The",
+        "Heat",
+        "never",
+        "give",
+        "up",
+        "easily."
       ]
     ],
     "speakOnly": false,
     "visual": {
       "icons": [
-        "Coffee",
-        "MapPin"
+        "Flame",
+        "Heart"
       ],
       "tags": [
-        "街角",
-        "同僚",
-        "一息"
+        "観戦席",
+        "友人",
+        "信頼"
       ]
     },
-    "coreImageJa": "【言いたいこと】近くでコーヒーを買ってきます ／ 【英語の語順】I will grab（サッと手に取る）→ a coffee nearby.（近くのコーヒーを）",
-    "pronunciationTip": "grab a はグラバと b と a を一息で滑らかに繋げる。",
+    "coreImageJa": "【言いたいこと】マイアミ・ヒートは簡単には絶対に諦めない（※チーム名なので複数扱いで give） ／ 【英語の語順】The Heat never give up（ヒートは決して上へ投げ出さない）→ easily.（簡単には）",
+    "pronunciationTip": "give up easily はギヴァッピーズィリーと v・u・p・ea を一息で繋ぐ。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": false,
     "disabled": false,
     "createdAt": "2026-01-01T00:00:00.000Z",
-    "promptAudioText": "We have fifteen minutes before the meeting.",
+    "promptAudioText": "They are down by twelve points.",
     "soundChangeChoices": [
-      "I will grab a coffee nearby.",
-      "I will have a coffee inside.",
-      "I should grab a taxi nearby.",
-      "I will grab a coffee tonight."
+      "The Heat never give up easily.",
+      "The Heat ever give up easily.",
+      "The Heat never gave up easily.",
+      "The team never give in easily."
     ]
   },
   {

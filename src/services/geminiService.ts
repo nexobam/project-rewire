@@ -217,19 +217,19 @@ export function generateLocalMockPipelineOutput(params: {
       hasSoundChange: true,
     },
     {
-      contentCategory: 'daily',
-      sceneCategory: 'office',
-      grammarPattern: 'send_file_again',
-      enText: 'Could you send me that file again?',
-      blocks: ['Could', 'you', 'send', 'me', 'that', 'file', 'again?'],
+      contentCategory: 'heat',
+      sceneCategory: 'arena',
+      grammarPattern: 'heat_transition',
+      enText: 'Miami pushed the pace in transition.',
+      blocks: ['Miami', 'pushed', 'the', 'pace', 'in', 'transition.'],
       acceptableOrders: [
-        ['Could', 'you', 'send', 'me', 'that', 'file', 'again?'],
+        ['Miami', 'pushed', 'the', 'pace', 'in', 'transition.'],
       ],
-      icons: ['Mail', 'FileText'],
-      tags: ['オフィス', '同僚', '依頼'],
+      icons: ['Flame', 'Zap'],
+      tags: ['アリーナ', '仲間', '躍動'],
       coreImageJa:
-        '【言いたいこと】あのファイルをもう一度送ってもらえますか？ ／ 【英語の語順】Could you send me（私に送ってもらえますか）→ that file again?（あのファイルをもう一度）',
-      pronunciationTip: 'Could you はクジューと融合させ、send me の d は軽く落とす。',
+        '【言いたいこと】マイアミが速攻（トランジション）で一気にペースを上げた ／ 【英語の語順】Miami pushed the pace（マイアミが速度を前へ押し出した）→ in transition.（攻守切替の中で）',
+      pronunciationTip: 'pushed the はプッシュザと t を止めて th へ滑らせる。',
       hasSoundChange: true,
     },
     {
@@ -474,8 +474,8 @@ export async function runFourAiEmployeesPipeline(params: {
   const step1SystemPrompt = `あなたは英語脳再配線アプリ「Project Rewire」の専属AI英語講師チーム（弱点分析・コアイメージ解説・カリキュラム作成）です。
 【絶対ルール】
 - 出題中（回答前）に日本語を英訳させることは禁止ですが、回答後の解説（coreImageJa）では何を言っている文なのか100%理解できるよう、必ず「【言いたいこと】自然な場面の意味・ニュアンス ／ 【英語の語順】前から順のチャンク理解と空間コアイメージ」の形式で記述すること。
-- 新規問題は5問（日常会話100%：仕事・カフェ・買い物・旅行・家族や友人との実用的な会話表現で、パターンプラクティスとチャンク・ビルディングを混合）。contentCategory はすべて daily とすること。
-- スポーツや特定チーム（バスケ等）の話題は入れず、誰でもイメージしやすい身近な日常シーンに絞ること。
+- 新規問題は5問（日常会話85%：Miami Heat 15%の比率、パターンプラクティスとチャンク・ビルディングを混合）。
+- Lv.2以降では、マイアミのストリート・ドライブ・相棒とのリアルな掛け合い（GTA6 / Vice City のような日常の相棒トークやゲーム雑談でも使える自然なカジュアル英語・口語表現）も適度に織り交ぜること。
 - タグは「場所／相手／感情」の名詞3つ（各8文字以内）。動詞やヒント語は禁止。
 - アイコンは次のホワイトリストからのみ2つ選択: ${whitelistStr}
 - enTextは80文字以内、blocksは3〜9個、acceptableOrdersにはblocks自身の並びを必ず含める。

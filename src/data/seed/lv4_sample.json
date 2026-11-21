@@ -140,76 +140,71 @@
   {
     "id": "lv4_03",
     "level": 4,
-    "contentCategory": "daily",
-    "sceneCategory": "office",
-    "grammarPattern": "native_banter_daily",
-    "enText": "We should wrap up the meeting before noon.",
+    "contentCategory": "heat",
+    "sceneCategory": "arena",
+    "grammarPattern": "native_banter_heat",
+    "enText": "Their defense switches everything on the perimeter.",
     "blocks": [
       {
         "id": "lv4_03_b0",
-        "text": "We"
+        "text": "Their"
       },
       {
         "id": "lv4_03_b1",
-        "text": "should"
+        "text": "defense"
       },
       {
         "id": "lv4_03_b2",
-        "text": "wrap"
+        "text": "switches"
       },
       {
         "id": "lv4_03_b3",
-        "text": "up"
+        "text": "everything"
       },
       {
         "id": "lv4_03_b4",
-        "text": "the"
+        "text": "on"
       },
       {
         "id": "lv4_03_b5",
-        "text": "meeting"
+        "text": "the"
       },
       {
         "id": "lv4_03_b6",
-        "text": "before"
-      },
-      {
-        "id": "lv4_03_b7",
-        "text": "noon."
+        "text": "perimeter."
       }
     ],
     "acceptableOrders": [
       [
-        "We",
-        "should",
-        "wrap",
-        "up",
+        "Their",
+        "defense",
+        "switches",
+        "everything",
+        "on",
         "the",
-        "meeting",
-        "before",
-        "noon."
+        "perimeter."
       ]
     ],
     "speakOnly": false,
     "visual": {
       "icons": [
-        "Clock",
-        "Users"
+        "Shield",
+        "Flame"
       ],
       "tags": [
-        "会議室",
-        "同僚",
-        "集中"
+        "アリーナ",
+        "解説者",
+        "分析"
       ]
     },
-    "coreImageJa": "【言いたいこと】正午までに会議を締めくくったほうがいいね ／ 【英語の語順】We should wrap up（私たちは包み終えるべきだ）→ the meeting before noon.（会議を正午前に）",
-    "pronunciationTip": "wrap up the はラッパップザと p と u を繋いでリズムよく。",
+    "coreImageJa": "【言いたいこと】彼らの守備は外周すべてでスイッチ（受け渡し）してくる ／ 【英語の語順】Their defense switches everything（彼らの守備はすべてを受け渡す）→ on the perimeter.（外周エリアで）",
+    "pronunciationTip": "switches everything on はスウィッチズエヴリシンゴンと一息で駆け抜ける。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
     "disabled": false,
     "createdAt": "2026-01-01T00:00:00.000Z",
-    "promptAudioText": "We have another call right after lunch."
+    "promptAudioText": "Break down Miami's fourth quarter defensive scheme."
   },
   {
     "id": "lv4_04",

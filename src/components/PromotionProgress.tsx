@@ -37,7 +37,7 @@ export const PromotionProgress: React.FC<PromotionProgressProps> = ({
           <span>Lv.4 ネイティブ雑談・自由発話フェーズ到達済み</span>
         </div>
         <p className="text-xs opacity-80">
-          すべての昇格ゲートを突破しました。All EnglishモードとLive実戦で170wpmの英語ポッドキャスト聴取・自由発話を磨きましょう。
+          すべての昇格ゲートを突破しました。All EnglishモードとLive実戦で170wpmのNBAポッドキャスト聴取・自由発話を磨きましょう。
         </p>
       </div>
     );

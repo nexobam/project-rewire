@@ -87,9 +87,15 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
     startedAt: Date.now(),
   }));
 
+  // 絵柄の問題（Lv.1前半：pictureフェーズ）は日常会話（daily）のみに絞り、バスケ（heat）を出題しない
+  const isPicturePhase = settings.level === 1 && settings.lv1Phase === 'picture';
+  const dailyOnlyChunks = allChunks.filter((c) => c.contentCategory === 'daily');
+  const selectableChunksForBatch =
+    isPicturePhase && dailyOnlyChunks.length > 0 ? dailyOnlyChunks : allChunks;
+
   const [batch, setBatch] = useState<Chunk[]>(() =>
     buildSessionBatch({
-      allChunks,
+      allChunks: selectableChunksForBatch,
       reviewStates,
       recentAttempts,
       currentStudyDate,
@@ -246,16 +252,25 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
       }
       setShuffledSoundChoices(shuffleArray(baseSoundChoices));
 
-      // 絵カード4択用のダミー選択肢3枚（場面・場所タグ・アイコンが被らないカードを優先）＋正解1枚を作成
+      // 絵カード4択用のダミー選択肢3枚（日常会話のみ・場面・場所タグ・アイコンが被らないカードを優先）＋正解1枚を作成
       const targetMeaning = extractSituationMeaning(chunk);
+      const dailyCandidates = allChunks.filter(
+        (c) =>
+          c.id !== chunk.id &&
+          !c.disabled &&
+          c.contentCategory === 'daily' &&
+          c.enText !== chunk.enText &&
+          extractSituationMeaning(c) !== targetMeaning
+      );
+      const fallbackCandidates = allChunks.filter(
+        (c) =>
+          c.id !== chunk.id &&
+          !c.disabled &&
+          c.enText !== chunk.enText &&
+          extractSituationMeaning(c) !== targetMeaning
+      );
       const basePool = shuffleArray(
-        allChunks.filter(
-          (c) =>
-            c.id !== chunk.id &&
-            !c.disabled &&
-            c.enText !== chunk.enText &&
-            extractSituationMeaning(c) !== targetMeaning
-        )
+        dailyCandidates.length >= 3 ? dailyCandidates : fallbackCandidates
       );
       const pickedDistractors: Chunk[] = [];
       const usedPlaces = new Set<string>([chunk.visual.tags[0]]);
@@ -617,7 +632,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
       } else {
         // 15問バッチ完了：まだ残り時間がある場合は次バッチを補充
         const nextBatch = buildSessionBatch({
-          allChunks,
+          allChunks: selectableChunksForBatch,
           reviewStates,
           recentAttempts,
           currentStudyDate,
