@@ -15,6 +15,7 @@ import {
   saveQuestionProgressTransaction,
   saveSessionToDb,
   saveSettingsToDb,
+  setActiveDatabaseProfile,
   upgradeSeedChunksWithLatestExplanations,
 } from '../db/database';
 import {
@@ -37,6 +38,7 @@ import {
   normalizeGeminiModelName,
   runFourAiEmployeesPipeline,
 } from '../services/geminiService';
+import type { UserProfileId } from '../services/profileService';
 import {
   DEFAULT_SETTINGS,
   type AiReport,
@@ -230,8 +232,8 @@ export function mergeCloudAndLocalStores(
   };
 }
 
-export function useAppStore() {
-  const [loading, setLoading] = useState(true);
+export function useAppStore(activeProfile: UserProfileId | null = null) {
+  const [loading, setLoading] = useState(Boolean(activeProfile));
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [chunks, setChunks] = useState<Chunk[]>([]);
   const [reviewStates, setReviewStates] = useState<ReviewState[]>([]);
@@ -256,20 +258,23 @@ export function useAppStore() {
   const coachMessagesRef = useRef<CoachMessage[]>(coachMessages);
   const processingReportIdsRef = useRef<Set<string>>(new Set());
 
-  const syncPushWithRetryFlag = useCallback(async (stores: CloudSyncStores) => {
-    const ok = await pushCloudStores(stores);
-    if (!ok) {
-      setPendingSyncFlag(true);
-    } else if (
-      stores.settings &&
-      stores.chunks &&
-      stores.attempts &&
-      stores.sessions
-    ) {
-      setPendingSyncFlag(false);
-    }
-    return ok;
-  }, []);
+  const syncPushWithRetryFlag = useCallback(
+    async (stores: CloudSyncStores) => {
+      const ok = await pushCloudStores(stores, activeProfile);
+      if (!ok) {
+        setPendingSyncFlag(true);
+      } else if (
+        stores.settings &&
+        stores.chunks &&
+        stores.attempts &&
+        stores.sessions
+      ) {
+        setPendingSyncFlag(false);
+      }
+      return ok;
+    },
+    [activeProfile]
+  );
 
   const applyAllStoresState = useCallback(
     (next: {
@@ -457,9 +462,17 @@ export function useAppStore() {
     [syncPushWithRetryFlag]
   );
 
-  // 初回ロード（ローカルDB読み込み完了で即起動し、クラウド同期はバックグラウンドで安全マージ）
+  // 初回ロード（プロファイル選択後に該当ユーザー専用DB＆クラウド領域を読み込み）
   useEffect(() => {
+    if (!activeProfile) {
+      setLoading(false);
+      return;
+    }
+
     let mounted = true;
+    setLoading(true);
+    setActiveDatabaseProfile(activeProfile);
+
     void (async () => {
       try {
         const data = await initializeAndLoadAppData();
@@ -494,7 +507,7 @@ export function useAppStore() {
         setServerHasGeminiKey(cloudStatus.serverHasGeminiKey);
 
         if (cloudStatus.cloudAvailable) {
-          const cloudRes = await fetchCloudStores();
+          const cloudRes = await fetchCloudStores(activeProfile);
           if (!mounted) return;
           if (cloudRes.unauthorized) {
             setCloudAuthNeeded(true);
@@ -565,7 +578,7 @@ export function useAppStore() {
     return () => {
       mounted = false;
     };
-  }, [applyAllStoresState, processPendingAiReports, refreshStudyDateEvaluation, syncPushWithRetryFlag]);
+  }, [activeProfile, applyAllStoresState, processPendingAiReports, refreshStudyDateEvaluation, syncPushWithRetryFlag]);
 
   // オンライン復帰時に未同期データがあれば再送信
   useEffect(() => {
@@ -973,7 +986,7 @@ export function useAppStore() {
       if (!ok) return false;
       setCloudAuthNeeded(false);
 
-      const cloudRes = await fetchCloudStores();
+      const cloudRes = await fetchCloudStores(activeProfile);
       if (cloudRes.ok && cloudRes.stores) {
         const cs = cloudRes.stores;
         if (cs.settings || (cs.chunks && cs.chunks.length > 0)) {
@@ -1024,7 +1037,7 @@ export function useAppStore() {
       }
       return true;
     },
-    [applyAllStoresState, refreshStudyDateEvaluation, syncPushWithRetryFlag]
+    [activeProfile, applyAllStoresState, refreshStudyDateEvaluation, syncPushWithRetryFlag]
   );
 
   return {

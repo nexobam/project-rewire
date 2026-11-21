@@ -18,6 +18,12 @@ import { SettingsPage } from '../pages/SettingsPage';
 import { SilentModePage } from '../pages/SilentModePage';
 import { SpeakModePage } from '../pages/SpeakModePage';
 import { askAiCoachQuestion } from '../services/geminiService';
+import {
+  clearActiveProfile,
+  getActiveProfile,
+  INACTIVITY_LOGOUT_MS,
+  selectActiveProfile,
+} from '../services/profileService';
 import { DEFAULT_SETTINGS, type Attempt, type Chunk, type Session } from '../types';
 
 describe('本番運用エッジケース & シナリオ検証', () => {
@@ -362,5 +368,83 @@ describe('本番運用エッジケース & シナリオ検証', () => {
     });
     // answered として偽回答が保存されていないこと
     expect(onUpsert).not.toHaveBeenCalled();
+  });
+
+  it('使用者プロファイル（M / Y）は14日間アクセスがないと自動ログアウトし、Worker D1 も M と Y で完全分離されること', async () => {
+    clearActiveProfile();
+    expect(getActiveProfile(1000)).toBeNull();
+
+    // M を選択して13日後までは有効、14日経過で自動ログアウト
+    selectActiveProfile('M', 1_000_000);
+    expect(getActiveProfile(1_000_000 + INACTIVITY_LOGOUT_MS - 1000)).toBe('M');
+    // 最終アクセス時刻が更新されたのでそこから14日後にログアウト
+    const lastActive = 1_000_000 + INACTIVITY_LOGOUT_MS - 1000;
+    expect(getActiveProfile(lastActive + INACTIVITY_LOGOUT_MS)).toBeNull();
+
+    // Worker 側でも M と Y の保存データが分離されること
+    const rows = new Map<string, { store_key: string; data_json: string; updated_at: number }>();
+    const env = {
+      DB: {
+        prepare(query: string) {
+          let bound: unknown[] = [];
+          const stmt = {
+            bind(...values: unknown[]) {
+              bound = values;
+              return stmt;
+            },
+            first: async () => null,
+            all: async () => ({ results: [...rows.values()] as never[] }),
+            run: async () => {
+              if (query.includes('INSERT INTO sync_store')) {
+                const [key, json, ts] = bound as [string, string, number];
+                rows.set(key, { store_key: key, data_json: json, updated_at: ts });
+              }
+              return { success: true };
+            },
+          };
+          return stmt;
+        },
+      },
+      ASSETS: { fetch: vi.fn(async () => new Response('ok')) },
+      GEMINI_API_KEY: 'test-key',
+      APP_PASSCODE: 'secret',
+    };
+
+    await worker.fetch(
+      new Request('https://example.workers.dev/api/sync?profile=M', {
+        method: 'PUT',
+        headers: { 'X-App-Passcode': 'secret', 'X-App-Profile': 'M' },
+        body: JSON.stringify({ stores: { attempts: [{ id: 'm_att_1' }] } }),
+      }),
+      env
+    );
+    await worker.fetch(
+      new Request('https://example.workers.dev/api/sync?profile=Y', {
+        method: 'PUT',
+        headers: { 'X-App-Passcode': 'secret', 'X-App-Profile': 'Y' },
+        body: JSON.stringify({ stores: { attempts: [{ id: 'y_att_1' }] } }),
+      }),
+      env
+    );
+
+    const getM = (await (
+      await worker.fetch(
+        new Request('https://example.workers.dev/api/sync?profile=M', {
+          headers: { 'X-App-Passcode': 'secret', 'X-App-Profile': 'M' },
+        }),
+        env
+      )
+    ).json()) as { stores: { attempts: { id: string }[] } };
+    const getY = (await (
+      await worker.fetch(
+        new Request('https://example.workers.dev/api/sync?profile=Y', {
+          headers: { 'X-App-Passcode': 'secret', 'X-App-Profile': 'Y' },
+        }),
+        env
+      )
+    ).json()) as { stores: { attempts: { id: string }[] } };
+
+    expect(getM.stores.attempts).toEqual([{ id: 'm_att_1' }]);
+    expect(getY.stores.attempts).toEqual([{ id: 'y_att_1' }]);
   });
 });

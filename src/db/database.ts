@@ -60,13 +60,32 @@ interface RewireDBSchema extends DBSchema {
 }
 
 let dbPromise: Promise<IDBPDatabase<RewireDBSchema>> | null = null;
+let activeDbProfile: 'M' | 'Y' | null = null;
+
+/**
+ * 使用者プロファイル（M / Y）に応じて IndexedDB のデータベースを切り替える
+ */
+export function setActiveDatabaseProfile(profile: 'M' | 'Y' | null): void {
+  if (activeDbProfile === profile) return;
+  activeDbProfile = profile;
+  if (dbPromise) {
+    const closing = dbPromise;
+    dbPromise = null;
+    void closing.then((db) => db.close()).catch(() => undefined);
+  }
+}
+
+export function getActiveDatabaseName(): string {
+  return activeDbProfile ? `${DB_NAME}-${activeDbProfile}` : DB_NAME;
+}
 
 /**
  * IndexedDB インスタンスを取得（初回にストア作成）
  */
 export function getDatabase(): Promise<IDBPDatabase<RewireDBSchema>> {
   if (!dbPromise) {
-    dbPromise = openDB<RewireDBSchema>(DB_NAME, DB_VERSION, {
+    const targetDbName = getActiveDatabaseName();
+    dbPromise = openDB<RewireDBSchema>(targetDbName, DB_VERSION, {
       upgrade(db) {
         if (!db.objectStoreNames.contains('chunks')) {
           db.createObjectStore('chunks', { keyPath: 'id' });

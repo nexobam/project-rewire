@@ -9,6 +9,7 @@ import {
   Ticket,
 } from 'lucide-react';
 import type { ThemePalette } from '../domain/contrast';
+import type { UserProfileId } from '../services/profileService';
 import type { Level } from '../types';
 
 export type NavTab = 'home' | 'coach' | 'settings';
@@ -20,6 +21,7 @@ export interface HeaderProps {
   restTickets: number;
   palette: ThemePalette;
   activeTab: NavTab;
+  activeProfile?: UserProfileId | null;
   onChangeTab: (tab: NavTab) => void;
 }
 
@@ -38,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
   restTickets,
   palette,
   activeTab,
+  activeProfile,
   onChangeTab,
 }) => {
   const phaseSubText =
@@ -67,6 +70,19 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="font-bold tracking-tight text-lg">
                 Project Rewire
               </span>
+              {activeProfile && (
+                <span
+                  style={{
+                    backgroundColor: palette.text,
+                    color: palette.card,
+                  }}
+                  className="text-[11px] font-bold px-2 py-0.5 rounded-full leading-none"
+                  data-testid="active-profile-badge"
+                  title={`使用者: ${activeProfile}`}
+                >
+                  {activeProfile}
+                </span>
+              )}
               <span
                 style={{ borderColor: palette.border }}
                 className="text-xs font-semibold px-2 py-0.5 rounded border"

@@ -174,20 +174,26 @@ export async function verifyCloudPasscode(passcode: string): Promise<boolean> {
 }
 
 /**
- * Cloudflare D1 から全ストアデータを取得する
+ * Cloudflare D1 から全ストアデータを取得する（profile指定時は M / Y 別領域を取得）
  */
-export async function fetchCloudStores(): Promise<{
+export async function fetchCloudStores(
+  profile?: 'M' | 'Y' | null
+): Promise<{
   ok: boolean;
   unauthorized?: boolean;
   stores?: CloudSyncStores;
 }> {
   try {
     const passcode = getSavedPasscode();
+    const query = profile ? `?profile=${encodeURIComponent(profile)}` : '';
     const res = await fetchWithTimeout(
-      '/api/sync',
+      `/api/sync${query}`,
       {
         method: 'GET',
-        headers: passcode ? { 'X-App-Passcode': passcode } : {},
+        headers: {
+          ...(passcode ? { 'X-App-Passcode': passcode } : {}),
+          ...(profile ? { 'X-App-Profile': profile } : {}),
+        },
         cache: 'no-store',
       },
       7000
@@ -206,9 +212,12 @@ export async function fetchCloudStores(): Promise<{
 }
 
 /**
- * Cloudflare D1 へストアデータを保存（同期）する（送信前にAPIキーを必ず除去）
+ * Cloudflare D1 へストアデータを保存（同期）する（送信前にAPIキーを必ず除去・profile別に分離）
  */
-export async function pushCloudStores(stores: CloudSyncStores): Promise<boolean> {
+export async function pushCloudStores(
+  stores: CloudSyncStores,
+  profile?: 'M' | 'Y' | null
+): Promise<boolean> {
   if (!cachedCloudStatus.cloudAvailable) {
     return false;
   }
@@ -221,13 +230,15 @@ export async function pushCloudStores(stores: CloudSyncStores): Promise<boolean>
     }
 
     const passcode = getSavedPasscode();
+    const query = profile ? `?profile=${encodeURIComponent(profile)}` : '';
     const res = await fetchWithTimeout(
-      '/api/sync',
+      `/api/sync${query}`,
       {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           ...(passcode ? { 'X-App-Passcode': passcode } : {}),
+          ...(profile ? { 'X-App-Profile': profile } : {}),
         },
         body: JSON.stringify({ stores: safeStores }),
       },

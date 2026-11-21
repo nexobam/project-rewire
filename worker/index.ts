@@ -95,6 +95,18 @@ function getClientIp(request: Request): string {
   return request.headers.get('CF-Connecting-IP') ?? 'unknown';
 }
 
+function getProfilePrefix(request: Request, url: URL): string {
+  const raw =
+    url.searchParams.get('profile') ??
+    request.headers.get('X-App-Profile') ??
+    '';
+  const trimmed = raw.trim().toUpperCase();
+  if (trimmed === 'M' || trimmed === 'Y') {
+    return `${trimmed}:`;
+  }
+  return '';
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -151,8 +163,9 @@ export default {
           return jsonResponse({ error: 'Unauthorized' }, 401);
         }
 
-        // D1から全ストアを取得
+        // D1から全ストアを取得（プロファイル指定時は M: / Y: のプレフィックス付きキーのみ取得）
         if (url.pathname === '/api/sync' && request.method === 'GET') {
+          const profilePrefix = getProfilePrefix(request, url);
           const rows = await env.DB.prepare(
             'SELECT store_key, data_json, updated_at FROM sync_store'
           ).all<{ store_key: string; data_json: string; updated_at: number }>();
@@ -161,17 +174,26 @@ export default {
           let latestUpdatedAt = 0;
 
           for (const row of rows.results) {
-            if (VALID_STORE_KEYS.has(row.store_key)) {
+            let logicalKey: string | null = null;
+            if (profilePrefix) {
+              if (row.store_key.startsWith(profilePrefix)) {
+                logicalKey = row.store_key.slice(profilePrefix.length);
+              }
+            } else {
+              logicalKey = row.store_key;
+            }
+
+            if (logicalKey && VALID_STORE_KEYS.has(logicalKey)) {
               try {
                 const parsed = JSON.parse(row.data_json);
                 if (
-                  row.store_key === 'settings' &&
+                  logicalKey === 'settings' &&
                   parsed &&
                   typeof parsed === 'object'
                 ) {
                   delete (parsed as Record<string, unknown>).geminiApiKey;
                 }
-                stores[row.store_key] = parsed;
+                stores[logicalKey] = parsed;
                 if (row.updated_at > latestUpdatedAt) {
                   latestUpdatedAt = row.updated_at;
                 }
@@ -188,8 +210,9 @@ export default {
           });
         }
 
-        // D1へストアを保存（トランザクションバッチで原子的にupsert）
+        // D1へストアを保存（トランザクションバッチで原子的にupsert・プロファイル別に分離）
         if (url.pathname === '/api/sync' && request.method === 'PUT') {
+          const profilePrefix = getProfilePrefix(request, url);
           const body = (await request.json().catch(() => null)) as {
             stores?: Record<string, unknown>;
           } | null;
@@ -229,6 +252,7 @@ export default {
               );
             }
 
+            const dbStoreKey = `${profilePrefix}${key}`;
             statements.push(
               env.DB.prepare(
                 `INSERT INTO sync_store (store_key, data_json, updated_at)
@@ -236,7 +260,7 @@ export default {
                  ON CONFLICT(store_key) DO UPDATE SET
                    data_json = excluded.data_json,
                    updated_at = excluded.updated_at`
-              ).bind(key, serialized, now)
+              ).bind(dbStoreKey, serialized, now)
             );
           }
 

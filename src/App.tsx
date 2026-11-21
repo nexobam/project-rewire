@@ -21,9 +21,19 @@ import { SilentModePage } from './pages/SilentModePage';
 import { SleepModePage } from './pages/SleepModePage';
 import { SpeakModePage } from './pages/SpeakModePage';
 import { playTactileClick, unlockAudioContext } from './services/audioService';
+import {
+  getActiveProfile,
+  selectActiveProfile,
+  touchProfileActivity,
+  type UserProfileId,
+} from './services/profileService';
 import { unlockSpeechSynthesis } from './services/ttsService';
 
 export const App: React.FC = () => {
+  const [activeProfile, setActiveProfile] = useState<UserProfileId | null>(() =>
+    getActiveProfile()
+  );
+
   const {
     loading,
     cloudEnabled,
@@ -53,7 +63,7 @@ export const App: React.FC = () => {
     deleteCoachMessage,
     clearCoachMessages,
     generateAiQuestionsNow,
-  } = useAppStore();
+  } = useAppStore(activeProfile);
 
   const [activeTab, setActiveTab] = useState<NavTab>('home');
   const [activeMode, setActiveMode] = useState<ActiveModeLaunch | null>(null);
@@ -66,9 +76,18 @@ export const App: React.FC = () => {
 
   const [currentStudyDate, setCurrentStudyDate] = useState(() => getStudyDate());
 
-  // 午前4時境界跨ぎやPWA復帰時の学習日・ストリーク再評価
+  // 午前4時境界跨ぎ・PWA復帰時の学習日再評価＆2週間無アクセス時の自動ログアウト判定
   useEffect(() => {
     const syncStudyDate = () => {
+      const checkedProfile = getActiveProfile();
+      if (activeProfile && !checkedProfile) {
+        setActiveMode(null);
+        setActiveProfile(null);
+        return;
+      }
+      if (checkedProfile) {
+        touchProfileActivity();
+      }
       const nextDate = getStudyDate();
       setCurrentStudyDate((prev) => {
         if (prev !== nextDate) {
@@ -88,7 +107,7 @@ export const App: React.FC = () => {
       window.removeEventListener('focus', syncStudyDate);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [refreshStudyDateEvaluation]);
+  }, [activeProfile, refreshStudyDateEvaluation]);
 
   // セッション実行中フラグをPWA SW更新制御へ共有（セッション終了後に安全リロード）
   useEffect(() => {
@@ -173,6 +192,67 @@ export const App: React.FC = () => {
     playTactileClick(settings.clickSound);
     setActiveMode(launch);
   };
+
+  // 初回または2週間無アクセスによるログアウト時：使用者（M / Y）選択画面
+  if (!activeProfile) {
+    return (
+      <div
+        style={{
+          backgroundColor: palette.background,
+          color: palette.text,
+        }}
+        className="min-h-dvh flex items-center justify-center px-4"
+        data-testid="profile-selector-screen"
+      >
+        <div
+          style={{
+            backgroundColor: palette.card,
+            borderColor: palette.border,
+          }}
+          className="w-full max-w-sm border rounded-2xl p-6 space-y-5 text-center animate-page-enter"
+        >
+          <div className="space-y-1.5">
+            <h1 className="text-xl font-bold tracking-tight">Project Rewire</h1>
+            <p className="text-sm font-semibold">使用者を選んでください</p>
+            <p className="text-xs opacity-75 leading-relaxed">
+              選んだ人ごとに進捗・回答履歴が完全に分かれます。
+              <br />
+              一度選ぶと固定され、2週間アクセスがないと自動でログアウトします。
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            {(['M', 'Y'] as const).map((profileId) => (
+              <button
+                key={profileId}
+                type="button"
+                onClick={() => {
+                  unlockSpeechSynthesis();
+                  unlockAudioContext();
+                  playTactileClick(true);
+                  selectActiveProfile(profileId);
+                  setActiveProfile(profileId);
+                }}
+                style={{
+                  backgroundColor: palette.text,
+                  color: palette.card,
+                  borderColor: palette.text,
+                  borderBottomWidth: '4px',
+                }}
+                className="min-h-[84px] rounded-xl font-bold text-2xl tactile-block flex flex-col items-center justify-center gap-1"
+                data-testid={`select-profile-${profileId}`}
+              >
+                <span>{profileId}</span>
+                <span className="text-[11px] font-medium opacity-80">
+                  {profileId} で始める
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -271,6 +351,7 @@ export const App: React.FC = () => {
           restTickets={settings.restTickets}
           palette={palette}
           activeTab={activeTab}
+          activeProfile={activeProfile}
           onChangeTab={(tab) => {
             if (isRecalibrating) {
               setIsRecalibrating(false);
@@ -321,6 +402,7 @@ export const App: React.FC = () => {
         restTickets={settings.restTickets}
         palette={palette}
         activeTab={activeTab}
+        activeProfile={activeProfile}
         onChangeTab={(tab) => {
           if (activeMode) {
             const msg =
