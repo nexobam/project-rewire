@@ -12,6 +12,10 @@ import {
   type Chunk,
   type Settings,
 } from '../types';
+import {
+  fetchGeminiViaCloudProxy,
+  getCachedCloudStatus,
+} from './cloudSyncService';
 import { maskSensitiveText, secureLogger } from './logger';
 
 // Gemini Call 1 (temperature 0.7) 用 JSON Schema
@@ -284,29 +288,37 @@ async function callGeminiJsonEndpoint(params: {
     model
   )}:generateContent`;
 
-  const response = await fetchImpl(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-goog-api-key': apiKey,
-    },
-    body: JSON.stringify({
-      systemInstruction: {
-        parts: [{ text: systemInstruction }],
-      },
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: userPrompt }],
-        },
-      ],
-      generationConfig: {
+  const response = !apiKey
+    ? await fetchGeminiViaCloudProxy({
+        model,
+        systemInstruction,
+        userPrompt,
         temperature,
-        responseMimeType: 'application/json',
         responseSchema,
-      },
-    }),
-  });
+      })
+    : await fetchImpl(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: systemInstruction }],
+          },
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: userPrompt }],
+            },
+          ],
+          generationConfig: {
+            temperature,
+            responseMimeType: 'application/json',
+            responseSchema,
+          },
+        }),
+      });
 
   if (response.status === 429) {
     throw new RateLimitError('Gemini API rate limit (429)');
@@ -359,10 +371,14 @@ export async function runFourAiEmployeesPipeline(params: {
 
   const isOffline =
     typeof navigator !== 'undefined' && navigator.onLine === false;
+  const hasLocalKey = Boolean(settings.geminiApiKey?.trim());
+  const useServerProxy =
+    !hasLocalKey &&
+    !params.fetchImpl &&
+    getCachedCloudStatus().serverHasGeminiKey;
 
   if (
-    !settings.geminiApiKey ||
-    settings.geminiApiKey.trim() === '' ||
+    (!hasLocalKey && !useServerProxy) ||
     isOffline ||
     !fetchImpl ||
     !canMakeApiCallToday(settings, 2)
@@ -407,7 +423,7 @@ export async function runFourAiEmployeesPipeline(params: {
   try {
     // コール1（temperature 0.7）
     const step1Result = await callGeminiJsonEndpoint({
-      apiKey: settings.geminiApiKey,
+      apiKey: settings.geminiApiKey ?? '',
       model: settings.geminiModel,
       systemInstruction: step1SystemPrompt,
       userPrompt: step1UserPrompt,
@@ -423,7 +439,7 @@ export async function runFourAiEmployeesPipeline(params: {
 2. 英文（enText, blocks, acceptableOrders）から「ネイティブとして不自然な英語」を排除し、自然で語順が1通りに定まりやすいチャンク（3〜9語、80文字以内）に修正する。`;
 
     const step2Result = (await callGeminiJsonEndpoint({
-      apiKey: settings.geminiApiKey,
+      apiKey: settings.geminiApiKey ?? '',
       model: settings.geminiModel,
       systemInstruction: step2SystemPrompt,
       userPrompt: JSON.stringify(step1Result),
@@ -523,9 +539,14 @@ export async function askAiCoachQuestion(params: {
     usedMock: true,
   };
 
+  const hasLocalKey = Boolean(settings.geminiApiKey?.trim());
+  const useServerProxy =
+    !hasLocalKey &&
+    !params.fetchImpl &&
+    getCachedCloudStatus().serverHasGeminiKey;
+
   if (
-    !settings.geminiApiKey ||
-    settings.geminiApiKey.trim() === '' ||
+    (!hasLocalKey && !useServerProxy) ||
     isOffline ||
     !fetchImpl ||
     !canMakeApiCallToday(settings, 1)
@@ -544,7 +565,7 @@ export async function askAiCoachQuestion(params: {
     };
 
     const res = (await callGeminiJsonEndpoint({
-      apiKey: settings.geminiApiKey,
+      apiKey: settings.geminiApiKey ?? '',
       model: settings.geminiModel,
       systemInstruction:
         'あなたは英語コーチです。日本語の直訳は一切使わず、「空間・動き・感情のコアイメージ」と「発音のコツ」、および自然な英語の例文3つだけで質問に答えてください。',

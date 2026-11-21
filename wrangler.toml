@@ -1,0 +1,13 @@
+name = "project-rewire"
+main = "worker/index.ts"
+compatibility_date = "2025-03-01"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "project-rewire-db"
+database_id = "5a2da26e-154c-4737-af37-00ef0b091087"

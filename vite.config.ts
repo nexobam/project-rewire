@@ -4,8 +4,10 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // Vite & Vitest 設定ファイル
+const basePath = process.env.VITE_BASE_PATH || '/';
+
 export default defineConfig({
-  base: '/project-rewire/',
+  base: basePath,
   plugins: [
     react(),
     tailwindcss(),
@@ -20,8 +22,8 @@ export default defineConfig({
         background_color: '#F7F6F2',
         display: 'standalone',
         orientation: 'portrait-primary',
-        start_url: '/project-rewire/',
-        scope: '/project-rewire/',
+        start_url: basePath,
+        scope: basePath,
         icons: [
           {
             src: 'icons/icon-192.svg',

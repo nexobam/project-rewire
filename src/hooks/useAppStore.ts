@@ -23,6 +23,12 @@ import {
   evaluateStreakAndTickets,
   getStudyDate,
 } from '../domain/studyDate';
+import {
+  checkCloudAuthStatus,
+  fetchCloudStores,
+  pushCloudStores,
+  verifyCloudPasscode,
+} from '../services/cloudSyncService';
 import { runFourAiEmployeesPipeline } from '../services/geminiService';
 import {
   DEFAULT_SETTINGS,
@@ -48,6 +54,9 @@ export function useAppStore() {
   const [streakDays, setStreakDays] = useState(0);
   const [suggestRehab, setSuggestRehab] = useState(false);
   const [justPromotedBanner, setJustPromotedBanner] = useState(false);
+  const [cloudEnabled, setCloudEnabled] = useState(false);
+  const [cloudAuthNeeded, setCloudAuthNeeded] = useState(false);
+  const [serverHasGeminiKey, setServerHasGeminiKey] = useState(false);
 
   // pending状態のAIレポートを非同期に処理する（最大3回リトライ、失敗したら status:'failed'）
   const processPendingAiReports = useCallback(
@@ -147,21 +156,74 @@ export function useAppStore() {
       const data = await initializeAndLoadAppData();
       if (!mounted) return;
 
+      let mergedData = data;
+      const cloudStatus = await checkCloudAuthStatus();
+      if (!mounted) return;
+      setCloudEnabled(cloudStatus.cloudAvailable);
+      setServerHasGeminiKey(cloudStatus.serverHasGeminiKey);
+
+      if (cloudStatus.cloudAvailable) {
+        const cloudRes = await fetchCloudStores();
+        if (!mounted) return;
+        if (cloudRes.unauthorized) {
+          setCloudAuthNeeded(true);
+        } else if (cloudRes.ok && cloudRes.stores) {
+          const cs = cloudRes.stores;
+          if (cs.settings || (cs.chunks && cs.chunks.length > 0)) {
+            mergedData = {
+              settings: cs.settings ?? data.settings,
+              chunks:
+                cs.chunks && cs.chunks.length > 0 ? cs.chunks : data.chunks,
+              reviewStates: cs.reviewStates ?? data.reviewStates,
+              attempts: cs.attempts ?? data.attempts,
+              sessions: cs.sessions ?? data.sessions,
+              aiReports: cs.aiReports ?? data.aiReports,
+              coachMessages: cs.coachMessages ?? data.coachMessages,
+            };
+            await commitValidatedBackupToDb(
+              {
+                schemaVersion: 1,
+                exportedAt: new Date().toISOString(),
+                settings: mergedData.settings,
+                chunks: mergedData.chunks,
+                reviewStates: mergedData.reviewStates,
+                attempts: mergedData.attempts,
+                sessions: mergedData.sessions,
+                aiReports: mergedData.aiReports,
+                coachMessages: mergedData.coachMessages,
+              },
+              data.settings.geminiApiKey
+            );
+          } else {
+            // D1が初回空状態の場合はローカル初期データをD1へ保存
+            void pushCloudStores({
+              settings: data.settings,
+              chunks: data.chunks,
+              reviewStates: data.reviewStates,
+              attempts: data.attempts,
+              sessions: data.sessions,
+              aiReports: data.aiReports,
+              coachMessages: data.coachMessages,
+            });
+          }
+        }
+      }
+
       const today = getStudyDate();
-      const activeDates = data.sessions
+      const activeDates = mergedData.sessions
         .filter((s) => s.activeSeconds > 0)
         .map((s) => s.studyDate);
 
       const streakEval = evaluateStreakAndTickets({
         currentStudyDate: today,
         activeStudyDates: activeDates,
-        currentTickets: data.settings.restTickets,
-        lastTicketRefillWeek: data.settings.lastTicketRefillWeek,
-        lastEvaluatedStudyDate: data.settings.lastEvaluatedStudyDate,
+        currentTickets: mergedData.settings.restTickets,
+        lastTicketRefillWeek: mergedData.settings.lastTicketRefillWeek,
+        lastEvaluatedStudyDate: mergedData.settings.lastEvaluatedStudyDate,
       });
 
       const updatedSettings: Settings = {
-        ...data.settings,
+        ...mergedData.settings,
         restTickets: streakEval.restTickets,
         lastTicketRefillWeek: streakEval.lastTicketRefillWeek,
         lastEvaluatedStudyDate: streakEval.lastEvaluatedStudyDate,
@@ -169,21 +231,21 @@ export function useAppStore() {
       await saveSettingsToDb(updatedSettings);
 
       setSettings(updatedSettings);
-      setChunks(data.chunks);
-      setReviewStates(data.reviewStates);
-      setAttempts(data.attempts);
-      setSessions(data.sessions);
-      setAiReports(data.aiReports);
-      setCoachMessages(data.coachMessages);
+      setChunks(mergedData.chunks);
+      setReviewStates(mergedData.reviewStates);
+      setAttempts(mergedData.attempts);
+      setSessions(mergedData.sessions);
+      setAiReports(mergedData.aiReports);
+      setCoachMessages(mergedData.coachMessages);
       setStreakDays(streakEval.streakDays);
       setSuggestRehab(streakEval.suggestRehab);
       setLoading(false);
 
       // 起動時に未完了（pending）のAIレポートがあれば再実行
       void processPendingAiReports(
-        data.aiReports,
-        data.attempts,
-        data.chunks,
+        mergedData.aiReports,
+        mergedData.attempts,
+        mergedData.chunks,
         updatedSettings
       );
     })();
@@ -198,6 +260,7 @@ export function useAppStore() {
       const next: Settings = { ...settings, ...patch };
       setSettings(next);
       await saveSettingsToDb(next);
+      void pushCloudStores({ settings: next });
       return next;
     },
     [settings]
@@ -235,20 +298,26 @@ export function useAppStore() {
       const nextAttempts = [...attempts, attempt];
       setAttempts(nextAttempts);
 
+      let nextReviewStatesList = reviewStates;
       if (nextReviewState) {
-        setReviewStates((prev) => {
-          const idx = prev.findIndex((s) => s.chunkId === nextReviewState.chunkId);
-          if (idx === -1) return [...prev, nextReviewState];
-          const copy = [...prev];
-          copy[idx] = nextReviewState;
-          return copy;
-        });
+        const idx = reviewStates.findIndex(
+          (s) => s.chunkId === nextReviewState.chunkId
+        );
+        nextReviewStatesList =
+          idx === -1
+            ? [...reviewStates, nextReviewState]
+            : reviewStates.map((s, i) => (i === idx ? nextReviewState! : s));
+        setReviewStates(nextReviewStatesList);
       }
 
-      setSessions((prev) => {
-        const idx = prev.findIndex((s) => s.id === session.id);
-        const nextList = idx === -1 ? [...prev, session] : prev.map((s) => (s.id === session.id ? session : s));
-        const activeDates = nextList
+      const sessIdx = sessions.findIndex((s) => s.id === session.id);
+      const nextSessionsList =
+        sessIdx === -1
+          ? [...sessions, session]
+          : sessions.map((s) => (s.id === session.id ? session : s));
+
+      setSessions(() => {
+        const activeDates = nextSessionsList
           .filter((s) => s.activeSeconds > 0)
           .map((s) => s.studyDate);
         const streakEval = evaluateStreakAndTickets({
@@ -260,7 +329,13 @@ export function useAppStore() {
         });
         setStreakDays(streakEval.streakDays);
         setSuggestRehab(false);
-        return nextList;
+        return nextSessionsList;
+      });
+
+      void pushCloudStores({
+        attempts: nextAttempts,
+        reviewStates: nextReviewStatesList,
+        sessions: nextSessionsList,
       });
 
       // Lv.1前半（絵カード期）→後半（語順ブロック期）の自動移行判定
@@ -303,8 +378,9 @@ export function useAppStore() {
         chunks,
         settings
       );
+      void pushCloudStores({ sessions, aiReports: nextReports });
     },
-    [aiReports, attempts, chunks, processPendingAiReports, settings]
+    [aiReports, attempts, chunks, processPendingAiReports, sessions, settings]
   );
 
   // 「不自然」報告ボタンによる問題の無効化（disabled = true）
@@ -385,8 +461,92 @@ export function useAppStore() {
     [settings.geminiApiKey]
   );
 
+  // パスコード認証してD1と同期する
+  const submitCloudPasscode = useCallback(
+    async (passcode: string): Promise<boolean> => {
+      const ok = await verifyCloudPasscode(passcode);
+      if (!ok) return false;
+      setCloudAuthNeeded(false);
+
+      const cloudRes = await fetchCloudStores();
+      if (cloudRes.ok && cloudRes.stores) {
+        const cs = cloudRes.stores;
+        if (cs.settings || (cs.chunks && cs.chunks.length > 0)) {
+          const nextSettings = cs.settings ?? settings;
+          const nextChunks =
+            cs.chunks && cs.chunks.length > 0 ? cs.chunks : chunks;
+          const nextReviews = cs.reviewStates ?? reviewStates;
+          const nextAttempts = cs.attempts ?? attempts;
+          const nextSessions = cs.sessions ?? sessions;
+          const nextReports = cs.aiReports ?? aiReports;
+          const nextCoach = cs.coachMessages ?? coachMessages;
+
+          await commitValidatedBackupToDb(
+            {
+              schemaVersion: 1,
+              exportedAt: new Date().toISOString(),
+              settings: nextSettings,
+              chunks: nextChunks,
+              reviewStates: nextReviews,
+              attempts: nextAttempts,
+              sessions: nextSessions,
+              aiReports: nextReports,
+              coachMessages: nextCoach,
+            },
+            settings.geminiApiKey
+          );
+
+          setSettings(nextSettings);
+          setChunks(nextChunks);
+          setReviewStates(nextReviews);
+          setAttempts(nextAttempts);
+          setSessions(nextSessions);
+          setAiReports(nextReports);
+          setCoachMessages(nextCoach);
+
+          const activeDates = nextSessions
+            .filter((s) => s.activeSeconds > 0)
+            .map((s) => s.studyDate);
+          const streakEval = evaluateStreakAndTickets({
+            currentStudyDate: getStudyDate(),
+            activeStudyDates: activeDates,
+            currentTickets: nextSettings.restTickets,
+            lastTicketRefillWeek: nextSettings.lastTicketRefillWeek,
+            lastEvaluatedStudyDate: nextSettings.lastEvaluatedStudyDate,
+          });
+          setStreakDays(streakEval.streakDays);
+          setSuggestRehab(streakEval.suggestRehab);
+        } else {
+          void pushCloudStores({
+            settings,
+            chunks,
+            reviewStates,
+            attempts,
+            sessions,
+            aiReports,
+            coachMessages,
+          });
+        }
+      }
+      return true;
+    },
+    [
+      aiReports,
+      attempts,
+      chunks,
+      coachMessages,
+      reviewStates,
+      sessions,
+      settings,
+    ]
+  );
+
   return {
     loading,
+    cloudEnabled,
+    cloudAuthNeeded,
+    serverHasGeminiKey,
+    submitCloudPasscode,
     settings,
     chunks,
     reviewStates,

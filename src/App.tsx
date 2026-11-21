@@ -26,6 +26,9 @@ import { unlockSpeechSynthesis } from './services/ttsService';
 export const App: React.FC = () => {
   const {
     loading,
+    cloudEnabled,
+    cloudAuthNeeded,
+    submitCloudPasscode,
     settings,
     chunks,
     reviewStates,
@@ -50,6 +53,8 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTab>('home');
   const [activeMode, setActiveMode] = useState<ActiveModeLaunch | null>(null);
   const [isRecalibrating, setIsRecalibrating] = useState(false);
+  const [passcodeInput, setPasscodeInput] = useState('');
+  const [passcodeError, setPasscodeError] = useState(false);
 
   const isSleepModeActive = activeMode?.mode === 'sleep';
   const { palette } = useTheme(settings.themePreference, isSleepModeActive);
@@ -140,6 +145,72 @@ export const App: React.FC = () => {
         className="min-h-screen flex items-center justify-center text-sm font-semibold"
       >
         Project Rewire を起動中...
+      </div>
+    );
+  }
+
+  // Cloudflare D1 クラウド同期モードでパスコード未認証の場合
+  if (cloudEnabled && cloudAuthNeeded) {
+    return (
+      <div
+        style={{
+          backgroundColor: palette.background,
+          color: palette.text,
+        }}
+        className="min-h-screen flex items-center justify-center px-4"
+      >
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setPasscodeError(false);
+            const ok = await submitCloudPasscode(passcodeInput);
+            if (!ok) {
+              setPasscodeError(true);
+            }
+          }}
+          style={{
+            backgroundColor: palette.card,
+            borderColor: palette.border,
+          }}
+          className="w-full max-w-sm border rounded-xl p-6 space-y-4"
+        >
+          <h1 className="text-lg font-bold">Project Rewire ログイン</h1>
+          <p className="text-xs opacity-80">
+            クラウド同期とサーバー側 Gemini API を利用するため、パスコードを入力してください（一度入力するとこの端末に記憶されます）。
+          </p>
+          <input
+            type="password"
+            value={passcodeInput}
+            onChange={(e) => setPasscodeInput(e.target.value)}
+            placeholder="パスコードを入力..."
+            style={{
+              backgroundColor: palette.background,
+              borderColor: palette.border,
+            }}
+            className="w-full px-3 py-2.5 rounded-lg border text-sm"
+            autoFocus
+          />
+          {passcodeError && (
+            <p
+              style={{ color: palette.crimsonText }}
+              className="text-xs font-semibold"
+            >
+              パスコードが正しくありません。
+            </p>
+          )}
+          <button
+            type="submit"
+            style={{
+              backgroundColor: palette.text,
+              color: palette.card,
+              borderColor: palette.text,
+              borderBottomWidth: '3px',
+            }}
+            className="w-full min-h-[48px] py-2.5 rounded-lg font-bold text-sm tactile-block"
+          >
+            ロック解除して同期
+          </button>
+        </form>
       </div>
     );
   }
@@ -316,6 +387,7 @@ export const App: React.FC = () => {
           justPromotedBanner={justPromotedBanner}
           currentStudyDate={currentStudyDate}
           palette={palette}
+          cloudEnabled={cloudEnabled}
           onStartMode={handleStartMode}
           onOpenCoach={() => setActiveTab('coach')}
           onOneTapBackup={() => void handleOneTapBackup()}

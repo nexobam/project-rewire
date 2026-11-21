@@ -43,6 +43,7 @@ export interface HomePageProps {
   justPromotedBanner: boolean;
   currentStudyDate: string;
   palette: ThemePalette;
+  cloudEnabled?: boolean;
   onStartMode: (launch: ActiveModeLaunch) => void;
   onOpenCoach: () => void;
   onOneTapBackup: () => void;
@@ -119,6 +120,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   justPromotedBanner,
   currentStudyDate,
   palette,
+  cloudEnabled = false,
   onStartMode,
   onOpenCoach,
   onOneTapBackup,
@@ -141,14 +143,16 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
-      {/* 週1回および昇格時のバックアップ促進バナー（14日超でクローズ不可） */}
-      <BackupBanner
-        lastBackupAt={settings.lastBackupAt}
-        justPromoted={justPromotedBanner}
-        palette={palette}
-        onOneTapBackup={onOneTapBackup}
-        onDismissPromoted={onDismissPromoted}
-      />
+      {/* 週1回および昇格時のバックアップ促進バナー（クラウド自動同期時は非表示） */}
+      {!cloudEnabled && (
+        <BackupBanner
+          lastBackupAt={settings.lastBackupAt}
+          justPromoted={justPromotedBanner}
+          palette={palette}
+          onOneTapBackup={onOneTapBackup}
+          onDismissPromoted={onDismissPromoted}
+        />
+      )}
 
       {/* PCでは2カラム表示（左：1タップ開始＆5学習モード、右：昇格ゲート＆ヒートマップカレンダー） */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
