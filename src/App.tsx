@@ -365,7 +365,6 @@ export const App: React.FC = () => {
           onDeleteMessage={deleteCoachMessage}
           onClearMessages={clearCoachMessages}
           chunks={chunks}
-          attempts={attempts}
           cloudEnabled={cloudEnabled}
           serverHasGeminiKey={serverHasGeminiKey}
         />

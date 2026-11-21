@@ -6,6 +6,7 @@ import {
   Award,
   CheckCircle,
   Mic,
+  Volume2,
   XCircle,
 } from 'lucide-react';
 import { PostAnswerCard } from '../components/PostAnswerCard';
@@ -108,7 +109,7 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
   );
   const [sttActive, setSttActive] = useState(false);
   const [showFirstWordHint, setShowFirstWordHint] = useState(false);
-  const [showChunkOrderHint, setShowChunkOrderHint] = useState(false);
+  const [showSituationHint, setShowSituationHint] = useState(false);
   const [answeredResult, setAnsweredResult] = useState<{
     rating: Rating;
     completionMs: number;
@@ -150,7 +151,7 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
     sttControllerRef.current?.stop();
     setSttActive(false);
     setShowFirstWordHint(false);
-    setShowChunkOrderHint(false);
+    setShowSituationHint(false);
     setAnsweredResult(null);
     setSttTranscript('');
     setSttMatchRate(undefined);
@@ -416,68 +417,88 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <div className="space-y-3">
-          {/* 状況ビジュアルカード（回答後のみ正解英文サブタイトルを表示） */}
+          {/* 状況ビジュアルカード（回答前はアイコン＋3タグのみ、回答後に意味と正解英文を表示） */}
           <VisualCard
             chunk={currentChunk}
             palette={palette}
             allEnglishMode={isAllEnglish}
+            showSituationMeaning={Boolean(answeredResult)}
             showEnglishSubtitle={Boolean(answeredResult)}
           />
 
-          {/* 発話ミッション：この場面であなたが英語で伝える内容（答えの英文 enText と100%一致） */}
-          {!isAllEnglish && (
-            <div
-              style={{
-                backgroundColor: palette.card,
-                borderColor: palette.text,
-              }}
-              className="border-2 rounded-lg p-4 space-y-2.5"
-              data-testid="speak-mission-intent"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs font-bold opacity-75">
-                  発話ミッション（この内容を英語で発話してください）
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setShowFirstWordHint((prev) => !prev)}
-                    style={{ borderColor: palette.border }}
-                    className="text-xs font-semibold px-2 py-0.5 rounded border"
-                    data-testid="first-word-hint-button"
-                  >
-                    {showFirstWordHint
-                      ? `最初の語: "${currentChunk.blocks[0]?.text ?? ''}"`
-                      : '最初の1語ヒント'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowChunkOrderHint((prev) => !prev)}
-                    style={{ borderColor: palette.border }}
-                    className="text-xs font-semibold px-2 py-0.5 rounded border"
-                    data-testid="chunk-order-hint-button"
-                  >
-                    {showChunkOrderHint ? '語順ヒントを隠す' : '語順チャンクヒント'}
-                  </button>
-                </div>
-              </div>
-              <p className="font-bold text-base" data-testid="speak-mission-text">
-                {situationMeaning}
-              </p>
-              {showChunkOrderHint && (
-                <p
-                  style={{
-                    backgroundColor: palette.background,
-                    borderColor: palette.border,
-                  }}
-                  className="text-xs p-2.5 rounded border"
-                  data-testid="speak-chunk-order-hint"
+          {/* 音声再生＆必要なときだけ開くヒントバー（回答前は日本語ネタバレを隠し、音と状況カードだけで発話する） */}
+          <div
+            style={{
+              backgroundColor: palette.card,
+              borderColor: palette.border,
+            }}
+            className="border rounded-lg p-4 space-y-2.5"
+            data-testid="speak-controls-bar"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  playTactileClick(settings.clickSound);
+                  void speakEnglishText({
+                    text: currentChunk.enText,
+                    rate: settings.ttsRate,
+                    multiSpeakerRandom: settings.level >= 2,
+                  });
+                }}
+                style={{
+                  backgroundColor: palette.background,
+                  borderColor: palette.text,
+                  borderBottomWidth: '3px',
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border text-xs font-bold tactile-block"
+                data-testid="speak-play-audio-button"
+              >
+                <Volume2 size={15} strokeWidth={1.75} color="currentColor" />
+                <span>英語音声を再生</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowFirstWordHint((prev) => !prev)}
+                style={{ borderColor: palette.border }}
+                className="text-xs font-semibold px-3 py-2 rounded-lg border tactile-btn"
+                data-testid="first-word-hint-button"
+              >
+                {showFirstWordHint
+                  ? `最初の語: "${currentChunk.blocks[0]?.text ?? ''}"`
+                  : '最初の1語ヒント'}
+              </button>
+
+              {!isAllEnglish && (
+                <button
+                  type="button"
+                  onClick={() => setShowSituationHint((prev) => !prev)}
+                  style={{ borderColor: palette.border }}
+                  className="text-xs font-semibold px-3 py-2 rounded-lg border tactile-btn"
+                  data-testid="situation-hint-button"
                 >
-                  {wordOrderBreakdown}
-                </p>
+                  {showSituationHint ? '場面ヒントを隠す' : '言いたいことヒント'}
+                </button>
               )}
             </div>
-          )}
+
+            {showSituationHint && !isAllEnglish && (
+              <div
+                style={{
+                  backgroundColor: palette.background,
+                  borderColor: palette.border,
+                }}
+                className="p-3 rounded border space-y-1 text-xs"
+                data-testid="speak-mission-intent"
+              >
+                <p className="font-bold text-sm" data-testid="speak-mission-text">
+                  {situationMeaning}
+                </p>
+                <p className="opacity-85">{wordOrderBreakdown}</p>
+              </div>
+            )}
+          </div>
 
           {/* Lv.3 パラフレーズ用 NGワード表示 */}
           {currentChunk.ngWords && currentChunk.ngWords.length > 0 && (
@@ -527,7 +548,7 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
             >
               <div className="space-y-1">
                 <p className="font-bold text-sm">
-                  左の発話ミッションを見て、直接英語を発話してください（回答後に正解の英語音声が流れます）
+                  状況ビジュアルカード（場所・相手・感情）を見て英語を発話してください（回答後に正解英文と解説が表示されます）
                 </p>
                 <p className="text-xs opacity-75">
                   下のマイクボタンを押している間（またはタップで）話し、発話後に3つのボタンで自己判定してください。

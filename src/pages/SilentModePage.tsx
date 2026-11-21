@@ -640,10 +640,10 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
               data-testid="silent-picture-choice-guide"
             >
               <p className="text-sm font-bold">
-                Lv.1前半（絵カード期）：流れた英語の音を聴き、その英語が言っている状況・意味に合うカードを4枚から1枚選んでください。
+                Lv.1前半（絵カード期）：流れた英語の音を聴き、その場面に合う状況ビジュアルカード（場所・相手・感情）を4枚から1枚選んでください。
               </p>
               <p className="text-xs opacity-80">
-                ※各カードには「場所・相手・感情」と「この場面で言っていること」が記載されています。選択後に正解の英文・語順チャンク解説・発音フォームが表示されます。
+                ※日本語のネタバレは出ません。選択後に正解の英文・言っていること・語順チャンク解説・発音フォームが表示されます。
               </p>
               <button
                 type="button"
@@ -734,7 +734,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
                     chunk={card}
                     palette={palette}
                     compact
-                    showSituationMeaning={true}
+                    showSituationMeaning={false}
                     showEnglishSubtitle={false}
                     onClick={() => handleSelectPictureCard(card)}
                   />

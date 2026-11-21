@@ -85,20 +85,17 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
       expect(expectedChunk).toBeDefined();
       const expectedMeaning = extractSituationMeaning(expectedChunk!);
 
-      // 絵カード4択のときだけカード内に「この場面で言っていること（状況・意図）」が表示され、音変化リスニングでは回答前非表示（ネタバレ防止）であること
+      // 回答前はネタバレ防止のため、絵カード4択でも音変化でも「この場面で言っていること」を表示しないこと
+      expect(
+        screen.queryByTestId(`visual-card-intent-${expectedChunk!.id}`)
+      ).not.toBeInTheDocument();
+
       if (screen.queryByTestId('picture-choice-grid')) {
-        const correctCardIntent = await waitFor(() =>
-          screen.getByTestId(`visual-card-intent-${expectedChunk!.id}`)
-        );
-        expect(correctCardIntent).toHaveTextContent(expectedMeaning);
         const correctCard = screen.getByTestId(
           `visual-card-${expectedChunk!.id}`
         );
         fireEvent.click(correctCard);
       } else {
-        expect(
-          screen.queryByTestId(`visual-card-intent-${expectedChunk!.id}`)
-        ).not.toBeInTheDocument();
         // 音変化リスニング：聴こえた英文と同一の選択肢ボタンをクリック
         const soundChoiceBtn = screen.getByRole('button', {
           name: currentSpokenEn,
@@ -200,7 +197,7 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
     );
   });
 
-  it('シナリオ3（発話ドリルモード 5問連続）：1問目〜5問目すべてでPush-to-Talkマイクボタンが常時表示・動作し、発話ミッション・流れる音声・答えが100%一致すること', async () => {
+  it('シナリオ3（発話ドリルモード 5問連続）：回答前は日本語の意味を隠し「英語音声を再生」ボタンとPush-to-Talkマイクが全問で動作し、音声・答え・解説が100%一致すること', async () => {
     const settings = {
       ...DEFAULT_SETTINGS,
       level: 1 as const,
@@ -213,9 +210,7 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
       attempts: [],
     });
 
-    const chunkMapByMeaning = new Map(
-      ALL_SEED_CHUNKS.map((c) => [extractSituationMeaning(c), c])
-    );
+    const chunkMapByEn = new Map(ALL_SEED_CHUNKS.map((c) => [c.enText, c]));
 
     render(
       <SpeakModePage
@@ -235,16 +230,18 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
     );
 
     for (let qIdx = 0; qIdx < 5; qIdx++) {
-      const countBeforeAnswer = spokenTexts.length;
+      // 回答前は日本語の意味（speak-mission-intent）が最初から表示されていないこと
+      expect(
+        screen.queryByTestId('speak-mission-intent')
+      ).not.toBeInTheDocument();
 
-      // 回答前に別の英文（promptAudioText等）が勝手に流れていないこと
-      const missionTextEl = await waitFor(() =>
-        screen.getByTestId('speak-mission-text')
+      // 音声再生ボタン（speak-play-audio-button）が全問に存在し、押すと英語音声が再生されること
+      const playAudioBtn = await waitFor(() =>
+        screen.getByTestId('speak-play-audio-button')
       );
-      const missionText = missionTextEl.textContent?.trim() ?? '';
-      expect(missionText.length).toBeGreaterThan(0);
-
-      const expectedChunk = chunkMapByMeaning.get(missionText);
+      fireEvent.click(playAudioBtn);
+      const playedEn = spokenTexts[spokenTexts.length - 1];
+      const expectedChunk = chunkMapByEn.get(playedEn);
       expect(expectedChunk).toBeDefined();
 
       // Push-to-Talkマイクボタンが1問目だけでなく2問目〜5問目でも必ず表示されていること
@@ -272,25 +269,19 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
         expect(screen.getByTestId('post-answer-card')).toBeInTheDocument()
       );
 
-      // 1. 回答確定時に流れた音声（spokenTextsの最新要素）
-      expect(spokenTexts.length).toBeGreaterThan(countBeforeAnswer);
       const spokenAnswerEn = spokenTexts[spokenTexts.length - 1];
-
-      // 2. 画面に表示された正解英文（revealed-en-text）
       const revealedEn =
         screen.getByTestId('revealed-en-text').textContent?.trim() ?? '';
-
-      // 3. 回答後カードの「このセリフで言っていること（場面の意図）」
       const revealedMeaning =
         screen
           .getByTestId('explanation-situation-meaning')
           .textContent?.replace('このセリフで言っていること（場面の意図）', '')
           .trim() ?? '';
 
-      // 発音された英語・表示された答え・出題時の発話ミッションが100%同一チャンクで完全一致していること！
+      // 発音された英語・表示された答え・回答後の解説が100%同一チャンクで完全一致していること！
       expect(spokenAnswerEn).toBe(expectedChunk!.enText);
       expect(revealedEn).toBe(expectedChunk!.enText);
-      expect(revealedMeaning).toBe(missionText);
+      expect(revealedMeaning).toBe(extractSituationMeaning(expectedChunk!));
 
       // 次の問題へ進む
       fireEvent.click(screen.getByTestId('next-question-button'));
@@ -392,14 +383,22 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
       />
     );
 
-    expect(screen.getByTestId('chunk-quick-ask-section')).toBeInTheDocument();
-    expect(screen.getByTestId('quick-question-templates')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('chunk-quick-ask-section')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('quick-question-templates')
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('coach-intro-description')).toBeInTheDocument();
     expect(
       screen.getByTestId('ai-coach-connection-badge')
     ).toHaveTextContent('AI講師オンライン接続中');
 
-    // 1タップテンプレートをクリックすると即座に質問が送信されること
-    fireEvent.click(screen.getByTestId('quick-template-0'));
+    // 自由入力フォームから質問を送信すると即座にAI講師の回答が保存されること
+    fireEvent.change(screen.getByTestId('coach-question-input'), {
+      target: { value: '"Let me get..." のニュアンスを教えて' },
+    });
+    fireEvent.click(screen.getByTestId('coach-send-button'));
     await waitFor(() => expect(savedMessages.length).toBe(1));
     expect(savedMessages[0].answer).toContain('Let me get');
 
