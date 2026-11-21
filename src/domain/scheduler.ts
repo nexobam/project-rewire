@@ -1,6 +1,7 @@
 // 15問バッチ編成・インターリービング・Miami Heat比率（15%±5%）制御・問題組み替え生成ロジック
 
 import type { Attempt, Block, Chunk, Level, ReviewState } from '../types';
+import { shuffleArray } from './shuffle';
 import { isReviewDue } from './srs';
 
 export const BATCH_SIZE = 15;
@@ -260,11 +261,14 @@ export function buildSessionBatch(params: BuildSessionBatchParams): Chunk[] {
     batchSize = BATCH_SIZE,
   } = params;
 
-  const activeChunks = allChunks.filter((c) => {
-    if (c.disabled) return false;
-    if (mode !== 'speak' && c.speakOnly) return false;
-    return c.level <= Math.max(1, currentLevel);
-  });
+  // 毎回同じ固定順（lv1_01, lv1_02...）にならないよう最初にシャッフルしてから優先度別に分類する
+  const activeChunks = shuffleArray(
+    allChunks.filter((c) => {
+      if (c.disabled) return false;
+      if (mode !== 'speak' && c.speakOnly) return false;
+      return c.level <= Math.max(1, currentLevel);
+    })
+  );
 
   const stateMap = new Map<string, ReviewState>();
   for (const rs of reviewStates) {
@@ -316,13 +320,17 @@ export function buildSessionBatch(params: BuildSessionBatchParams): Chunk[] {
     dueChunks.sort(prioritizeSilentCleared);
     newOrWeakChunks.sort(prioritizeSilentCleared);
   } else {
-    // 弱点（最新評価が red のもの）や未学習（ReviewStateなし）を優先
+    // 弱点（最新評価が red のもの）→ 未学習のAI新規生成問題 → 未学習シード問題の順で優先
     newOrWeakChunks.sort((a, b) => {
       const sa = stateMap.get(a.id);
       const sb = stateMap.get(b.id);
-      const aRed = sa?.recentRatings[sa.recentRatings.length - 1] === 'red' ? 2 : !sa ? 1 : 0;
-      const bRed = sb?.recentRatings[sb.recentRatings.length - 1] === 'red' ? 2 : !sb ? 1 : 0;
-      return bRed - aRed;
+      const score = (c: Chunk, s?: ReviewState) => {
+        if (s?.recentRatings[s.recentRatings.length - 1] === 'red') return 3;
+        if (!s && c.source === 'ai') return 2;
+        if (!s) return 1;
+        return 0;
+      };
+      return score(b, sb) - score(a, sa);
     });
   }
 

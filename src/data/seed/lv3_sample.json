@@ -59,7 +59,7 @@
         "交渉"
       ]
     },
-    "coreImageJa": "予定という箱を手でグッと金曜日の位置まで押し動かす空間イメージ（postponeを使わず表現）。",
+    "coreImageJa": "【言いたいこと】会議を金曜日にずらせませんか？（postpone禁止） ／ 【英語の語順】Can we push the meeting（会議を押し動かせる？）→ to Friday?（金曜日へ）",
     "pronunciationTip": "push the はプッシュザ、meeting to はミーティングトゥと鼻音から渡す。",
     "hasSoundChange": true,
     "source": "seed",
@@ -132,7 +132,7 @@
         "驚き"
       ]
     },
-    "coreImageJa": "値札の重みが自分の許容ラインをはるかに突き抜けている感覚（expensiveを使わず表現）。",
+    "coreImageJa": "【言いたいこと】あのジャケットは高すぎる（expensive禁止） ／ 【英語の語順】That jacket costs（あのジャケットは費用がかかる）→ way too much money.（あまりにも多くのお金が）",
     "pronunciationTip": "costs way はコスツウェイ、too much を強調してピッチを上げる。",
     "hasSoundChange": true,
     "source": "seed",
@@ -205,7 +205,7 @@
         "共感"
       ]
     },
-    "coreImageJa": "相手の言葉が生まれてきた立ち位置・景色が自分の目にもくっきり見えている感覚（understand禁止）。",
+    "coreImageJa": "【言いたいこと】あなたの気持ち・立場はよく分かります（understand禁止） ／ 【英語の語順】I see exactly（はっきり見える）→ where you come from.（あなたがどこから来ているか＝立場が）",
     "pronunciationTip": "where you はウェアユー、come from の m をしっかり閉じて余韻を残す。",
     "hasSoundChange": true,
     "source": "seed",
@@ -278,7 +278,7 @@
         "興奮"
       ]
     },
-    "coreImageJa": "敵地での困難な勝利を力強く引き剥がして手中に収める躍動感（winを使わず表現）。",
+    "coreImageJa": "【言いたいこと】マイアミがアウェーで大きな勝利をもぎ取った（win禁止） ／ 【英語の語順】Miami pulled off（マイアミが引き抜いて成し遂げた）→ a huge road victory.（敵地での大勝利を）",
     "pronunciationTip": "pulled off a はプルドファと連結し、huge road の j と r を滑らかに。",
     "hasSoundChange": true,
     "source": "seed",
@@ -351,7 +351,7 @@
         "消耗"
       ]
     },
-    "coreImageJa": "体の中のバッテリー残量が外へ抜けきって空になっている状態（tiredを使わず表現）。",
+    "coreImageJa": "【言いたいこと】今夜はもう完全にバテて元気がない（tired禁止） ／ 【英語の語順】I am completely（完全に）→ out of energy tonight.（今夜はエネルギー切れだ）",
     "pronunciationTip": "out of energy はアウロヴェナジーとフラップTと v・e を一息で繋ぐ。",
     "hasSoundChange": true,
     "source": "seed",

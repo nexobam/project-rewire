@@ -149,6 +149,34 @@ export async function requestPersistentStorage(): Promise<boolean> {
 }
 
 /**
+ * 既存のシードチャンクの解説（coreImageJa / pronunciationTip）を最新のシード定義でアップグレードする
+ */
+export function upgradeSeedChunksWithLatestExplanations(chunks: Chunk[]): {
+  chunks: Chunk[];
+  changed: boolean;
+} {
+  const seedMap = new Map<string, Chunk>(ALL_SEED_CHUNKS.map((s) => [s.id, s]));
+  let changed = false;
+  const updated = chunks.map((c) => {
+    const latestSeed = seedMap.get(c.id);
+    if (
+      latestSeed &&
+      (c.coreImageJa !== latestSeed.coreImageJa ||
+        c.pronunciationTip !== latestSeed.pronunciationTip)
+    ) {
+      changed = true;
+      return {
+        ...c,
+        coreImageJa: latestSeed.coreImageJa,
+        pronunciationTip: latestSeed.pronunciationTip,
+      };
+    }
+    return c;
+  });
+  return { chunks: updated, changed };
+}
+
+/**
  * 初期シードデータと初期設定を投入し、全データを読み込む
  */
 export async function initializeAndLoadAppData(): Promise<{
@@ -171,7 +199,7 @@ export async function initializeAndLoadAppData(): Promise<{
   }
   const { id: _ignoreId, ...settings } = settingsRow;
 
-  // シード問題の初期投入
+  // シード問題の初期投入および解説の最新化
   let chunks = await db.getAll('chunks');
   if (chunks.length === 0) {
     const tx = db.transaction('chunks', 'readwrite');
@@ -180,6 +208,16 @@ export async function initializeAndLoadAppData(): Promise<{
     }
     await tx.done;
     chunks = [...ALL_SEED_CHUNKS];
+  } else {
+    const upgraded = upgradeSeedChunksWithLatestExplanations(chunks);
+    if (upgraded.changed) {
+      const tx = db.transaction('chunks', 'readwrite');
+      for (const c of upgraded.chunks) {
+        await tx.store.put(c);
+      }
+      await tx.done;
+      chunks = upgraded.chunks;
+    }
   }
 
   const [reviewStates, attempts, sessions, aiReports, coachMessages] =

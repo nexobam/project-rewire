@@ -47,6 +47,7 @@ export const App: React.FC = () => {
     promoteToLevel,
     saveLiveLogResult,
     upsertCoachMessage,
+    generateAiQuestionsNow,
     applyImportedBackup,
   } = useAppStore();
 
@@ -392,6 +393,7 @@ export const App: React.FC = () => {
           onOpenCoach={() => setActiveTab('coach')}
           onOneTapBackup={() => void handleOneTapBackup()}
           onDismissPromoted={() => setJustPromotedBanner(false)}
+          onGenerateAiQuestionsNow={generateAiQuestionsNow}
         />
       )}
     </div>

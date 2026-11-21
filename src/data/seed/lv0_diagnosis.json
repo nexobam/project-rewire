@@ -54,7 +54,7 @@
         "余裕"
       ]
     },
-    "coreImageJa": "自分の領域にスッと引き寄せる感覚。相手に許可ではなく自分の行動の流れを宣言する。",
+    "coreImageJa": "【言いたいこと】水出しコーヒーを1つください ／ 【英語の語順】Let me get（私に取らせて＝ください）→ a cold brew.（水出しコーヒーを）",
     "pronunciationTip": "Let me はレミ、get a はゲラと舌先を弾いて一息で繋げる。",
     "hasSoundChange": true,
     "source": "seed",
@@ -132,7 +132,7 @@
         "解放感"
       ]
     },
-    "coreImageJa": "意識の矢印がすでに出口へ向かって動き出している空間イメージ。",
+    "coreImageJa": "【言いたいこと】そろそろ帰ります（出ます）ね ／ 【英語の語順】I am gonna（これから〜する）→ head out（外へ頭を向ける＝出る）→ now.（今）",
     "pronunciationTip": "head out はヘッダウと連結し、最後の t は破裂させず止める。",
     "hasSoundChange": true,
     "source": "seed",
@@ -202,7 +202,7 @@
         "焦り"
       ]
     },
-    "coreImageJa": "時間の流れの中を走って追いかけているが、少し後ろにズレている感覚。",
+    "coreImageJa": "【言いたいこと】少し遅れています ／ 【英語の語順】I am running（走っている＝進行中）→ a bit late.（少し遅れて）",
     "pronunciationTip": "running a はラニンガ、bit late の t は喉の奥で止めて飲み込む。",
     "hasSoundChange": true,
     "source": "seed",
@@ -272,7 +272,7 @@
         "熱狂"
       ]
     },
-    "coreImageJa": "コート全体の支配権を上からガバッと覆い尽くすダイナミックな動き。",
+    "coreImageJa": "【言いたいこと】ジミーが試合を完全に支配している ／ 【英語の語順】Jimmy is taking over（ジミーが乗っ取っている）→ the game.（試合を）",
     "pronunciationTip": "taking over はテイキンオーバーと鼻音から母音へ滑らかに渡す。",
     "hasSoundChange": true,
     "source": "seed",
@@ -342,7 +342,7 @@
         "納得"
       ]
     },
-    "coreImageJa": "相手から届いた音の響きが、自分の感覚に心地よくピタッと収まるイメージ。",
+    "coreImageJa": "【言いたいこと】それ、かなり良さそうだね ／ 【英語の語順】That sounds（それは〜に響く）→ pretty good（かなり良く）→ to me.（私には）",
     "pronunciationTip": "sounds の d は消え、pretty good はプリディグッと軽やかに弾む。",
     "hasSoundChange": true,
     "source": "seed",
@@ -412,7 +412,7 @@
         "疲労"
       ]
     },
-    "coreImageJa": "心の手触りが料理という動作に向かって伸びていかない脱力感。",
+    "coreImageJa": "【言いたいこと】今日は料理をする気分じゃないな ／ 【英語の語順】I do not feel like（〜したい感触がない）→ cooking.（料理することを）",
     "pronunciationTip": "do not はドンと短く切り、feel like の l を重ねてフィーライクと繋ぐ。",
     "hasSoundChange": true,
     "source": "seed",
@@ -482,7 +482,7 @@
         "懐古"
       ]
     },
-    "coreImageJa": "過去のある期間、この空間に根を張っていたが今は切り離されている距離感。",
+    "coreImageJa": "【言いたいこと】昔このあたりに住んでいました ／ 【英語の語順】I used to live（以前は住んでいた）→ around here.（この周辺に）",
     "pronunciationTip": "used to はユーストゥと濁らず無声音で一気に駆け抜ける。",
     "hasSoundChange": true,
     "source": "seed",
@@ -560,7 +560,7 @@
         "誇り"
       ]
     },
-    "coreImageJa": "ゴール下の空間に重い鍵をかけて相手を一歩も入れない鉄壁の塊。",
+    "coreImageJa": "【言いたいこと】今夜バムがゴール下を完全封鎖した ／ 【英語の語順】Bam locked down（バムが鍵をかけて封じた）→ the paint（ゴール下エリアを）→ tonight.（今夜）",
     "pronunciationTip": "locked down はロックダウンと k と d の間で一瞬息を止めて破裂させる。",
     "hasSoundChange": true,
     "source": "seed",
@@ -630,7 +630,7 @@
         "慎重"
       ]
     },
-    "coreImageJa": "不確かな予定表の上にもう一度視線を重ねて輪郭をくっきりさせる動き。",
+    "coreImageJa": "【言いたいこと】予定をもう一度確認させてください ／ 【英語の語順】Let me double check（私に再確認させて）→ the schedule.（スケジュールを）",
     "pronunciationTip": "double check はダボチェッと l を暗い母音にして素早く繋ぐ。",
     "hasSoundChange": true,
     "source": "seed",
@@ -700,7 +700,7 @@
         "気楽"
       ]
     },
-    "coreImageJa": "視線だけを空間にふわっと泳がせて、まだ何にも手を伸ばさない距離感。",
+    "coreImageJa": "【言いたいこと】見ているだけです、ありがとう ／ 【英語の語順】I am just looking around（ただ周りを見ているだけです）→ thanks.（ありがとう）",
     "pronunciationTip": "looking around はルッキナラウンと ng と a を滑らかに連結する。",
     "hasSoundChange": true,
     "source": "seed",
@@ -770,7 +770,7 @@
         "多忙"
       ]
     },
-    "coreImageJa": "いったん切れた線の先端を、すぐさま相手の元へ折り返し投げ返す弾力。",
+    "coreImageJa": "【言いたいこと】すぐに折り返し電話します ／ 【英語の語順】I will call you（あなたに電話します）→ right back.（すぐ折り返して）",
     "pronunciationTip": "I will はアイル、right back の t は寸止めしてライバッと跳ねる。",
     "hasSoundChange": true,
     "source": "seed",
@@ -848,7 +848,7 @@
         "冷静"
       ]
     },
-    "coreImageJa": "絡まった糸を今はそのままにして、先の時間軸で解きほぐす余白。",
+    "coreImageJa": "【言いたいこと】それは後でなんとか解決しよう ／ 【英語の語順】We can figure it out（私たちはそれを解き明かせる）→ later.（後で）",
     "pronunciationTip": "figure it out はフィギュリラウと3語を一塊の波として発音する。",
     "hasSoundChange": true,
     "source": "seed",
@@ -918,7 +918,7 @@
         "信頼"
       ]
     },
-    "coreImageJa": "どれだけ押し込まれても下から熱い炎が押し返し続ける粘り強い圧力。",
+    "coreImageJa": "【言いたいこと】ヒートは簡単には諦めない ／ 【英語の語順】The Heat never give up（ヒートは決して手放さない）→ easily.（簡単には）",
     "pronunciationTip": "give up easily はギヴァッピーズィリーと v・u・p・ea を一息で繋ぐ。",
     "hasSoundChange": true,
     "source": "seed",
@@ -988,7 +988,7 @@
         "委任"
       ]
     },
-    "coreImageJa": "決定権というボールを相手の手のひらの上にポンと預ける軽やかさ。",
+    "coreImageJa": "【言いたいこと】完全にあなたにお任せします ／ 【英語の語順】It is totally（それは完全に）→ up to you.（あなた次第）",
     "pronunciationTip": "It is はイッツ、up to you はアプトゥユーと p を軽く止めて渡す。",
     "hasSoundChange": true,
     "source": "seed",
@@ -1058,7 +1058,7 @@
         "腑に落ちる"
       ]
     },
-    "coreImageJa": "バラバラだったパズルのピースがカチッと音を立てて一つの像を結ぶ感覚。",
+    "coreImageJa": "【言いたいこと】なるほど、すごく納得がいきました ／ 【英語の語順】That makes（それが作る）→ a lot of sense.（たくさんの筋道・納得を）",
     "pronunciationTip": "makes a はメイクサ、lot of はラロヴとフラップTで滑らかに転がす。",
     "hasSoundChange": true,
     "source": "seed",

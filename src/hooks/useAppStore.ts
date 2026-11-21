@@ -13,6 +13,7 @@ import {
   saveQuestionProgressTransaction,
   saveSessionToDb,
   saveSettingsToDb,
+  upgradeSeedChunksWithLatestExplanations,
 } from '../db/database';
 import {
   checkLv1PhaseTransition,
@@ -123,15 +124,15 @@ export function useAppStore() {
           continue;
         }
 
+        let latestChunks = currentChunks;
         if (result.newChunks.length > 0) {
           await saveChunksToDb(result.newChunks);
-          setChunks((prev) => {
-            const existingIds = new Set(prev.map((c) => c.id));
-            const uniqueNew = result.newChunks.filter(
-              (c) => !existingIds.has(c.id)
-            );
-            return [...prev, ...uniqueNew];
-          });
+          const existingIds = new Set(currentChunks.map((c) => c.id));
+          const uniqueNew = result.newChunks.filter(
+            (c) => !existingIds.has(c.id)
+          );
+          latestChunks = [...currentChunks, ...uniqueNew];
+          setChunks(latestChunks);
         }
 
         const doneReport: AiReport = {
@@ -141,9 +142,17 @@ export function useAppStore() {
           teacher: result.teacher,
         };
         await saveAiReportToDb(doneReport);
-        setAiReports((prev) =>
-          prev.map((r) => (r.id === doneReport.id ? doneReport : r))
-        );
+        setAiReports((prev) => {
+          const nextList = prev.map((r) =>
+            r.id === doneReport.id ? doneReport : r
+          );
+          void pushCloudStores({
+            chunks: latestChunks,
+            aiReports: nextList,
+            settings: nextSettings,
+          });
+          return nextList;
+        });
       }
     },
     []
@@ -170,16 +179,22 @@ export function useAppStore() {
         } else if (cloudRes.ok && cloudRes.stores) {
           const cs = cloudRes.stores;
           if (cs.settings || (cs.chunks && cs.chunks.length > 0)) {
+            const rawChunks =
+              cs.chunks && cs.chunks.length > 0 ? cs.chunks : data.chunks;
+            const upgradedCloud =
+              upgradeSeedChunksWithLatestExplanations(rawChunks);
             mergedData = {
               settings: cs.settings ?? data.settings,
-              chunks:
-                cs.chunks && cs.chunks.length > 0 ? cs.chunks : data.chunks,
+              chunks: upgradedCloud.chunks,
               reviewStates: cs.reviewStates ?? data.reviewStates,
               attempts: cs.attempts ?? data.attempts,
               sessions: cs.sessions ?? data.sessions,
               aiReports: cs.aiReports ?? data.aiReports,
               coachMessages: cs.coachMessages ?? data.coachMessages,
             };
+            if (upgradedCloud.changed) {
+              void pushCloudStores({ chunks: upgradedCloud.chunks });
+            }
             await commitValidatedBackupToDb(
               {
                 schemaVersion: 1,
@@ -390,7 +405,9 @@ export function useAppStore() {
       if (!target) return;
       const updated: Chunk = { ...target, disabled: true };
       await saveChunksToDb([updated]);
-      setChunks((prev) => prev.map((c) => (c.id === chunkId ? updated : c)));
+      const nextChunks = chunks.map((c) => (c.id === chunkId ? updated : c));
+      setChunks(nextChunks);
+      void pushCloudStores({ chunks: nextChunks });
     },
     [chunks]
   );
@@ -405,6 +422,7 @@ export function useAppStore() {
         level: nextLevel,
         bossCooldownUntil: undefined,
       });
+      void pushCloudStores({ chunks: lockedChunks });
       setJustPromotedBanner(true);
     },
     [chunks, updateSettings]
@@ -424,24 +442,100 @@ export function useAppStore() {
         await saveChunksToDb(newChunks);
       }
 
-      setSessions((prev) => [...prev, session]);
-      setAiReports((prev) => [...prev, report]);
+      const nextSessions = [...sessions, session];
+      const nextReports = [...aiReports, report];
+      const nextChunks =
+        newChunks.length > 0 ? [...chunks, ...newChunks] : chunks;
+
+      setSessions(nextSessions);
+      setAiReports(nextReports);
       if (newChunks.length > 0) {
-        setChunks((prev) => [...prev, ...newChunks]);
+        setChunks(nextChunks);
       }
+      void pushCloudStores({
+        sessions: nextSessions,
+        aiReports: nextReports,
+        chunks: nextChunks,
+      });
     },
-    []
+    [aiReports, chunks, sessions]
   );
 
   // AIコーチ質問メッセージの保存
-  const upsertCoachMessage = useCallback(async (msg: CoachMessage) => {
-    await saveCoachMessageToDb(msg);
-    setCoachMessages((prev) => {
-      const idx = prev.findIndex((m) => m.id === msg.id);
-      if (idx === -1) return [...prev, msg];
-      return prev.map((m) => (m.id === msg.id ? msg : m));
+  const upsertCoachMessage = useCallback(
+    async (msg: CoachMessage) => {
+      await saveCoachMessageToDb(msg);
+      const idx = coachMessages.findIndex((m) => m.id === msg.id);
+      const nextList =
+        idx === -1
+          ? [...coachMessages, msg]
+          : coachMessages.map((m) => (m.id === msg.id ? msg : m));
+      setCoachMessages(nextList);
+      void pushCloudStores({ coachMessages: nextList });
+    },
+    [coachMessages]
+  );
+
+  // 手動で今すぐAI社員に新問題を5問生成させるアクション
+  const generateAiQuestionsNow = useCallback(async (): Promise<{
+    addedCount: number;
+    usedMock: boolean;
+  }> => {
+    const result = await runFourAiEmployeesPipeline({
+      sessionAttempts: attempts.slice(-15),
+      existingChunks: chunks,
+      settings,
     });
-  }, []);
+
+    const today = getStudyDate();
+    let nextSettings = settings;
+    if (result.apiCallsMade > 0) {
+      const prevCount =
+        settings.apiCallDate === today ? (settings.apiCallCount ?? 0) : 0;
+      nextSettings = {
+        ...settings,
+        apiCallDate: today,
+        apiCallCount: prevCount + result.apiCallsMade,
+      };
+      await saveSettingsToDb(nextSettings);
+      setSettings(nextSettings);
+    }
+
+    let addedCount = 0;
+    let nextChunks = chunks;
+    if (result.newChunks.length > 0) {
+      const existingIds = new Set(chunks.map((c) => c.id));
+      const uniqueNew = result.newChunks.filter((c) => !existingIds.has(c.id));
+      if (uniqueNew.length > 0) {
+        await saveChunksToDb(uniqueNew);
+        nextChunks = [...chunks, ...uniqueNew];
+        setChunks(nextChunks);
+        addedCount = uniqueNew.length;
+      }
+    }
+
+    const manualReport: AiReport = {
+      id: `report_manual_${Date.now()}`,
+      sessionId: 'manual_generation',
+      studyDate: today,
+      status: 'done',
+      retryCount: 0,
+      analyst: result.analyst,
+      teacher: result.teacher,
+      createdAt: Date.now(),
+    };
+    await saveAiReportToDb(manualReport);
+    const nextReports = [...aiReports, manualReport];
+    setAiReports(nextReports);
+
+    void pushCloudStores({
+      chunks: nextChunks,
+      aiReports: nextReports,
+      settings: nextSettings,
+    });
+
+    return { addedCount, usedMock: result.usedMock };
+  }, [aiReports, attempts, chunks, settings]);
 
   // バックアップのインポート適用
   const applyImportedBackup = useCallback(
@@ -565,6 +659,7 @@ export function useAppStore() {
     promoteToLevel,
     saveLiveLogResult,
     upsertCoachMessage,
+    generateAiQuestionsNow,
     applyImportedBackup,
   };
 }

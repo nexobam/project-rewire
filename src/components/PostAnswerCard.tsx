@@ -129,21 +129,62 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
         </div>
       )}
 
-      {/* コアイメージと発音フォーム（直訳禁止・要件2-1-4。Lv.4 All Englishモード時は非表示） */}
+      {/* 場面での意味・英語の語順チャンク理解・発音フォーム（Lv.4 All Englishモード時は非表示） */}
       {!allEnglishMode && (
         <div className="space-y-2 text-sm">
-          <div
-            style={{
-              backgroundColor: palette.background,
-              borderColor: palette.border,
-            }}
-            className="p-3 rounded border"
-          >
-            <p className="text-xs font-bold opacity-75 mb-1">
-              空間・動き・感情のコアイメージ（直訳なし）
-            </p>
-            <p>{chunk.coreImageJa}</p>
-          </div>
+          {chunk.coreImageJa.includes('／') ? (
+            <>
+              <div
+                style={{
+                  backgroundColor: palette.background,
+                  borderColor: palette.border,
+                }}
+                className="p-3 rounded border"
+              >
+                <p className="text-xs font-bold opacity-75 mb-1">
+                  このセリフで言っていること（場面の意図）
+                </p>
+                <p className="font-bold text-base">
+                  {chunk.coreImageJa
+                    .split('／')[0]
+                    .replace(/^【言いたいこと】/, '')
+                    .trim()}
+                </p>
+              </div>
+              <div
+                style={{
+                  backgroundColor: palette.background,
+                  borderColor: palette.border,
+                }}
+                className="p-3 rounded border"
+              >
+                <p className="text-xs font-bold opacity-75 mb-1">
+                  英語の語順のまま前から理解（チャンク分解・コアイメージ）
+                </p>
+                <p>
+                  {chunk.coreImageJa
+                    .split('／')
+                    .slice(1)
+                    .join('／')
+                    .replace(/^\s*【英語の語順】/, '')
+                    .trim()}
+                </p>
+              </div>
+            </>
+          ) : (
+            <div
+              style={{
+                backgroundColor: palette.background,
+                borderColor: palette.border,
+              }}
+              className="p-3 rounded border"
+            >
+              <p className="text-xs font-bold opacity-75 mb-1">
+                意味と空間・動きのコアイメージ
+              </p>
+              <p>{chunk.coreImageJa}</p>
+            </div>
+          )}
           <div
             style={{
               backgroundColor: palette.background,

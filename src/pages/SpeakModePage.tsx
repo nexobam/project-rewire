@@ -103,6 +103,7 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
     undefined
   );
   const [sttActive, setSttActive] = useState(false);
+  const [showFirstWordHint, setShowFirstWordHint] = useState(false);
   const [answeredResult, setAnsweredResult] = useState<{
     rating: Rating;
     completionMs: number;
@@ -111,6 +112,7 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
   const [sessionFinished, setSessionFinished] = useState(false);
 
   const sttControllerRef = useRef<SttSessionController | null>(null);
+  const micPressStartMsRef = useRef<number>(0);
   const questionStartMsRef = useRef<number>(performance.now());
   const sessionStartMsRef = useRef<number>(Date.now());
 
@@ -137,40 +139,16 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
   }, [settings.level]);
 
   // 問題開始：オウム返しは禁止（お手本音声は絶対に流さない！流してよいのは「相手の短い問いかけ音声 promptAudioText」だけ・要件4-2）
+  // マイクは自動起動せず、ユーザーがマイクボタンを押したタイミングで起動する
   const startSpeakQuestion = useCallback(
     (chunk: Chunk) => {
       sttControllerRef.current?.stop();
+      setSttActive(false);
+      setShowFirstWordHint(false);
       setAnsweredResult(null);
       setSttTranscript('');
       setSttMatchRate(undefined);
       questionStartMsRef.current = performance.now();
-
-      const beginSttIfAvailable = () => {
-        if (!isSttSupported()) {
-          setSttActive(false);
-          return;
-        }
-        setSttActive(true);
-        sttControllerRef.current = startAuxiliaryStt({
-          level: settings.level,
-          onTranscriptUpdate: (text) => {
-            setSttTranscript(text);
-            const match = calculateSttMatch(chunk.enText, text);
-            setSttMatchRate(match.matchRate);
-          },
-          onFinish: (finalText) => {
-            setSttActive(false);
-            if (finalText) {
-              setSttTranscript(finalText);
-              const match = calculateSttMatch(chunk.enText, finalText);
-              setSttMatchRate(match.matchRate);
-            }
-          },
-          onFallbackToSelfJudge: () => {
-            setSttActive(false);
-          },
-        });
-      };
 
       if (chunk.promptAudioText) {
         void speakEnglishText({
@@ -179,15 +157,68 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
           multiSpeakerRandom: settings.level >= 2,
           onEnd: () => {
             questionStartMsRef.current = performance.now();
-            beginSttIfAvailable();
           },
         });
-      } else {
-        beginSttIfAvailable();
       }
     },
     [settings.level, settings.ttsRate]
   );
+
+  // マイクボタンを押したとき（押している間起動／短タップでのON・OFFトグル両対応）
+  const startMicRecording = useCallback(() => {
+    if (!currentChunk || !isSttSupported()) return;
+    playTactileClick(settings.clickSound);
+    sttControllerRef.current?.stop();
+    setSttTranscript('');
+    setSttMatchRate(undefined);
+    setSttActive(true);
+    micPressStartMsRef.current = performance.now();
+
+    sttControllerRef.current = startAuxiliaryStt({
+      level: settings.level,
+      disableSilenceTimeout: true,
+      onTranscriptUpdate: (text) => {
+        setSttTranscript(text);
+        const match = calculateSttMatch(currentChunk.enText, text);
+        setSttMatchRate(match.matchRate);
+      },
+      onFinish: (finalText) => {
+        setSttActive(false);
+        if (finalText) {
+          setSttTranscript(finalText);
+          const match = calculateSttMatch(currentChunk.enText, finalText);
+          setSttMatchRate(match.matchRate);
+        }
+      },
+      onFallbackToSelfJudge: () => {
+        setSttActive(false);
+      },
+    });
+  }, [currentChunk, settings.clickSound, settings.level]);
+
+  const stopMicRecording = useCallback(() => {
+    playTactileClick(settings.clickSound);
+    sttControllerRef.current?.stop();
+    setSttActive(false);
+  }, [settings.clickSound]);
+
+  const handleMicPointerDown = () => {
+    if (sttActive) {
+      // すでに録音中ならタップで停止
+      stopMicRecording();
+    } else {
+      startMicRecording();
+    }
+  };
+
+  const handleMicPointerUp = () => {
+    if (!sttActive) return;
+    const heldMs = performance.now() - micPressStartMsRef.current;
+    // 350ms以上長押ししていた場合は指を離した瞬間に録音停止（Push-to-Talk）
+    if (heldMs >= 350) {
+      stopMicRecording();
+    }
+  };
 
   useEffect(() => {
     if (currentChunk && !sessionFinished) {
@@ -379,6 +410,40 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
             showEnglishSubtitle={Boolean(answeredResult)}
           />
 
+          {/* 発話ミッション：この場面であなたが伝えたい意図（何を言えばいいか迷わないための状況ゴール） */}
+          {!(settings.level === 4 && settings.allEnglishMode) && (
+            <div
+              style={{
+                backgroundColor: palette.card,
+                borderColor: palette.text,
+              }}
+              className="border-2 rounded-lg p-4 space-y-2"
+              data-testid="speak-mission-intent"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold opacity-75">
+                  発話ミッション（この場面で伝えたいこと）
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowFirstWordHint((prev) => !prev)}
+                  style={{ borderColor: palette.border }}
+                  className="text-xs font-semibold px-2 py-0.5 rounded border"
+                >
+                  {showFirstWordHint
+                    ? `最初の語: "${currentChunk.blocks[0]?.text ?? ''}"`
+                    : '最初の1語ヒントを見る'}
+                </button>
+              </div>
+              <p className="font-bold text-base">
+                {currentChunk.coreImageJa
+                  .split('／')[0]
+                  .replace(/^【言いたいこと】/, '')
+                  .trim()}
+              </p>
+            </div>
+          )}
+
           {/* 相手の短い問いかけ音声がある場合 */}
           {currentChunk.promptAudioText && (
             <div
@@ -470,23 +535,57 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
                 </p>
               </div>
 
-              {/* STT補助パネル */}
+              {/* マイクボタン（押している間マイク起動 ／ タップで開始・停止トグル）＆ STT補助パネル */}
               <div
                 style={{
                   backgroundColor: palette.background,
-                  borderColor: palette.border,
+                  borderColor: sttActive
+                    ? (palette.amberSurface ?? palette.text)
+                    : palette.border,
                 }}
-                className="p-3.5 rounded-lg border text-xs space-y-1"
+                className="p-4 rounded-lg border space-y-3"
                 data-testid="stt-status-box"
               >
-                <div className="flex items-center justify-between font-semibold">
+                {isSttSupported() ? (
+                  <button
+                    type="button"
+                    onPointerDown={handleMicPointerDown}
+                    onPointerUp={handleMicPointerUp}
+                    onPointerCancel={handleMicPointerUp}
+                    style={{
+                      backgroundColor: sttActive
+                        ? (palette.amberSurface ?? palette.text)
+                        : palette.card,
+                      color: sttActive
+                        ? (palette.amberSurfaceText ?? '#1C1917')
+                        : palette.text,
+                      borderColor: palette.text,
+                      borderBottomWidth: '3px',
+                    }}
+                    className="w-full min-h-[56px] px-4 py-3 rounded-lg border-2 font-bold text-sm flex items-center justify-center gap-2 tactile-block select-none"
+                    data-testid="push-to-talk-mic-button"
+                  >
+                    <Mic size={20} strokeWidth={1.75} color="currentColor" />
+                    <span>
+                      {sttActive
+                        ? 'マイク聞き取り中...（離す／タップで停止）'
+                        : 'マイクボタンを押している間（またはタップで）英語を話す'}
+                    </span>
+                  </button>
+                ) : (
+                  <p className="text-xs opacity-75">
+                    ※このブラウザ環境またはオフライン時は音声認識（STT）非対応のため、声に出したあと下の自己判定ボタンで進んでください。
+                  </p>
+                )}
+
+                <div className="flex items-center justify-between text-xs font-semibold">
                   <span>
-                    STT補助:{' '}
+                    STT補助状態:{' '}
                     {sttActive
-                      ? 'マイク聞き取り中...'
-                      : isSttSupported()
-                        ? '待機／認識完了'
-                        : '非対応またはオフライン（自己判定のみで進行）'}
+                      ? '録音・認識中...'
+                      : sttTranscript
+                        ? '認識完了'
+                        : '待機中'}
                   </span>
                   {typeof sttMatchRate === 'number' && (
                     <span>
@@ -503,7 +602,7 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
                 {violatedNgWords.length > 0 && (
                   <p
                     style={{ color: palette.crimsonText }}
-                    className="font-bold pt-1"
+                    className="font-bold text-xs pt-1"
                   >
                     NGワードが含まれています: {violatedNgWords.join(', ')}
                   </p>

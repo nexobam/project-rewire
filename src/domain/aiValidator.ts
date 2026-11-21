@@ -190,7 +190,7 @@ export function validateAiQuestion(
         data.tags[2].trim(),
       ],
     },
-    coreImageJa: data.coreImageJa.slice(0, 100),
+    coreImageJa: data.coreImageJa.slice(0, 220),
     pronunciationTip: data.pronunciationTip,
     hasSoundChange: data.hasSoundChange,
     source: 'ai',

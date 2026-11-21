@@ -67,19 +67,43 @@ export const VisualCard: React.FC<VisualCardProps> = ({
           </div>
         </div>
 
-        {/* Miami Heat タグのみクリムゾンを許可（要件7・背景トークンと組み合わせて4.5:1以上を確保） */}
-        {isHeat && (
+        <div className="flex items-center gap-1.5">
+          {/* 問題ソースバッジ（AI生成・Live弱点・コア問題の見える化） */}
           <span
             style={{
               backgroundColor: palette.background,
-              color: palette.crimsonText ?? palette.text,
-              borderColor: palette.crimsonText ?? palette.border,
+              borderColor: palette.border,
+              color:
+                chunk.source === 'ai'
+                  ? (palette.amberText ?? palette.text)
+                  : palette.text,
             }}
-            className="text-xs font-bold px-2 py-0.5 rounded border uppercase tracking-wider"
+            className="text-[11px] font-bold px-2 py-0.5 rounded border"
+            data-testid={`chunk-source-${chunk.source}`}
           >
-            MIAMI HEAT
+            {chunk.source === 'ai'
+              ? 'AI生成'
+              : chunk.source === 'live'
+                ? 'Live弱点'
+                : chunk.source === 'recomposed'
+                  ? '弱点応用'
+                  : 'コア問題'}
           </span>
-        )}
+
+          {/* Miami Heat タグのみクリムゾンを許可（要件7・背景トークンと組み合わせて4.5:1以上を確保） */}
+          {isHeat && (
+            <span
+              style={{
+                backgroundColor: palette.background,
+                color: palette.crimsonText ?? palette.text,
+                borderColor: palette.crimsonText ?? palette.border,
+              }}
+              className="text-xs font-bold px-2 py-0.5 rounded border uppercase tracking-wider"
+            >
+              MIAMI HEAT
+            </span>
+          )}
+        </div>
       </div>
 
       {/* 場面タグ3つ（場所／相手／感情の名詞・各8文字以内）。Lv.4 All Englishモード時は非表示可 */}

@@ -48,6 +48,10 @@ export interface HomePageProps {
   onOpenCoach: () => void;
   onOneTapBackup: () => void;
   onDismissPromoted: () => void;
+  onGenerateAiQuestionsNow?: () => Promise<{
+    addedCount: number;
+    usedMock: boolean;
+  }>;
 }
 
 /**
@@ -111,6 +115,7 @@ export function selectRecommendedAction(params: {
 
 export const HomePage: React.FC<HomePageProps> = ({
   settings,
+  chunks,
   reviewStates,
   sessions,
   aiReports,
@@ -125,7 +130,17 @@ export const HomePage: React.FC<HomePageProps> = ({
   onOpenCoach,
   onOneTapBackup,
   onDismissPromoted,
+  onGenerateAiQuestionsNow,
 }) => {
+  const [generatingAi, setGeneratingAi] = React.useState(false);
+  const [aiGenNotice, setAiGenNotice] = React.useState<string | null>(null);
+
+  const activeChunks = chunks.filter((c) => !c.disabled);
+  const seedCount = activeChunks.filter((c) => c.source === 'seed').length;
+  const aiCount = activeChunks.filter((c) => c.source === 'ai').length;
+  const liveOrRecompCount = activeChunks.filter(
+    (c) => c.source === 'live' || c.source === 'recomposed'
+  ).length;
   const dueCount = reviewStates.filter((s) =>
     isReviewDue(s, currentStudyDate)
   ).length;
@@ -425,6 +440,107 @@ export const HomePage: React.FC<HomePageProps> = ({
             palette={palette}
             currentStudyDate={currentStudyDate}
           />
+
+          {/* 問題バンク内訳 ＆ 4人のAI社員による新規問題生成パネル */}
+          <div
+            style={{
+              backgroundColor: palette.card,
+              borderColor: palette.border,
+              color: palette.text,
+            }}
+            className="border rounded-lg p-5 space-y-3 text-xs"
+            data-testid="ai-question-bank-card"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-bold text-sm">
+                <Sparkles size={16} strokeWidth={1.75} color="currentColor" />
+                <span>問題バンク ＆ 4人のAI社員ステータス</span>
+              </div>
+              <span className="font-mono font-bold">
+                全 {activeChunks.length} 問
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div
+                style={{
+                  backgroundColor: palette.background,
+                  borderColor: palette.border,
+                }}
+                className="p-2.5 rounded border"
+              >
+                <div className="opacity-75">初期コア問題</div>
+                <div className="text-base font-bold font-mono">{seedCount}問</div>
+              </div>
+              <div
+                style={{
+                  backgroundColor: palette.background,
+                  borderColor: palette.border,
+                }}
+                className="p-2.5 rounded border"
+              >
+                <div className="opacity-75">AI生成問題</div>
+                <div
+                  style={{ color: palette.amberText ?? palette.text }}
+                  className="text-base font-bold font-mono"
+                >
+                  {aiCount}問
+                </div>
+              </div>
+              <div
+                style={{
+                  backgroundColor: palette.background,
+                  borderColor: palette.border,
+                }}
+                className="p-2.5 rounded border"
+              >
+                <div className="opacity-75">Live弱点・応用</div>
+                <div className="text-base font-bold font-mono">
+                  {liveOrRecompCount}問
+                </div>
+              </div>
+            </div>
+
+            <p className="opacity-80">
+              セッション完了時（「終了して集計」時）にAI社員が自動で新問題を5問作りますが、下のボタンから今すぐ追加作成することもできます。
+            </p>
+
+            {onGenerateAiQuestionsNow && (
+              <button
+                type="button"
+                disabled={generatingAi}
+                onClick={async () => {
+                  setGeneratingAi(true);
+                  setAiGenNotice(null);
+                  try {
+                    const res = await onGenerateAiQuestionsNow();
+                    setAiGenNotice(
+                      `AI社員が新しく ${res.addedCount} 問を作成しました！（次回のバッチで優先出題されます）`
+                    );
+                  } finally {
+                    setGeneratingAi(false);
+                  }
+                }}
+                style={{
+                  backgroundColor: palette.background,
+                  borderColor: palette.text,
+                  borderBottomWidth: '3px',
+                }}
+                className="w-full min-h-[44px] px-4 py-2.5 rounded-lg border font-bold text-xs tactile-block disabled:opacity-50"
+                data-testid="generate-ai-questions-now-button"
+              >
+                {generatingAi
+                  ? '4人のAI社員が新問題を作成・品質監査中...'
+                  : '今すぐAI社員に新問題を5問作らせる'}
+              </button>
+            )}
+
+            {aiGenNotice && (
+              <p className="font-bold pt-1" style={{ color: palette.greenText }}>
+                {aiGenNotice}
+              </p>
+            )}
+          </div>
 
           {/* 直近のAI社員コメントサマリー */}
           {aiReports.filter((r) => r.analyst).length > 0 && (

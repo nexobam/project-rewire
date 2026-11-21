@@ -54,8 +54,15 @@ export function startAuxiliaryStt(params: {
   onTranscriptUpdate: (transcript: string) => void;
   onFinish: (finalTranscript: string) => void;
   onFallbackToSelfJudge?: () => void;
+  disableSilenceTimeout?: boolean;
 }): SttSessionController {
-  const { level, onTranscriptUpdate, onFinish, onFallbackToSelfJudge } = params;
+  const {
+    level,
+    onTranscriptUpdate,
+    onFinish,
+    onFallbackToSelfJudge,
+    disableSilenceTimeout = false,
+  } = params;
 
   if (!isSttSupported()) {
     onFallbackToSelfJudge?.();
@@ -110,6 +117,7 @@ export function startAuxiliaryStt(params: {
 
   const resetSilenceTimer = () => {
     clearSilenceTimer();
+    if (disableSilenceTimeout) return;
     silenceTimer = setTimeout(() => {
       finishOnce();
     }, silenceMs);

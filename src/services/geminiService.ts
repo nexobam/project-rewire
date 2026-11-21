@@ -176,7 +176,7 @@ export function generateLocalMockPipelineOutput(params: {
       icons: ['Coffee', 'Clock'],
       tags: ['カフェ', '店員', '一息'],
       coreImageJa:
-        '自分の手元へもう一杯のコーヒーをサッと引き寄せる軽快な空間動作。',
+        '【言いたいこと】コーヒーをもう1杯もらおうかな ／ 【英語の語順】Let me grab（サッと手元に取らせて）→ another cup of coffee.（もう1杯のコーヒーを）',
       pronunciationTip: 'Let me はレミ、cup of はカッポヴと一息で連結する。',
       hasSoundChange: true,
     },
@@ -192,7 +192,7 @@ export function generateLocalMockPipelineOutput(params: {
       icons: ['Mail', 'Briefcase'],
       tags: ['オフィス', '同僚', '連携'],
       coreImageJa:
-        '相手を最新情報の掲示板の前に常に立たせ続ける継続的な共有感覚。',
+        '【言いたいこと】この件は随時アップデート（進捗報告）しますね ／ 【英語の語順】I will keep you posted（あなたを最新情報に触れた状態に保つ）→ on this.（この件に接触させて）',
       pronunciationTip: 'keep you はキーピュ、posted on はポースティドンと繋ぐ。',
       hasSoundChange: true,
     },
@@ -208,7 +208,7 @@ export function generateLocalMockPipelineOutput(params: {
       icons: ['Flame', 'Zap'],
       tags: ['アリーナ', '仲間', '躍動'],
       coreImageJa:
-        '守備から攻撃へ切り替わる瞬間にコート全体の速度を前へ押し出す推進力。',
+        '【言いたいこと】マイアミが速攻（トランジション）で一気にペースを上げた ／ 【英語の語順】Miami pushed the pace（マイアミが速度を前へ押し出した）→ in transition.（攻守切替の中で）',
       pronunciationTip: 'pushed the はプッシュザと t を止めて th へ滑らせる。',
       hasSoundChange: true,
     },
@@ -224,7 +224,7 @@ export function generateLocalMockPipelineOutput(params: {
       icons: ['Train', 'Home'],
       tags: ['駅改札', '家族', '安堵'],
       coreImageJa:
-        '頭と体の向きが自宅へ真っ直ぐ向かって移動し始めている軌道。',
+        '【言いたいこと】今ちょうど家に向かって帰っているところです ／ 【英語の語順】I am heading back home（頭を家の方へ戻して進んでいる）→ right now.（たった今）',
       pronunciationTip: 'heading back の ng を軽く鼻に抜き、right now の t を止める。',
       hasSoundChange: true,
     },
@@ -240,7 +240,7 @@ export function generateLocalMockPipelineOutput(params: {
       icons: ['ThumbsUp', 'Users'],
       tags: ['ダイナー', '友人', '賛同'],
       coreImageJa:
-        '提示されたプランと自分が心地よく並んで調和している感覚。',
+        '【言いたいこと】そのプランで全く問題ない（大賛成）よ ／ 【英語の語順】I am totally good（私は完全に心地よい・OKだ）→ with that plan.（その計画と一緒にいて）',
       pronunciationTip: 'totally の t はフラップで軽く弾き、good with を密着させる。',
       hasSoundChange: true,
     },
@@ -401,7 +401,7 @@ export async function runFourAiEmployeesPipeline(params: {
 
   const step1SystemPrompt = `あなたは英語脳再配線アプリ「Project Rewire」の3人の専門AI社員（データアナリスト・コアイメージ先生・カリキュラム職人）です。
 【絶対ルール】
-- 日本語の直訳は全面禁止。解説は「空間・動き・感情のコアイメージ（100字以内）」と「口・舌・リズムの発音フォーム」のみ。
+- 出題中（回答前）に日本語を英訳させることは禁止ですが、回答後の解説（coreImageJa）では何を言っている文なのか100%理解できるよう、必ず「【言いたいこと】自然な場面の意味・ニュアンス ／ 【英語の語順】前から順のチャンク理解と空間コアイメージ」の形式で記述すること。
 - 新規問題は5問（日常会話85%：Miami Heat 15%の比率、パターンプラクティスとチャンク・ビルディングを混合）。
 - タグは「場所／相手／感情」の名詞3つ（各8文字以内）。動詞やヒント語は禁止。
 - アイコンは次のホワイトリストからのみ2つ選択: ${whitelistStr}
@@ -435,7 +435,7 @@ export async function runFourAiEmployeesPipeline(params: {
     // コール2（temperature 0.2、独立した品質チェッカー）
     const step2SystemPrompt = `あなたは独立した英語・認知言語学の品質チェッカーです。
 入力されたJSONについて以下の2点を厳格に監査・修正し、同じJSONスキーマで最終版を納品してください：
-1. 日本語解説（analyst, teacher, coreImageJa）から「日本語の直訳臭さ」を完全に排除し、空間・動き・感情のコアイメージ表現に修正する。タグは8文字以内の名詞（場所・相手・感情）に修正する。
+1. 日本語解説（coreImageJa）が抽象的で意味不明になっていないか検査し、必ず「【言いたいこと】その場面で伝えたい自然な意味 ／ 【英語の語順】英語の語順のまま前から区切ったチャンク理解とコアイメージ」の形式に整える。タグは8文字以内の名詞（場所・相手・感情）に修正する。
 2. 英文（enText, blocks, acceptableOrders）から「ネイティブとして不自然な英語」を排除し、自然で語順が1通りに定まりやすいチャンク（3〜9語、80文字以内）に修正する。`;
 
     const step2Result = (await callGeminiJsonEndpoint({
