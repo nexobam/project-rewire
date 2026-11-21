@@ -148,31 +148,89 @@ export async function requestPersistentStorage(): Promise<boolean> {
   return false;
 }
 
+const KNOWN_MOCK_AI_EXPLANATIONS: Record<
+  string,
+  { coreImageJa: string; pronunciationTip: string }
+> = {
+  'Let me grab another cup of coffee.': {
+    coreImageJa:
+      '【言いたいこと】コーヒーをもう1杯もらおうかな ／ 【英語の語順】Let me grab（サッと手元に取らせて）→ another cup of coffee.（もう1杯のコーヒーを）',
+    pronunciationTip: 'Let me はレミ、cup of はカッポヴと一息で連結する。',
+  },
+  'I will keep you posted on this.': {
+    coreImageJa:
+      '【言いたいこと】この件は随時アップデート（進捗報告）しますね ／ 【英語の語順】I will keep you posted（あなたを最新情報に触れた状態に保つ）→ on this.（この件に接触させて）',
+    pronunciationTip: 'keep you はキーピュ、posted on はポースティドンと繋ぐ。',
+  },
+  'Miami pushed the pace in transition.': {
+    coreImageJa:
+      '【言いたいこと】マイアミが速攻（トランジション）で一気にペースを上げた ／ 【英語の語順】Miami pushed the pace（マイアミが速度を前へ押し出した）→ in transition.（攻守切替の中で）',
+    pronunciationTip: 'pushed the はプッシュザと t を止めて th へ滑らせる。',
+  },
+  'I am heading back home right now.': {
+    coreImageJa:
+      '【言いたいこと】今ちょうど家に向かって帰っているところです ／ 【英語の語順】I am heading back home（頭を家の方へ戻して進んでいる）→ right now.（たった今）',
+    pronunciationTip:
+      'heading back の ng を軽く鼻に抜き、right now の t を止める。',
+  },
+  'I am totally good with that plan.': {
+    coreImageJa:
+      '【言いたいこと】そのプランで全く問題ない（大賛成）よ ／ 【英語の語順】I am totally good（私は完全に心地よい・OKだ）→ with that plan.（その計画と一緒にいて）',
+    pronunciationTip:
+      'totally の t はフラップで軽く弾き、good with を密着させる。',
+  },
+};
+
 /**
- * 既存のシードチャンクの解説（coreImageJa / pronunciationTip）を最新のシード定義でアップグレードする
+ * 既存のシードチャンクおよび既知のAIモックチャンクの解説（coreImageJa / pronunciationTip）を最新定義でアップグレードする
  */
 export function upgradeSeedChunksWithLatestExplanations(chunks: Chunk[]): {
   chunks: Chunk[];
   changed: boolean;
 } {
-  const seedMap = new Map<string, Chunk>(ALL_SEED_CHUNKS.map((s) => [s.id, s]));
+  const seedById = new Map<string, Chunk>(
+    ALL_SEED_CHUNKS.map((s) => [s.id, s])
+  );
+  const seedByEnText = new Map<string, Chunk>(
+    ALL_SEED_CHUNKS.map((s) => [s.enText.trim(), s])
+  );
+
   let changed = false;
   const updated = chunks.map((c) => {
-    const latestSeed = seedMap.get(c.id);
+    const latestSeed =
+      seedById.get(c.id) ?? seedByEnText.get(c.enText.trim());
+    if (latestSeed) {
+      if (
+        c.coreImageJa !== latestSeed.coreImageJa ||
+        c.pronunciationTip !== latestSeed.pronunciationTip
+      ) {
+        changed = true;
+        return {
+          ...c,
+          coreImageJa: latestSeed.coreImageJa,
+          pronunciationTip: latestSeed.pronunciationTip,
+        };
+      }
+      return c;
+    }
+
+    const knownMock = KNOWN_MOCK_AI_EXPLANATIONS[c.enText.trim()];
     if (
-      latestSeed &&
-      (c.coreImageJa !== latestSeed.coreImageJa ||
-        c.pronunciationTip !== latestSeed.pronunciationTip)
+      knownMock &&
+      (c.coreImageJa !== knownMock.coreImageJa ||
+        c.pronunciationTip !== knownMock.pronunciationTip)
     ) {
       changed = true;
       return {
         ...c,
-        coreImageJa: latestSeed.coreImageJa,
-        pronunciationTip: latestSeed.pronunciationTip,
+        coreImageJa: knownMock.coreImageJa,
+        pronunciationTip: knownMock.pronunciationTip,
       };
     }
+
     return c;
   });
+
   return { chunks: updated, changed };
 }
 

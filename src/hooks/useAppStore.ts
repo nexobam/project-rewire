@@ -567,8 +567,14 @@ export function useAppStore() {
         const cs = cloudRes.stores;
         if (cs.settings || (cs.chunks && cs.chunks.length > 0)) {
           const nextSettings = cs.settings ?? settings;
-          const nextChunks =
+          const rawChunks =
             cs.chunks && cs.chunks.length > 0 ? cs.chunks : chunks;
+          const upgradedCloud =
+            upgradeSeedChunksWithLatestExplanations(rawChunks);
+          const nextChunks = upgradedCloud.chunks;
+          if (upgradedCloud.changed) {
+            void pushCloudStores({ chunks: nextChunks });
+          }
           const nextReviews = cs.reviewStates ?? reviewStates;
           const nextAttempts = cs.attempts ?? attempts;
           const nextSessions = cs.sessions ?? sessions;

@@ -1,4 +1,4 @@
-// 発話ドリルモード画面（5/15/30分・オウム返し禁止＝お手本音声なし・自己判定3ボタン＋STT補助・Lv.3 NGワード対応・要件2-2, 4-2）
+// 発話ドリルモード画面（5/15/30分・オウム返し禁止＝回答前はお手本音声なし・自己判定3ボタン＋Push-to-Talkマイク＆STT補助・Lv.3 NGワード対応・要件2-2, 4-2）
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -6,11 +6,14 @@ import {
   Award,
   CheckCircle,
   Mic,
-  Volume2,
   XCircle,
 } from 'lucide-react';
 import { PostAnswerCard } from '../components/PostAnswerCard';
 import { VisualCard } from '../components/VisualCard';
+import {
+  extractSituationMeaning,
+  extractWordOrderBreakdown,
+} from '../domain/chunkExplanation';
 import type { ThemePalette } from '../domain/contrast';
 import type { GateStatus } from '../domain/promotionGate';
 import { buildSessionBatch } from '../domain/scheduler';
@@ -98,12 +101,14 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
   );
 
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [batchGeneration, setBatchGeneration] = useState(0);
   const [sttTranscript, setSttTranscript] = useState('');
   const [sttMatchRate, setSttMatchRate] = useState<number | undefined>(
     undefined
   );
   const [sttActive, setSttActive] = useState(false);
   const [showFirstWordHint, setShowFirstWordHint] = useState(false);
+  const [showChunkOrderHint, setShowChunkOrderHint] = useState(false);
   const [answeredResult, setAnsweredResult] = useState<{
     rating: Rating;
     completionMs: number;
@@ -115,6 +120,8 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
   const micPressStartMsRef = useRef<number>(0);
   const questionStartMsRef = useRef<number>(performance.now());
   const sessionStartMsRef = useRef<number>(Date.now());
+  // バックグラウンド同期や設定更新で現在の問題や回答後解説がリセットされないためのガード
+  const preparedQuestionKeyRef = useRef<string | null>(null);
 
   const currentChunk = batch[currentIndex];
 
@@ -138,35 +145,37 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
     };
   }, [settings.level]);
 
-  // 問題開始：オウム返しは禁止（お手本音声は絶対に流さない！流してよいのは「相手の短い問いかけ音声 promptAudioText」だけ・要件4-2）
-  // マイクは自動起動せず、ユーザーがマイクボタンを押したタイミングで起動する
-  const startSpeakQuestion = useCallback(
-    (chunk: Chunk) => {
-      sttControllerRef.current?.stop();
-      setSttActive(false);
-      setShowFirstWordHint(false);
-      setAnsweredResult(null);
-      setSttTranscript('');
-      setSttMatchRate(undefined);
-      questionStartMsRef.current = performance.now();
+  // 問題開始：オウム返し禁止（回答前はお手本音声を流さず、発話ミッション・答え・音声対象をすべて currentChunk.enText に統一して不一致を防ぐ）
+  const startSpeakQuestion = useCallback(() => {
+    sttControllerRef.current?.stop();
+    setSttActive(false);
+    setShowFirstWordHint(false);
+    setShowChunkOrderHint(false);
+    setAnsweredResult(null);
+    setSttTranscript('');
+    setSttMatchRate(undefined);
+    questionStartMsRef.current = performance.now();
+  }, []);
 
-      if (chunk.promptAudioText) {
-        void speakEnglishText({
-          text: chunk.promptAudioText,
-          rate: settings.ttsRate,
-          multiSpeakerRandom: settings.level >= 2,
-          onEnd: () => {
-            questionStartMsRef.current = performance.now();
-          },
-        });
-      }
-    },
-    [settings.level, settings.ttsRate]
-  );
+  const currentQuestionKey = currentChunk
+    ? `${session.id}_b${batchGeneration}_q${currentIndex}_${currentChunk.id}`
+    : null;
 
-  // マイクボタンを押したとき（押している間起動／短タップでのON・OFFトグル両対応）
+  useEffect(() => {
+    if (
+      currentChunk &&
+      !sessionFinished &&
+      currentQuestionKey &&
+      preparedQuestionKeyRef.current !== currentQuestionKey
+    ) {
+      preparedQuestionKeyRef.current = currentQuestionKey;
+      startSpeakQuestion();
+    }
+  }, [currentChunk, currentQuestionKey, sessionFinished, startSpeakQuestion]);
+
+  // マイクボタンを押したとき（押している間起動／短タップでのON・OFFトグル両対応・全問題で常時利用可能）
   const startMicRecording = useCallback(() => {
-    if (!currentChunk || !isSttSupported()) return;
+    if (!currentChunk) return;
     playTactileClick(settings.clickSound);
     sttControllerRef.current?.stop();
     setSttTranscript('');
@@ -220,13 +229,7 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (currentChunk && !sessionFinished) {
-      startSpeakQuestion(currentChunk);
-    }
-  }, [currentChunk, sessionFinished, startSpeakQuestion]);
-
-  // 自己判定ボタン（緑／黄／赤）タップ（STT結果にかかわらず自己判定が主・要件2-2）
+  // 自己判定ボタン（緑／黄／赤）タップ（回答確定と同時に正解の英語音声 currentChunk.enText を再生し、発音・ミッション・答えを100%一致させる）
   const handleSelfJudge = async (selfRating: Rating) => {
     playTactileClick(settings.clickSound);
     sttControllerRef.current?.stop();
@@ -246,6 +249,13 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
       completionMs,
     });
     setSessionResults((prev) => [...prev, resolved.finalRating]);
+
+    // 回答確定時にミッションと完全一致する正解英語音声（currentChunk.enText）を再生
+    void speakEnglishText({
+      text: currentChunk.enText,
+      rate: settings.ttsRate,
+      multiSpeakerRandom: settings.level >= 2,
+    });
 
     const elapsedSeconds = Math.max(
       1,
@@ -311,6 +321,7 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
         mode: 'speak',
       });
       setBatch(nextBatch);
+      setBatchGeneration((prev) => prev + 1);
       setCurrentIndex(0);
     }
   };
@@ -377,6 +388,10 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
   }
 
   const violatedNgWords = containsNgWord(sttTranscript, currentChunk.ngWords);
+  const isAllEnglish =
+    settings.level === 4 && Boolean(settings.allEnglishMode);
+  const situationMeaning = extractSituationMeaning(currentChunk);
+  const wordOrderBreakdown = extractWordOrderBreakdown(currentChunk);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
@@ -393,6 +408,7 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
           onClick={handleFinishEarly}
           style={{ borderColor: palette.border }}
           className="px-2.5 py-1 rounded border text-xs"
+          data-testid="speak-finish-early-button"
         >
           終了して集計
         </button>
@@ -400,81 +416,66 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <div className="space-y-3">
-          {/* 状況ビジュアルカード（お手本音声は絶対に流さない・要件4-2） */}
+          {/* 状況ビジュアルカード（回答後のみ正解英文サブタイトルを表示） */}
           <VisualCard
             chunk={currentChunk}
             palette={palette}
-            allEnglishMode={
-              settings.level === 4 && Boolean(settings.allEnglishMode)
-            }
+            allEnglishMode={isAllEnglish}
             showEnglishSubtitle={Boolean(answeredResult)}
           />
 
-          {/* 発話ミッション：この場面であなたが伝えたい意図（何を言えばいいか迷わないための状況ゴール） */}
-          {!(settings.level === 4 && settings.allEnglishMode) && (
+          {/* 発話ミッション：この場面であなたが英語で伝える内容（答えの英文 enText と100%一致） */}
+          {!isAllEnglish && (
             <div
               style={{
                 backgroundColor: palette.card,
                 borderColor: palette.text,
               }}
-              className="border-2 rounded-lg p-4 space-y-2"
+              className="border-2 rounded-lg p-4 space-y-2.5"
               data-testid="speak-mission-intent"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-bold opacity-75">
-                  発話ミッション（この場面で伝えたいこと）
+                  発話ミッション（この内容を英語で発話してください）
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setShowFirstWordHint((prev) => !prev)}
-                  style={{ borderColor: palette.border }}
-                  className="text-xs font-semibold px-2 py-0.5 rounded border"
-                >
-                  {showFirstWordHint
-                    ? `最初の語: "${currentChunk.blocks[0]?.text ?? ''}"`
-                    : '最初の1語ヒントを見る'}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowFirstWordHint((prev) => !prev)}
+                    style={{ borderColor: palette.border }}
+                    className="text-xs font-semibold px-2 py-0.5 rounded border"
+                    data-testid="first-word-hint-button"
+                  >
+                    {showFirstWordHint
+                      ? `最初の語: "${currentChunk.blocks[0]?.text ?? ''}"`
+                      : '最初の1語ヒント'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowChunkOrderHint((prev) => !prev)}
+                    style={{ borderColor: palette.border }}
+                    className="text-xs font-semibold px-2 py-0.5 rounded border"
+                    data-testid="chunk-order-hint-button"
+                  >
+                    {showChunkOrderHint ? '語順ヒントを隠す' : '語順チャンクヒント'}
+                  </button>
+                </div>
               </div>
-              <p className="font-bold text-base">
-                {currentChunk.coreImageJa
-                  .split('／')[0]
-                  .replace(/^【言いたいこと】/, '')
-                  .trim()}
+              <p className="font-bold text-base" data-testid="speak-mission-text">
+                {situationMeaning}
               </p>
-            </div>
-          )}
-
-          {/* 相手の短い問いかけ音声がある場合 */}
-          {currentChunk.promptAudioText && (
-            <div
-              style={{
-                backgroundColor: palette.card,
-                borderColor: palette.border,
-              }}
-              className="border rounded-lg p-3.5 flex items-center justify-between gap-3 text-xs"
-            >
-              <div>
-                <span className="font-bold">相手の問いかけきっかけ：</span>
-                {settings.level >= 2 && (
-                  <span className="ml-1 opacity-85">
-                    &ldquo;{currentChunk.promptAudioText}&rdquo;
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  void speakEnglishText({
-                    text: currentChunk.promptAudioText!,
-                    rate: settings.ttsRate,
-                  });
-                }}
-                style={{ borderColor: palette.border }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded border font-semibold shrink-0"
-              >
-                <Volume2 size={14} strokeWidth={1.75} color="currentColor" />
-                <span>問いかけを再生</span>
-              </button>
+              {showChunkOrderHint && (
+                <p
+                  style={{
+                    backgroundColor: palette.background,
+                    borderColor: palette.border,
+                  }}
+                  className="text-xs p-2.5 rounded border"
+                  data-testid="speak-chunk-order-hint"
+                >
+                  {wordOrderBreakdown}
+                </p>
+              )}
             </div>
           )}
 
@@ -503,13 +504,11 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
               reactionMs={answeredResult.completionMs}
               completionMs={answeredResult.completionMs}
               palette={palette}
-              allEnglishMode={
-                settings.level === 4 && Boolean(settings.allEnglishMode)
-              }
+              allEnglishMode={isAllEnglish}
               sttTranscript={sttTranscript}
               sttMatchRate={sttMatchRate}
               onReplayAudio={() => {
-                // 回答後カードでは初めて正解音声の確認が可能
+                // 回答後カードでは正解音声（currentChunk.enText）をいつでも再生可能
                 void speakEnglishText({
                   text: currentChunk.enText,
                   rate: settings.ttsRate,
@@ -528,14 +527,14 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
             >
               <div className="space-y-1">
                 <p className="font-bold text-sm">
-                  状況カードから直接英語を発話してください（お手本音声は流れません）
+                  左の発話ミッションを見て、直接英語を発話してください（回答後に正解の英語音声が流れます）
                 </p>
                 <p className="text-xs opacity-75">
-                  発話後、以下の3つのボタンで自己判定してください（STT認識結果は補助表示であり、あなたの自己判定が常に優先されます）。
+                  下のマイクボタンを押している間（またはタップで）話し、発話後に3つのボタンで自己判定してください。
                 </p>
               </div>
 
-              {/* マイクボタン（押している間マイク起動 ／ タップで開始・停止トグル）＆ STT補助パネル */}
+              {/* マイクボタン（全問題で常時表示：押している間マイク起動 ／ タップで開始・停止トグル）＆ STT補助パネル */}
               <div
                 style={{
                   backgroundColor: palette.background,
@@ -546,46 +545,45 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
                 className="p-4 rounded-lg border space-y-3"
                 data-testid="stt-status-box"
               >
-                {isSttSupported() ? (
-                  <button
-                    type="button"
-                    onPointerDown={handleMicPointerDown}
-                    onPointerUp={handleMicPointerUp}
-                    onPointerCancel={handleMicPointerUp}
-                    style={{
-                      backgroundColor: sttActive
-                        ? (palette.amberSurface ?? palette.text)
-                        : palette.card,
-                      color: sttActive
-                        ? (palette.amberSurfaceText ?? '#1C1917')
-                        : palette.text,
-                      borderColor: palette.text,
-                      borderBottomWidth: '3px',
-                    }}
-                    className="w-full min-h-[56px] px-4 py-3 rounded-lg border-2 font-bold text-sm flex items-center justify-center gap-2 tactile-block select-none"
-                    data-testid="push-to-talk-mic-button"
-                  >
-                    <Mic size={20} strokeWidth={1.75} color="currentColor" />
-                    <span>
-                      {sttActive
-                        ? 'マイク聞き取り中...（離す／タップで停止）'
-                        : 'マイクボタンを押している間（またはタップで）英語を話す'}
-                    </span>
-                  </button>
-                ) : (
-                  <p className="text-xs opacity-75">
-                    ※このブラウザ環境またはオフライン時は音声認識（STT）非対応のため、声に出したあと下の自己判定ボタンで進んでください。
-                  </p>
-                )}
+                <button
+                  type="button"
+                  onPointerDown={handleMicPointerDown}
+                  onPointerUp={handleMicPointerUp}
+                  onContextMenu={(e) => e.preventDefault()}
+                  style={{
+                    backgroundColor: sttActive
+                      ? (palette.amberSurface ?? palette.text)
+                      : palette.card,
+                    color: sttActive
+                      ? (palette.amberSurfaceText ?? '#1C1917')
+                      : palette.text,
+                    borderColor: palette.text,
+                    borderBottomWidth: '3px',
+                    touchAction: 'none',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                  }}
+                  className="w-full min-h-[56px] px-4 py-3 rounded-lg border-2 font-bold text-sm flex items-center justify-center gap-2 tactile-block select-none"
+                  data-testid="push-to-talk-mic-button"
+                >
+                  <Mic size={20} strokeWidth={1.75} color="currentColor" />
+                  <span>
+                    {sttActive
+                      ? 'マイク聞き取り中...（離す／タップで停止）'
+                      : 'マイクボタンを押している間（またはタップで）英語を話す'}
+                  </span>
+                </button>
 
                 <div className="flex items-center justify-between text-xs font-semibold">
                   <span>
-                    STT補助状態:{' '}
+                    マイク状態:{' '}
                     {sttActive
                       ? '録音・認識中...'
                       : sttTranscript
                         ? '認識完了'
-                        : '待機中'}
+                        : isSttSupported()
+                          ? '待機中（ボタンを押して発話）'
+                          : '待機中（声に出して自己判定）'}
                   </span>
                   {typeof sttMatchRate === 'number' && (
                     <span>
@@ -595,7 +593,7 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
                   )}
                 </div>
                 {sttTranscript && (
-                  <p className="font-mono text-sm pt-1">
+                  <p className="font-mono text-sm pt-1" data-testid="stt-transcript-text">
                     &ldquo;{sttTranscript}&rdquo;
                   </p>
                 )}

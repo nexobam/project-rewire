@@ -1,8 +1,9 @@
 // ボス戦画面（全10問・ヒントなし・黄以内で正解した問題が8問以上で合格＆次Lv昇格、不合格時は24時間クールダウン＆間違いをSRS最優先登録・要件3）
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Award, CheckCircle, Shield, XCircle } from 'lucide-react';
+import { Award, CheckCircle, Mic, Shield, XCircle } from 'lucide-react';
 import { WordOrderBoard } from '../components/WordOrderBoard';
+import { extractSituationMeaning } from '../domain/chunkExplanation';
 import type { ThemePalette } from '../domain/contrast';
 import {
   buildBossQuestions,
@@ -10,12 +11,17 @@ import {
   type BossQuestion,
 } from '../domain/promotionGate';
 import { shuffleArray, strictShuffleBlocks } from '../domain/shuffle';
+import { calculateSttMatch } from '../domain/sttMatcher';
 import {
   isAcceptableWordOrder,
   judgePictureChoiceTiming,
   judgeWordOrderTiming,
 } from '../domain/timingJudge';
 import { playTactileClick, unlockAudioContext } from '../services/audioService';
+import {
+  startAuxiliaryStt,
+  type SttSessionController,
+} from '../services/sttService';
 import {
   speakEnglishText,
   unlockSpeechSynthesis,
@@ -70,8 +76,12 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(true);
   const [shuffledBlocks, setShuffledBlocks] = useState<Block[]>([]);
-  const [shuffledSoundChoices, setShuffledSoundChoices] = useState<string[]>([]);
+  const [shuffledSoundChoices, setShuffledSoundChoices] = useState<string[]>(
+    []
+  );
   const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
+  const [sttActive, setSttActive] = useState(false);
+  const [sttTranscript, setSttTranscript] = useState('');
   const [results, setResults] = useState<{ chunkId: string; rating: Rating }[]>(
     []
   );
@@ -83,28 +93,41 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
   const shownTimestampRef = useRef<number>(performance.now());
   const firstTapMsRef = useRef<number | null>(null);
   const sessionStartMsRef = useRef<number>(Date.now());
+  const preparedQuestionKeyRef = useRef<string | null>(null);
+  const sttControllerRef = useRef<SttSessionController | null>(null);
+  const micPressStartMsRef = useRef<number>(0);
 
   const currentQ = questions[currentIndex];
 
   const startQuestion = useCallback(
     (q: BossQuestion) => {
+      sttControllerRef.current?.stop();
+      setSttActive(false);
+      setSttTranscript('');
       setSelectedBlockIds([]);
       firstTapMsRef.current = null;
-      setIsAudioPlaying(true);
       setShuffledBlocks(
         strictShuffleBlocks(q.chunk.blocks, q.chunk.acceptableOrders)
       );
-      setShuffledSoundChoices(
-        shuffleArray(
-          q.chunk.soundChangeChoices ?? [
-            q.chunk.enText,
-            'Let us check that schedule later.',
-            'I am going to head back soon.',
-            'That sounds completely fine to me.',
-          ]
-        )
-      );
+      const baseSoundChoices =
+        q.chunk.soundChangeChoices &&
+        q.chunk.soundChangeChoices.includes(q.chunk.enText)
+          ? q.chunk.soundChangeChoices
+          : [
+              q.chunk.enText,
+              'Let us check that schedule later.',
+              'I am going to head back soon.',
+              'That sounds completely fine to me.',
+            ];
+      setShuffledSoundChoices(shuffleArray(baseSoundChoices));
 
+      if (q.exerciseType === 'speak') {
+        setIsAudioPlaying(false);
+        shownTimestampRef.current = performance.now();
+        return;
+      }
+
+      setIsAudioPlaying(true);
       void speakEnglishText({
         text: q.chunk.enText,
         rate: settings.ttsRate,
@@ -121,15 +144,79 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
   useEffect(() => {
     unlockSpeechSynthesis();
     unlockAudioContext();
+    return () => {
+      sttControllerRef.current?.stop();
+    };
   }, []);
 
+  const currentQuestionKey = currentQ
+    ? `${session.id}_q${currentIndex}_${currentQ.chunk.id}`
+    : null;
+
   useEffect(() => {
-    if (currentQ && !finalOutcome) {
+    if (
+      currentQ &&
+      !finalOutcome &&
+      currentQuestionKey &&
+      preparedQuestionKeyRef.current !== currentQuestionKey
+    ) {
+      preparedQuestionKeyRef.current = currentQuestionKey;
       startQuestion(currentQ);
     }
-  }, [currentQ, finalOutcome, startQuestion]);
+  }, [currentQ, currentQuestionKey, finalOutcome, startQuestion]);
+
+  const startBossMic = useCallback(() => {
+    if (!currentQ) return;
+    playTactileClick(settings.clickSound);
+    sttControllerRef.current?.stop();
+    setSttTranscript('');
+    setSttActive(true);
+    micPressStartMsRef.current = performance.now();
+
+    sttControllerRef.current = startAuxiliaryStt({
+      level: settings.level,
+      disableSilenceTimeout: true,
+      onTranscriptUpdate: (text) => {
+        setSttTranscript(text);
+        calculateSttMatch(currentQ.chunk.enText, text);
+      },
+      onFinish: (finalText) => {
+        setSttActive(false);
+        if (finalText) {
+          setSttTranscript(finalText);
+        }
+      },
+      onFallbackToSelfJudge: () => {
+        setSttActive(false);
+      },
+    });
+  }, [currentQ, settings.clickSound, settings.level]);
+
+  const stopBossMic = useCallback(() => {
+    playTactileClick(settings.clickSound);
+    sttControllerRef.current?.stop();
+    setSttActive(false);
+  }, [settings.clickSound]);
+
+  const handleBossMicPointerDown = () => {
+    if (sttActive) {
+      stopBossMic();
+    } else {
+      startBossMic();
+    }
+  };
+
+  const handleBossMicPointerUp = () => {
+    if (!sttActive) return;
+    const heldMs = performance.now() - micPressStartMsRef.current;
+    if (heldMs >= 350) {
+      stopBossMic();
+    }
+  };
 
   const recordAndAdvance = async (rating: Rating) => {
+    sttControllerRef.current?.stop();
+    setSttActive(false);
     const nextResults = [...results, { chunkId: currentQ.chunk.id, rating }];
     setResults(nextResults);
 
@@ -154,8 +241,9 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
       replayBeforeShown: 0,
       replayAfterShown: 0,
       rating,
-      inputMode: 'silent',
-      selfJudged: false,
+      inputMode: currentQ.exerciseType === 'speak' ? 'voice' : 'silent',
+      selfJudged: currentQ.exerciseType === 'speak',
+      sttTranscript: sttTranscript || undefined,
     };
 
     // 間違えた問題（red）は updateReviewState により stage 0（最優先復習キュー）に戻る
@@ -203,7 +291,10 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
     playTactileClick(settings.clickSound);
     const now = performance.now();
     if (firstTapMsRef.current === null) {
-      firstTapMsRef.current = Math.max(0, Math.round(now - shownTimestampRef.current));
+      firstTapMsRef.current = Math.max(
+        0,
+        Math.round(now - shownTimestampRef.current)
+      );
     }
 
     const nextSelected = [...selectedBlockIds, block.id];
@@ -303,7 +394,7 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
         <span>合格基準: 8問以上を黄以内でクリア</span>
       </div>
 
-      {/* ボス戦はヒントなし（状況ビジュアルカードのタグヒントも出さず、音または状況アイコンのみで勝負・要件3） */}
+      {/* ボス戦はヒントなし（状況ビジュアルカードのタグヒントも出さず、音または発話ミッションで勝負・要件3） */}
       <div
         style={{
           backgroundColor: palette.card,
@@ -363,8 +454,52 @@ export const BossBattlePage: React.FC<BossBattlePageProps> = ({
         ) : (
           <div className="space-y-4">
             <p className="text-sm font-bold">
-              【発話関門（ヒントなし）】問いかけに対して2秒以内に英語で返答してください
+              【発話関門（ヒントなし）】以下の発話ミッションを2秒以内に英語で発話してください
             </p>
+            <div
+              style={{
+                backgroundColor: palette.background,
+                borderColor: palette.border,
+              }}
+              className="p-3.5 rounded-lg border font-bold text-base"
+              data-testid="boss-speak-mission"
+            >
+              {extractSituationMeaning(currentQ.chunk)}
+            </div>
+
+            <button
+              type="button"
+              onPointerDown={handleBossMicPointerDown}
+              onPointerUp={handleBossMicPointerUp}
+              onContextMenu={(e) => e.preventDefault()}
+              style={{
+                backgroundColor: sttActive
+                  ? (palette.amberSurface ?? palette.text)
+                  : palette.background,
+                color: sttActive
+                  ? (palette.amberSurfaceText ?? '#1C1917')
+                  : palette.text,
+                borderColor: palette.text,
+                borderBottomWidth: '3px',
+                touchAction: 'none',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+              }}
+              className="w-full min-h-[52px] px-4 py-2.5 rounded-lg border-2 font-bold text-xs flex items-center justify-center gap-2 tactile-block select-none"
+              data-testid="boss-push-to-talk-mic-button"
+            >
+              <Mic size={18} strokeWidth={1.75} color="currentColor" />
+              <span>
+                {sttActive
+                  ? 'マイク聞き取り中...（離す／タップで停止）'
+                  : 'マイクボタンを押している間（またはタップで）英語を話す'}
+              </span>
+            </button>
+
+            {sttTranscript && (
+              <p className="text-xs font-mono">&ldquo;{sttTranscript}&rdquo;</p>
+            )}
+
             <div className="grid grid-cols-3 gap-3">
               <button
                 type="button"

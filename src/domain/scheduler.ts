@@ -61,19 +61,53 @@ export function recomposeChunk(baseChunk: Chunk, indexSuffix: number): Chunk {
   const modifiers: {
     prefix?: string;
     suffix?: string;
+    jaPrefix?: string;
+    jaSuffix?: string;
+    jaChunkNote: string;
     patternSuffix: string;
     sceneAlt: string;
   }[] = [
-    { suffix: 'right now', patternSuffix: '_now', sceneAlt: 'street' },
-    { suffix: 'for sure', patternSuffix: '_sure', sceneAlt: 'lounge' },
-    { prefix: 'Honestly', patternSuffix: '_honest', sceneAlt: 'office' },
-    { prefix: 'Actually', patternSuffix: '_actual', sceneAlt: 'station' },
-    { suffix: 'today', patternSuffix: '_today', sceneAlt: 'cafe' },
+    {
+      suffix: 'right now',
+      jaSuffix: '（今すぐ）',
+      jaChunkNote: '→ right now.（たった今・今すぐ）',
+      patternSuffix: '_now',
+      sceneAlt: 'street',
+    },
+    {
+      suffix: 'for sure',
+      jaSuffix: '（間違いなく・確実に）',
+      jaChunkNote: '→ for sure.（確実に・間違いなく）',
+      patternSuffix: '_sure',
+      sceneAlt: 'lounge',
+    },
+    {
+      prefix: 'Honestly',
+      jaPrefix: '正直なところ、',
+      jaChunkNote: 'Honestly（正直なところ）→ ',
+      patternSuffix: '_honest',
+      sceneAlt: 'office',
+    },
+    {
+      prefix: 'Actually',
+      jaPrefix: '実は、',
+      jaChunkNote: 'Actually（実は・実際は）→ ',
+      patternSuffix: '_actual',
+      sceneAlt: 'station',
+    },
+    {
+      suffix: 'today',
+      jaSuffix: '（今日）',
+      jaChunkNote: '→ today.（今日）',
+      patternSuffix: '_today',
+      sceneAlt: 'cafe',
+    },
   ];
 
   const mod = modifiers[indexSuffix % modifiers.length];
   const baseWords = baseChunk.blocks.map((b) => b.text);
   let newWords: string[];
+  let appliedModifier = false;
 
   if (mod.prefix && baseWords.length <= 7) {
     const firstWordLower =
@@ -81,6 +115,7 @@ export function recomposeChunk(baseChunk: Chunk, indexSuffix: number): Chunk {
         ? baseWords[0]
         : baseWords[0].charAt(0).toLowerCase() + baseWords[0].slice(1);
     newWords = [mod.prefix, firstWordLower, ...baseWords.slice(1)];
+    appliedModifier = true;
   } else if (mod.suffix && baseWords.length <= 7) {
     const lastWord = baseWords[baseWords.length - 1].replace(/[.!?]+$/, '');
     const punct = baseChunk.enText.match(/[.!?]+$/)?.[0] ?? '.';
@@ -89,6 +124,7 @@ export function recomposeChunk(baseChunk: Chunk, indexSuffix: number): Chunk {
       lastWord,
       `${mod.suffix}${punct}`,
     ];
+    appliedModifier = true;
   } else {
     newWords = [...baseWords];
   }
@@ -96,6 +132,7 @@ export function recomposeChunk(baseChunk: Chunk, indexSuffix: number): Chunk {
   // ブロック数は 3〜9 個の範囲内に収める
   if (newWords.length > 9) {
     newWords = [...baseWords];
+    appliedModifier = false;
   }
 
   const enText = newWords.join(' ');
@@ -109,12 +146,49 @@ export function recomposeChunk(baseChunk: Chunk, indexSuffix: number): Chunk {
       ? `${baseChunk.sceneCategory}_alt`
       : mod.sceneAlt;
 
+  // 組み替え後の英文に合わせて coreImageJa と soundChangeChoices も確実に同期させる
+  let updatedCoreImageJa = baseChunk.coreImageJa;
+  if (appliedModifier) {
+    const parts = baseChunk.coreImageJa.split('／');
+    const rawMeaning = (parts[0] ?? baseChunk.coreImageJa)
+      .replace(/^\s*【言いたいこと】\s*/, '')
+      .trim();
+    const rawBreakdown =
+      parts.length > 1
+        ? parts
+            .slice(1)
+            .join('／')
+            .replace(/^\s*【英語の語順】\s*/, '')
+            .trim()
+        : baseWords.join(' → ');
+
+    const newMeaning = mod.jaPrefix
+      ? `${mod.jaPrefix}${rawMeaning}`
+      : `${rawMeaning}${mod.jaSuffix ?? ''}`;
+    const newBreakdown = mod.prefix
+      ? `${mod.jaChunkNote}${rawBreakdown}`
+      : `${rawBreakdown} ${mod.jaChunkNote}`;
+
+    updatedCoreImageJa = `【言いたいこと】${newMeaning} ／ 【英語の語順】${newBreakdown}`;
+  }
+
+  const updatedSoundChangeChoices = baseChunk.soundChangeChoices
+    ? [
+        enText,
+        ...baseChunk.soundChangeChoices
+          .filter((c) => c !== baseChunk.enText && c !== enText)
+          .slice(0, 3),
+      ]
+    : undefined;
+
   return {
     ...baseChunk,
     id: `recomposed_${baseChunk.id}_${indexSuffix}`,
     enText,
     blocks,
     acceptableOrders: [newWords],
+    coreImageJa: updatedCoreImageJa,
+    soundChangeChoices: updatedSoundChangeChoices,
     grammarPattern: `${baseChunk.grammarPattern}${mod.patternSuffix}`,
     sceneCategory: altScene,
     source: 'recomposed',

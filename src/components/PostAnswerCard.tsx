@@ -1,14 +1,24 @@
-// 回答後カード（色と秒数の結果表示・英文全体開示・コアイメージ＆発音フォーム・「不自然」報告ボタン）
+// 回答後カード（色と秒数の結果表示・英文全体開示・場面の意図＆語順チャンク解説＆発音フォーム・Push-to-Talk発音練習マイク・「不自然」報告ボタン）
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertCircle,
   CheckCircle,
   Flag,
+  Mic,
   Volume2,
   XCircle,
 } from 'lucide-react';
+import {
+  extractSituationMeaning,
+  extractWordOrderBreakdown,
+} from '../domain/chunkExplanation';
 import type { ThemePalette } from '../domain/contrast';
+import { calculateSttMatch } from '../domain/sttMatcher';
+import {
+  startAuxiliaryStt,
+  type SttSessionController,
+} from '../services/sttService';
 import type { Chunk, Rating } from '../types';
 
 export interface PostAnswerCardProps {
@@ -39,6 +49,74 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
   onReportUnnatural,
 }) => {
   const [reported, setReported] = useState(false);
+  const [practiceMicActive, setPracticeMicActive] = useState(false);
+  const [practiceTranscript, setPracticeTranscript] = useState(
+    sttTranscript ?? ''
+  );
+  const [practiceMatchRate, setPracticeMatchRate] = useState<
+    number | undefined
+  >(sttMatchRate);
+
+  const sttControllerRef = useRef<SttSessionController | null>(null);
+  const pressStartMsRef = useRef<number>(0);
+
+  useEffect(() => {
+    setPracticeTranscript(sttTranscript ?? '');
+    setPracticeMatchRate(sttMatchRate);
+    return () => {
+      sttControllerRef.current?.stop();
+    };
+  }, [chunk.id, sttMatchRate, sttTranscript]);
+
+  const startPracticeMic = useCallback(() => {
+    sttControllerRef.current?.stop();
+    setPracticeTranscript('');
+    setPracticeMatchRate(undefined);
+    setPracticeMicActive(true);
+    pressStartMsRef.current = performance.now();
+
+    sttControllerRef.current = startAuxiliaryStt({
+      level: chunk.level || 1,
+      disableSilenceTimeout: true,
+      onTranscriptUpdate: (text) => {
+        setPracticeTranscript(text);
+        const match = calculateSttMatch(chunk.enText, text);
+        setPracticeMatchRate(match.matchRate);
+      },
+      onFinish: (finalText) => {
+        setPracticeMicActive(false);
+        if (finalText) {
+          setPracticeTranscript(finalText);
+          const match = calculateSttMatch(chunk.enText, finalText);
+          setPracticeMatchRate(match.matchRate);
+        }
+      },
+      onFallbackToSelfJudge: () => {
+        setPracticeMicActive(false);
+      },
+    });
+  }, [chunk.enText, chunk.level]);
+
+  const stopPracticeMic = useCallback(() => {
+    sttControllerRef.current?.stop();
+    setPracticeMicActive(false);
+  }, []);
+
+  const handlePracticeMicPointerDown = () => {
+    if (practiceMicActive) {
+      stopPracticeMic();
+    } else {
+      startPracticeMic();
+    }
+  };
+
+  const handlePracticeMicPointerUp = () => {
+    if (!practiceMicActive) return;
+    const heldMs = performance.now() - pressStartMsRef.current;
+    if (heldMs >= 350) {
+      stopPracticeMic();
+    }
+  };
 
   const ratingLabel =
     rating === 'green'
@@ -58,6 +136,9 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
     reactionMs !== null ? `${(reactionMs / 1000).toFixed(2)}秒` : '―';
   const completionSec =
     completionMs !== null ? `${(completionMs / 1000).toFixed(2)}秒` : '―';
+
+  const situationMeaning = extractSituationMeaning(chunk);
+  const wordOrderBreakdown = extractWordOrderBreakdown(chunk);
 
   return (
     <div
@@ -109,88 +190,102 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
           type="button"
           onClick={onReplayAudio}
           style={{ borderColor: palette.border }}
-          className="p-2 rounded border tactile-btn shrink-0"
+          className="px-3 py-2 rounded border tactile-btn shrink-0 flex items-center gap-1.5 text-xs font-bold"
           aria-label="正解音声を再生"
+          data-testid="post-answer-replay-audio"
         >
           <Volume2 size={18} strokeWidth={1.75} color="currentColor" />
+          <span>お手本音声</span>
         </button>
       </div>
 
-      {/* STT補助結果がある場合のみ表示 */}
-      {typeof sttTranscript === 'string' && sttTranscript.length > 0 && (
-        <div
-          style={{ borderColor: palette.border }}
-          className="text-xs border rounded p-2.5 space-y-1"
+      {/* 回答後でも押している間マイク起動で声に出して練習できるボタン */}
+      <div
+        style={{
+          backgroundColor: palette.background,
+          borderColor: practiceMicActive
+            ? (palette.amberSurface ?? palette.text)
+            : palette.border,
+        }}
+        className="p-3 rounded-lg border space-y-2"
+      >
+        <button
+          type="button"
+          onPointerDown={handlePracticeMicPointerDown}
+          onPointerUp={handlePracticeMicPointerUp}
+          onContextMenu={(e) => e.preventDefault()}
+          style={{
+            backgroundColor: practiceMicActive
+              ? (palette.amberSurface ?? palette.text)
+              : palette.card,
+            color: practiceMicActive
+              ? (palette.amberSurfaceText ?? '#1C1917')
+              : palette.text,
+            borderColor: palette.text,
+            borderBottomWidth: '3px',
+            touchAction: 'none',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+          }}
+          className="w-full min-h-[48px] px-3 py-2 rounded-lg border font-bold text-xs flex items-center justify-center gap-2 tactile-block select-none"
+          data-testid="post-answer-mic-button"
         >
-          <p className="font-semibold">
-            STT認識補助: &ldquo;{sttTranscript}&rdquo;（一致率{' '}
-            {Math.round((sttMatchRate ?? 0) * 100)}%）
-          </p>
-        </div>
-      )}
+          <Mic size={16} strokeWidth={1.75} color="currentColor" />
+          <span>
+            {practiceMicActive
+              ? 'マイク聞き取り中...（離す／タップで停止）'
+              : 'ボタンを押している間（またはタップで）正解フレーズを声に出して練習'}
+          </span>
+        </button>
+
+        {practiceTranscript.length > 0 && (
+          <div className="text-xs space-y-0.5 pt-1">
+            <p className="font-semibold">
+              STT認識補助: &ldquo;{practiceTranscript}&rdquo;（一致率{' '}
+              {Math.round((practiceMatchRate ?? 0) * 100)}%）
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* 場面での意味・英語の語順チャンク理解・発音フォーム（Lv.4 All Englishモード時は非表示） */}
       {!allEnglishMode && (
-        <div className="space-y-2 text-sm">
-          {chunk.coreImageJa.includes('／') ? (
-            <>
-              <div
-                style={{
-                  backgroundColor: palette.background,
-                  borderColor: palette.border,
-                }}
-                className="p-3 rounded border"
-              >
-                <p className="text-xs font-bold opacity-75 mb-1">
-                  このセリフで言っていること（場面の意図）
-                </p>
-                <p className="font-bold text-base">
-                  {chunk.coreImageJa
-                    .split('／')[0]
-                    .replace(/^【言いたいこと】/, '')
-                    .trim()}
-                </p>
-              </div>
-              <div
-                style={{
-                  backgroundColor: palette.background,
-                  borderColor: palette.border,
-                }}
-                className="p-3 rounded border"
-              >
-                <p className="text-xs font-bold opacity-75 mb-1">
-                  英語の語順のまま前から理解（チャンク分解・コアイメージ）
-                </p>
-                <p>
-                  {chunk.coreImageJa
-                    .split('／')
-                    .slice(1)
-                    .join('／')
-                    .replace(/^\s*【英語の語順】/, '')
-                    .trim()}
-                </p>
-              </div>
-            </>
-          ) : (
-            <div
-              style={{
-                backgroundColor: palette.background,
-                borderColor: palette.border,
-              }}
-              className="p-3 rounded border"
-            >
-              <p className="text-xs font-bold opacity-75 mb-1">
-                意味と空間・動きのコアイメージ
-              </p>
-              <p>{chunk.coreImageJa}</p>
-            </div>
-          )}
+        <div className="space-y-2 text-sm" data-testid="post-answer-explanation">
           <div
             style={{
               backgroundColor: palette.background,
               borderColor: palette.border,
             }}
             className="p-3 rounded border"
+            data-testid="explanation-situation-meaning"
+          >
+            <p className="text-xs font-bold opacity-75 mb-1">
+              このセリフで言っていること（場面の意図）
+            </p>
+            <p className="font-bold text-base">{situationMeaning}</p>
+          </div>
+
+          <div
+            style={{
+              backgroundColor: palette.background,
+              borderColor: palette.border,
+            }}
+            className="p-3 rounded border"
+            data-testid="explanation-word-order"
+          >
+            <p className="text-xs font-bold opacity-75 mb-1">
+              英語の語順のまま前から理解（チャンク分解・コアイメージ）
+            </p>
+            <p>{wordOrderBreakdown}</p>
+          </div>
+
+          <div
+            style={{
+              backgroundColor: palette.background,
+              borderColor: palette.border,
+            }}
+            className="p-3 rounded border"
+            data-testid="explanation-pronunciation"
           >
             <p className="text-xs font-bold opacity-75 mb-1">
               発音フォーム（口・舌・リズム）
@@ -221,7 +316,10 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
 
         <button
           type="button"
-          onClick={onNextQuestion}
+          onClick={() => {
+            sttControllerRef.current?.stop();
+            onNextQuestion();
+          }}
           style={{
             backgroundColor: palette.text,
             color: palette.card,

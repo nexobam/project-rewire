@@ -1,6 +1,7 @@
-// 状況ビジュアルカード（単色SVGアイコン2つ＋日本語の場面タグ3つ［場所／相手／感情］）コンポーネント（要件2-1-1, 7）
+// 状況ビジュアルカード（単色SVGアイコン2つ＋日本語の場面タグ3つ［場所／相手／感情］＋場面で言っていること解説）コンポーネント（要件2-1-1, 7）
 
 import React from 'react';
+import { extractSituationMeaning } from '../domain/chunkExplanation';
 import type { ThemePalette } from '../domain/contrast';
 import type { Chunk } from '../types';
 import { WhitelistedIcon } from './IconWhitelist';
@@ -27,6 +28,7 @@ export const VisualCard: React.FC<VisualCardProps> = ({
   const [mainIcon, subIcon] = chunk.visual.icons;
   const [placeTag, partnerTag, emotionTag] = chunk.visual.tags;
   const isHeat = chunk.contentCategory === 'heat';
+  const situationMeaning = extractSituationMeaning(chunk);
 
   const Wrapper = onClick ? 'button' : 'div';
 
@@ -106,36 +108,52 @@ export const VisualCard: React.FC<VisualCardProps> = ({
         </div>
       </div>
 
-      {/* 場面タグ3つ（場所／相手／感情の名詞・各8文字以内）。Lv.4 All Englishモード時は非表示可 */}
+      {/* 場面タグ3つ（場所／相手／感情の名詞・各8文字以内）＋この場面で言っていること解説。Lv.4 All Englishモード時は非表示 */}
       {!allEnglishMode ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <span
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              style={{
+                backgroundColor: palette.background,
+                borderColor: palette.border,
+              }}
+              className="text-xs font-semibold px-2.5 py-1 rounded border"
+            >
+              場所：{placeTag}
+            </span>
+            <span
+              style={{
+                backgroundColor: palette.background,
+                borderColor: palette.border,
+              }}
+              className="text-xs font-semibold px-2.5 py-1 rounded border"
+            >
+              相手：{partnerTag}
+            </span>
+            <span
+              style={{
+                backgroundColor: palette.background,
+                borderColor: palette.border,
+              }}
+              className="text-xs font-semibold px-2.5 py-1 rounded border"
+            >
+              感情：{emotionTag}
+            </span>
+          </div>
+
+          <div
             style={{
               backgroundColor: palette.background,
               borderColor: palette.border,
             }}
-            className="text-xs font-semibold px-2.5 py-1 rounded border"
+            className="p-2.5 rounded border"
+            data-testid={`visual-card-intent-${chunk.id}`}
           >
-            場所：{placeTag}
-          </span>
-          <span
-            style={{
-              backgroundColor: palette.background,
-              borderColor: palette.border,
-            }}
-            className="text-xs font-semibold px-2.5 py-1 rounded border"
-          >
-            相手：{partnerTag}
-          </span>
-          <span
-            style={{
-              backgroundColor: palette.background,
-              borderColor: palette.border,
-            }}
-            className="text-xs font-semibold px-2.5 py-1 rounded border"
-          >
-            感情：{emotionTag}
-          </span>
+            <span className="text-[11px] font-bold opacity-75 block mb-0.5">
+              この場面で言っていること（状況・意図）
+            </span>
+            <p className="text-sm font-bold leading-snug">{situationMeaning}</p>
+          </div>
         </div>
       ) : (
         <div className="text-xs font-semibold uppercase tracking-wider opacity-75">
@@ -145,7 +163,10 @@ export const VisualCard: React.FC<VisualCardProps> = ({
 
       {/* Lv.2以降で音声と文字の同時表示が解禁された場合、または回答後のみ表示 */}
       {showEnglishSubtitle && (
-        <p className="mt-3 pt-3 border-t text-base font-semibold tracking-tight" style={{ borderColor: palette.border }}>
+        <p
+          className="mt-3 pt-3 border-t text-base font-semibold tracking-tight"
+          style={{ borderColor: palette.border }}
+        >
           {chunk.enText}
         </p>
       )}

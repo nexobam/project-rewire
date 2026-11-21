@@ -1,4 +1,4 @@
-// Web Speech API (STT / SpeechRecognition) 補助認識サービス（要件4-2）
+// Web Speech API (STT / SpeechRecognition) 補助認識・Push-to-Talk制御サービス（要件4-2）
 
 import type { Level } from '../types';
 
@@ -18,12 +18,19 @@ interface SpeechRecognitionInstance {
   start: () => void;
   stop: () => void;
   abort: () => void;
-  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
-  onerror: ((event: unknown) => void) | null;
+  onresult:
+    | ((event: {
+        results: ArrayLike<ArrayLike<{ transcript: string }>>;
+      }) => void)
+    | null;
+  onerror: ((event: { error?: string }) => void) | null;
   onend: (() => void) | null;
 }
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
+
+// 前回の認識インスタンスが残って2問目以降のマイク起動を阻害しないようシングルトン管理
+let activeRecognitionInstance: SpeechRecognitionInstance | null = null;
 
 /**
  * ブラウザが SpeechRecognition / webkitSpeechRecognition に対応しており、オンラインか判定する
@@ -45,9 +52,9 @@ export interface SttSessionController {
 }
 
 /**
- * 補助音声認識を開始する
- * - 1.5秒（Lv.3以降は1.0秒）の無音で自動区切り
- * - 非対応、オフライン、マイク不可、エラー発生時は onFallbackToSelfJudge を呼び、自己判定を妨げない
+ * 補助音声認識（またはPush-to-Talkマイクセッション）を開始する
+ * - disableSilenceTimeout: true（Push-to-Talk中）はユーザーがボタンを離す／停止するまで認識を維持する
+ * - 2問目以降も確実に起動するよう、既存TTSのキャンセルと前回インスタンスのクリーンアップを行う
  */
 export function startAuxiliaryStt(params: {
   level: Level;
@@ -64,9 +71,63 @@ export function startAuxiliaryStt(params: {
     disableSilenceTimeout = false,
   } = params;
 
+  // マイク起動前に再生中のTTS音声があれば確実に停止してオーディオ競合を防ぐ
+  try {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  } catch {
+    // 無視
+  }
+
+  // 前回の認識インスタンスが残っていればクリーンアップ
+  if (activeRecognitionInstance) {
+    try {
+      activeRecognitionInstance.onresult = null;
+      activeRecognitionInstance.onerror = null;
+      activeRecognitionInstance.onend = null;
+      activeRecognitionInstance.abort();
+    } catch {
+      // 無視
+    }
+    activeRecognitionInstance = null;
+  }
+
+  let manualStopped = false;
+  let finished = false;
+  let committedTranscript = '';
+  let currentSegmentTranscript = '';
+  let silenceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const getCombinedTranscript = () =>
+    [committedTranscript, currentSegmentTranscript]
+      .filter(Boolean)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const clearSilenceTimer = () => {
+    if (silenceTimer !== null) {
+      clearTimeout(silenceTimer);
+      silenceTimer = null;
+    }
+  };
+
+  // STT非対応環境でも、Push-to-Talkボタンを押している間はセッションを維持し、stop()時に完了させる
   if (!isSttSupported()) {
-    onFallbackToSelfJudge?.();
-    return { stop: () => {} };
+    if (!disableSilenceTimeout) {
+      onFallbackToSelfJudge?.();
+      return { stop: () => {} };
+    }
+    return {
+      stop: () => {
+        if (finished) return;
+        finished = true;
+        manualStopped = true;
+        onFallbackToSelfJudge?.();
+        onFinish('');
+      },
+    };
   }
 
   const win = window as unknown as {
@@ -75,14 +136,26 @@ export function startAuxiliaryStt(params: {
   };
   const Ctor = win.SpeechRecognition || win.webkitSpeechRecognition;
   if (!Ctor) {
-    onFallbackToSelfJudge?.();
-    return { stop: () => {} };
+    if (!disableSilenceTimeout) {
+      onFallbackToSelfJudge?.();
+      return { stop: () => {} };
+    }
+    return {
+      stop: () => {
+        if (finished) return;
+        finished = true;
+        manualStopped = true;
+        onFallbackToSelfJudge?.();
+        onFinish('');
+      },
+    };
   }
 
   const silenceMs = getSilenceCutoffMs(level);
   let recognition: SpeechRecognitionInstance;
   try {
     recognition = new Ctor();
+    activeRecognitionInstance = recognition;
   } catch {
     onFallbackToSelfJudge?.();
     return { stop: () => {} };
@@ -92,27 +165,23 @@ export function startAuxiliaryStt(params: {
   recognition.continuous = true;
   recognition.interimResults = true;
 
-  let latestTranscript = '';
-  let silenceTimer: ReturnType<typeof setTimeout> | null = null;
-  let finished = false;
-
-  const clearSilenceTimer = () => {
-    if (silenceTimer !== null) {
-      clearTimeout(silenceTimer);
-      silenceTimer = null;
-    }
-  };
-
   const finishOnce = () => {
     if (finished) return;
     finished = true;
+    manualStopped = true;
     clearSilenceTimer();
     try {
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
       recognition.stop();
     } catch {
       // 無視
     }
-    onFinish(latestTranscript.trim());
+    if (activeRecognitionInstance === recognition) {
+      activeRecognitionInstance = null;
+    }
+    onFinish(getCombinedTranscript());
   };
 
   const resetSilenceTimer = () => {
@@ -131,18 +200,36 @@ export function startAuxiliaryStt(params: {
         parts.push(res[0].transcript);
       }
     }
-    latestTranscript = parts.join(' ').trim();
-    onTranscriptUpdate(latestTranscript);
+    currentSegmentTranscript = parts.join(' ').trim();
+    onTranscriptUpdate(getCombinedTranscript());
     resetSilenceTimer();
   };
 
-  recognition.onerror = () => {
+  recognition.onerror = (event) => {
+    const errCode = event?.error ?? '';
+    // Push-to-Talk中に一時的な無音（no-speech）が発生した場合は停止せず継続する
+    if (disableSilenceTimeout && !manualStopped && errCode === 'no-speech') {
+      return;
+    }
     clearSilenceTimer();
     onFallbackToSelfJudge?.();
     finishOnce();
   };
 
   recognition.onend = () => {
+    // Push-to-Talk（ボタンを押している間）にブラウザが自動区切りした場合は再起動して聞き取りを継続
+    if (disableSilenceTimeout && !manualStopped && !finished) {
+      if (currentSegmentTranscript) {
+        committedTranscript = getCombinedTranscript();
+        currentSegmentTranscript = '';
+      }
+      try {
+        recognition.start();
+        return;
+      } catch {
+        // 再起動できない場合のみ終了へ進む
+      }
+    }
     finishOnce();
   };
 
@@ -151,6 +238,9 @@ export function startAuxiliaryStt(params: {
     resetSilenceTimer();
   } catch {
     onFallbackToSelfJudge?.();
+    if (!disableSilenceTimeout) {
+      finishOnce();
+    }
   }
 
   return {

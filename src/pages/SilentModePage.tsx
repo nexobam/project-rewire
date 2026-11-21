@@ -5,6 +5,10 @@ import { Award, CheckCircle, Headphones, Volume2 } from 'lucide-react';
 import { PostAnswerCard } from '../components/PostAnswerCard';
 import { VisualCard } from '../components/VisualCard';
 import { WordOrderBoard } from '../components/WordOrderBoard';
+import {
+  extractSituationMeaning,
+  extractWordOrderBreakdown,
+} from '../domain/chunkExplanation';
 import type { ThemePalette } from '../domain/contrast';
 import type { GateStatus } from '../domain/promotionGate';
 import { buildSessionBatch } from '../domain/scheduler';
@@ -93,9 +97,12 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
   );
 
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [batchGeneration, setBatchGeneration] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(true);
   const [shuffledBlocks, setShuffledBlocks] = useState<Block[]>([]);
-  const [shuffledSoundChoices, setShuffledSoundChoices] = useState<string[]>([]);
+  const [shuffledSoundChoices, setShuffledSoundChoices] = useState<string[]>(
+    []
+  );
   const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
   const [pictureChoices, setPictureChoices] = useState<Chunk[]>([]);
   const [replayBeforeShown, setReplayBeforeShown] = useState(0);
@@ -118,6 +125,8 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
   const firstTapMsRef = useRef<number | null>(null);
   const sessionStartMsRef = useRef<number>(Date.now());
   const hasshownChoicesRef = useRef<boolean>(false);
+  // バックグラウンド同期や設定更新で現在の問題や回答後解説がリセットされないためのガード
+  const preparedQuestionKeyRef = useRef<string | null>(null);
 
   const currentChunk = batch[currentIndex];
 
@@ -175,20 +184,28 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
       setShuffledBlocks(
         strictShuffleBlocks(chunk.blocks, chunk.acceptableOrders)
       );
-      setShuffledSoundChoices(
-        shuffleArray(
-          chunk.soundChangeChoices ?? [
-            chunk.enText,
-            'I am going to check it later.',
-            'Let us talk about that tomorrow.',
-            'That sounds totally fine with me.',
-          ]
-        )
-      );
 
-      // 絵カード4択用のダミー選択肢3枚＋正解1枚をランダムに混ぜて作成
+      const baseSoundChoices =
+        chunk.soundChangeChoices && chunk.soundChangeChoices.includes(chunk.enText)
+          ? chunk.soundChangeChoices
+          : [
+              chunk.enText,
+              'I am going to check it later.',
+              'Let us talk about that tomorrow.',
+              'That sounds totally fine with me.',
+            ];
+      setShuffledSoundChoices(shuffleArray(baseSoundChoices));
+
+      // 絵カード4択用のダミー選択肢3枚（場面の意味も異なるもの）＋正解1枚をランダムに混ぜて作成
+      const targetMeaning = extractSituationMeaning(chunk);
       const distractors = shuffleArray(
-        allChunks.filter((c) => c.id !== chunk.id && !c.disabled)
+        allChunks.filter(
+          (c) =>
+            c.id !== chunk.id &&
+            !c.disabled &&
+            c.enText !== chunk.enText &&
+            extractSituationMeaning(c) !== targetMeaning
+        )
       ).slice(0, 3);
       const fourCards = shuffleArray([...distractors, chunk]);
       setPictureChoices(fourCards);
@@ -207,11 +224,21 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
     [allChunks, settings.level, settings.ttsRate]
   );
 
+  const currentQuestionKey = currentChunk
+    ? `${session.id}_b${batchGeneration}_q${currentIndex}_${currentChunk.id}`
+    : null;
+
   useEffect(() => {
-    if (currentChunk && !sessionFinished) {
+    if (
+      currentChunk &&
+      !sessionFinished &&
+      currentQuestionKey &&
+      preparedQuestionKeyRef.current !== currentQuestionKey
+    ) {
+      preparedQuestionKeyRef.current = currentQuestionKey;
       startQuestion(currentChunk);
     }
-  }, [currentChunk, sessionFinished, startQuestion]);
+  }, [currentChunk, currentQuestionKey, sessionFinished, startQuestion]);
 
   // 轟音リプレイ救済（要件2-1-3）
   // - 選択肢表示前のリプレイ：1回までペナルティなし
@@ -305,7 +332,10 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
 
     const now = performance.now();
     if (firstTapMsRef.current === null) {
-      firstTapMsRef.current = Math.max(0, Math.round(now - shownTimestampRef.current));
+      firstTapMsRef.current = Math.max(
+        0,
+        Math.round(now - shownTimestampRef.current)
+      );
     }
 
     const nextSelected = [...selectedBlockIds, block.id];
@@ -425,7 +455,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
     if (currentIndex + 1 < batch.length) {
       setCurrentIndex((prev) => prev + 1);
     } else {
-      // 15問バッチ完了：まだ残り時間がある場合は次バッチを補充、または1バッチ完了 option
+      // 15問バッチ完了：まだ残り時間がある場合は次バッチを補充
       const nextBatch = buildSessionBatch({
         allChunks,
         reviewStates,
@@ -435,6 +465,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
         mode: isRehab ? 'rehab' : 'silent',
       });
       setBatch(nextBatch);
+      setBatchGeneration((prev) => prev + 1);
       setCurrentIndex(0);
     }
   };
@@ -561,6 +592,8 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
 
   // Lv.2以降では音声と文字の同時表示を解禁（Lv.1は回答後まで英文非表示・要件2-1-2, 3）
   const allowSimultaneousSubtitle = settings.level >= 2;
+  const isAllEnglish =
+    settings.level === 4 && Boolean(settings.allEnglishMode);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
@@ -594,19 +627,23 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
         </div>
       </div>
 
-      {/* PCでは2カラム表示（左：状況ビジュアルカード、右：インタラクション／回答後カード） */}
+      {/* PCでは2カラム表示（左：状況ビジュアルカード＋場面解説、右：インタラクション／回答後カード） */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <div className="space-y-3">
-          {exerciseType === 'picture_choice' ? (
+          {exerciseType === 'picture_choice' && !answeredResult ? (
             <div
               style={{
                 backgroundColor: palette.card,
                 borderColor: palette.border,
               }}
               className="border rounded-lg p-5 space-y-3"
+              data-testid="silent-picture-choice-guide"
             >
               <p className="text-sm font-bold">
-                Lv.1前半（絵カード期）：英語の音を聴き、正しい状況ビジュアルカードを4枚から1枚選んでください（英文は回答後に表示されます）。
+                Lv.1前半（絵カード期）：流れた英語の音を聴き、その英語が言っている状況・意味に合うカードを4枚から1枚選んでください。
+              </p>
+              <p className="text-xs opacity-80">
+                ※各カードには「場所・相手・感情」と「この場面で言っていること」が記載されています。選択後に正解の英文・語順チャンク解説・発音フォームが表示されます。
               </p>
               <button
                 type="button"
@@ -625,13 +662,33 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
             <VisualCard
               chunk={currentChunk}
               palette={palette}
-              allEnglishMode={
-                settings.level === 4 && Boolean(settings.allEnglishMode)
-              }
+              allEnglishMode={isAllEnglish}
               showEnglishSubtitle={
                 allowSimultaneousSubtitle || Boolean(answeredResult)
               }
             />
+          )}
+
+          {/* サイレントモード左カラムにも回答後の語順チャンク解説サマリーを表示（スマホ・PCどちらでも一目で解説が見えるようにする） */}
+          {answeredResult && !isAllEnglish && (
+            <div
+              style={{
+                backgroundColor: palette.card,
+                borderColor: palette.border,
+              }}
+              className="border rounded-lg p-4 space-y-2 text-xs"
+              data-testid="silent-left-explanation-summary"
+            >
+              <p className="font-bold">
+                サイレントモード解説（英語の語順のまま理解）
+              </p>
+              <p className="font-semibold text-sm">
+                {extractSituationMeaning(currentChunk)}
+              </p>
+              <p className="opacity-90">
+                {extractWordOrderBreakdown(currentChunk)}
+              </p>
+            </div>
           )}
         </div>
 
@@ -643,9 +700,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
               reactionMs={answeredResult.reactionMs}
               completionMs={answeredResult.completionMs}
               palette={palette}
-              allEnglishMode={
-                settings.level === 4 && Boolean(settings.allEnglishMode)
-              }
+              allEnglishMode={isAllEnglish}
               onReplayAudio={() => {
                 void speakEnglishText({
                   text: currentChunk.enText,
