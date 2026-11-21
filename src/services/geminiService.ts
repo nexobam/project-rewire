@@ -632,7 +632,26 @@ export function buildQuestionAwareCoachFallback(
     };
   }
 
-  // 2. 特定の重要英語表現（Let me get vs Can I get / gonna vs about to / take over / pull off / sleep on it 等）
+  // 2. Miami Heat / バスケ応援・最高！の表現
+  if (
+    qLower.includes('heat') ||
+    question.includes('ヒート') ||
+    question.includes('マイアミ') ||
+    question.includes('最高')
+  ) {
+    return {
+      answer:
+        '「ヒート最高！」と熱く言いたいときは、シンプルでネイティブが試合中・試合後にそのまま叫ぶフレーズが自然です。感情を込めて文頭を強く言い切るのがポイントです。',
+      examples: [
+        'Heat are on fire! （ヒート最高にノッてるな！／絶好調だ！）',
+        'Let’s go Heat! （いけヒート！／ヒート最高！）',
+        'That was an insane win for Miami! （マイアミの今の勝ち方、マジで最高だった！）',
+      ],
+      usedMock: true,
+    };
+  }
+
+  // 3. 特定の重要英語表現（Let me get vs Can I get / gonna vs about to / take over / pull off / sleep on it 等）
   if (qLower.includes('let me get') || qLower.includes('can i get')) {
     return {
       answer:
