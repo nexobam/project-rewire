@@ -566,7 +566,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
             <p className="pt-1 opacity-75 flex items-center gap-1">
               <CheckCircle size={13} strokeWidth={1.75} color="currentColor" />
               <span>
-                4人のAI社員による分析と新規問題生成をバックグラウンドで実行中です。
+                専属AI講師による弱点分析と新規問題生成をバックグラウンドで実行中です。
               </span>
             </p>
           </div>

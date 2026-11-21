@@ -30,7 +30,10 @@ import {
   pushCloudStores,
   verifyCloudPasscode,
 } from '../services/cloudSyncService';
-import { runFourAiEmployeesPipeline } from '../services/geminiService';
+import {
+  normalizeGeminiModelName,
+  runFourAiEmployeesPipeline,
+} from '../services/geminiService';
 import {
   DEFAULT_SETTINGS,
   type AiReport,
@@ -239,11 +242,18 @@ export function useAppStore() {
 
       const updatedSettings: Settings = {
         ...mergedData.settings,
+        geminiModel: normalizeGeminiModelName(mergedData.settings.geminiModel),
         restTickets: streakEval.restTickets,
         lastTicketRefillWeek: streakEval.lastTicketRefillWeek,
         lastEvaluatedStudyDate: streakEval.lastEvaluatedStudyDate,
       };
       await saveSettingsToDb(updatedSettings);
+      if (
+        mergedData.settings.geminiModel !== updatedSettings.geminiModel &&
+        cloudStatus.cloudAvailable
+      ) {
+        void pushCloudStores({ settings: updatedSettings });
+      }
 
       setSettings(updatedSettings);
       setChunks(mergedData.chunks);
@@ -566,7 +576,11 @@ export function useAppStore() {
       if (cloudRes.ok && cloudRes.stores) {
         const cs = cloudRes.stores;
         if (cs.settings || (cs.chunks && cs.chunks.length > 0)) {
-          const nextSettings = cs.settings ?? settings;
+          const rawNextSettings = cs.settings ?? settings;
+          const nextSettings: Settings = {
+            ...rawNextSettings,
+            geminiModel: normalizeGeminiModelName(rawNextSettings.geminiModel),
+          };
           const rawChunks =
             cs.chunks && cs.chunks.length > 0 ? cs.chunks : chunks;
           const upgradedCloud =

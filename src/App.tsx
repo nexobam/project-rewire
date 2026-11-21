@@ -28,6 +28,7 @@ export const App: React.FC = () => {
     loading,
     cloudEnabled,
     cloudAuthNeeded,
+    serverHasGeminiKey,
     submitCloudPasscode,
     settings,
     chunks,
@@ -360,6 +361,10 @@ export const App: React.FC = () => {
           messages={coachMessages}
           palette={palette}
           onUpsertMessage={upsertCoachMessage}
+          chunks={chunks}
+          attempts={attempts}
+          cloudEnabled={cloudEnabled}
+          serverHasGeminiKey={serverHasGeminiKey}
         />
       ) : activeTab === 'settings' ? (
         <SettingsPage
@@ -371,6 +376,8 @@ export const App: React.FC = () => {
           aiReports={aiReports}
           coachMessages={coachMessages}
           palette={palette}
+          cloudEnabled={cloudEnabled}
+          serverHasGeminiKey={serverHasGeminiKey}
           onUpdateSettings={updateSettings}
           onStartRecalibration={() => setIsRecalibrating(true)}
           onApplyImportedBackup={applyImportedBackup}

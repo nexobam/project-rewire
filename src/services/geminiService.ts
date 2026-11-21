@@ -1,9 +1,14 @@
-// 4人のAI社員（2ステップAPIパイプライン）・AIコーチ質問チャット・指数バックオフ・ローカルモック代替サービス（要件5・要件6-11・要件8-3）
+// 専属AI講師チーム（2ステップAPIパイプライン）・AI講師質問チャット・指数バックオフ・スマートフォールバックサービス（要件5・要件6-11・要件8-3）
 
+import { ALL_SEED_CHUNKS } from '../data/seed';
 import {
   buildDuplicateForbidList,
   filterValidAiQuestions,
 } from '../domain/aiValidator';
+import {
+  extractSituationMeaning,
+  extractWordOrderBreakdown,
+} from '../domain/chunkExplanation';
 import { getStudyDate } from '../domain/studyDate';
 import {
   ICON_WHITELIST,
@@ -13,6 +18,7 @@ import {
   type Settings,
 } from '../types';
 import {
+  checkCloudAuthStatus,
   fetchGeminiViaCloudProxy,
   getCachedCloudStatus,
 } from './cloudSyncService';
@@ -107,6 +113,22 @@ export function canMakeApiCallToday(
 }
 
 /**
+ * 旧モデル名が設定に残っている場合に現行の推奨モデルへ正規化する
+ */
+export function normalizeGeminiModelName(model?: string): string {
+  const trimmed = (model ?? '').trim();
+  if (
+    !trimmed ||
+    trimmed === 'gemini-2.5-flash' ||
+    trimmed === 'gemini-2.0-flash' ||
+    trimmed === 'gemini-1.5-flash'
+  ) {
+    return 'gemini-3.8-flash';
+  }
+  return trimmed;
+}
+
+/**
  * セッション結果からミス種別カウントとローカルモックレポート＆モック新規問題を生成する
  * （APIキー未設定、オフライン、429エラー、上限到達時の確実なフォールバック）
  */
@@ -154,7 +176,7 @@ export function generateLocalMockPipelineOutput(params: {
   const teacher = [
     {
       coreImage:
-        '守護神や主語がまず空間に立ち、そこから動作の矢印が対象へ真っ直ぐ伸びる感覚を掴みましょう。',
+        '主語がまず空間に立ち、そこから動作の矢印が対象へ真っ直ぐ伸びる感覚を掴みましょう。',
       pronunciation:
         '機能語（to / of / a）は弱く短く前の単語の語尾にくっつけて一息で発音します。',
       praise:
@@ -225,7 +247,8 @@ export function generateLocalMockPipelineOutput(params: {
       tags: ['駅改札', '家族', '安堵'],
       coreImageJa:
         '【言いたいこと】今ちょうど家に向かって帰っているところです ／ 【英語の語順】I am heading back home（頭を家の方へ戻して進んでいる）→ right now.（たった今）',
-      pronunciationTip: 'heading back の ng を軽く鼻に抜き、right now の t を止める。',
+      pronunciationTip:
+        'heading back の ng を軽く鼻に抜き、right now の t を止める。',
       hasSoundChange: true,
     },
     {
@@ -241,7 +264,8 @@ export function generateLocalMockPipelineOutput(params: {
       tags: ['ダイナー', '友人', '賛同'],
       coreImageJa:
         '【言いたいこと】そのプランで全く問題ない（大賛成）よ ／ 【英語の語順】I am totally good（私は完全に心地よい・OKだ）→ with that plan.（その計画と一緒にいて）',
-      pronunciationTip: 'totally の t はフラップで軽く弾き、good with を密着させる。',
+      pronunciationTip:
+        'totally の t はフラップで軽く弾き、good with を密着させる。',
       hasSoundChange: true,
     },
   ];
@@ -263,7 +287,7 @@ export class RateLimitError extends Error {
 }
 
 /**
- * Gemini API への単一リクエスト実行（APIキーはURLに含めず x-goog-api-key ヘッダーで送信）
+ * Gemini API への単一リクエスト実行（APIキーはURLに含めず x-goog-api-key ヘッダーまたはサーバープロキシで送信）
  */
 async function callGeminiJsonEndpoint(params: {
   apiKey: string;
@@ -284,41 +308,60 @@ async function callGeminiJsonEndpoint(params: {
     fetchImpl = fetch,
   } = params;
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-    model
-  )}:generateContent`;
+  const normalizedModel = normalizeGeminiModelName(model);
 
   const response = !apiKey
     ? await fetchGeminiViaCloudProxy({
-        model,
+        model: normalizedModel,
         systemInstruction,
         userPrompt,
         temperature,
         responseSchema,
       })
-    : await fetchImpl(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey,
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemInstruction }],
-          },
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: userPrompt }],
+    : await (async () => {
+        const candidates = Array.from(
+          new Set([
+            normalizedModel,
+            'gemini-3.8-flash',
+            'gemini-3.8-flash-lite',
+            'gemini-2.5-flash-lite',
+          ])
+        );
+        let lastRes: Response | null = null;
+        for (const candidate of candidates) {
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+            candidate
+          )}:generateContent`;
+          const res = await fetchImpl(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey,
             },
-          ],
-          generationConfig: {
-            temperature,
-            responseMimeType: 'application/json',
-            responseSchema,
-          },
-        }),
-      });
+            body: JSON.stringify({
+              systemInstruction: {
+                parts: [{ text: systemInstruction }],
+              },
+              contents: [
+                {
+                  role: 'user',
+                  parts: [{ text: userPrompt }],
+                },
+              ],
+              generationConfig: {
+                temperature,
+                responseMimeType: 'application/json',
+                responseSchema,
+              },
+            }),
+          });
+          lastRes = res;
+          if (res.ok || (res.status !== 404 && res.status !== 503)) {
+            return res;
+          }
+        }
+        return lastRes!;
+      })();
 
   if (response.status === 429) {
     throw new RateLimitError('Gemini API rate limit (429)');
@@ -342,9 +385,9 @@ async function callGeminiJsonEndpoint(params: {
 }
 
 /**
- * 2ステップAPIパイプライン（4人のAI社員）を実行する（要件5）
- * - コール1 (temperature 0.7): データアナリスト + コアイメージ先生 + カリキュラム職人
- * - コール2 (temperature 0.2): 独立した品質チェッカー（直訳臭さと不自然な英語を監査・修正）
+ * 2ステップAPIパイプライン（専属AI講師チーム）を実行する（要件5）
+ * - コール1 (temperature 0.7): 弱点分析AI講師 + コアイメージ解説AI講師 + カリキュラム作成AI講師
+ * - コール2 (temperature 0.2): 独立した品質監査AI講師（直訳臭さと不自然な英語を監査・修正）
  * - APIキー未設定、オフライン、上限超過、429エラー時は指数バックオフ／ローカルモックでフォールバック
  */
 export async function runFourAiEmployeesPipeline(params: {
@@ -372,10 +415,13 @@ export async function runFourAiEmployeesPipeline(params: {
   const isOffline =
     typeof navigator !== 'undefined' && navigator.onLine === false;
   const hasLocalKey = Boolean(settings.geminiApiKey?.trim());
-  const useServerProxy =
-    !hasLocalKey &&
-    !params.fetchImpl &&
-    getCachedCloudStatus().serverHasGeminiKey;
+
+  let serverHasKey = getCachedCloudStatus().serverHasGeminiKey;
+  if (!hasLocalKey && !params.fetchImpl && !serverHasKey && !isOffline) {
+    const refreshed = await checkCloudAuthStatus();
+    serverHasKey = refreshed.serverHasGeminiKey;
+  }
+  const useServerProxy = !hasLocalKey && !params.fetchImpl && serverHasKey;
 
   if (
     (!hasLocalKey && !useServerProxy) ||
@@ -399,7 +445,7 @@ export async function runFourAiEmployeesPipeline(params: {
   const forbidList = buildDuplicateForbidList(existingChunks);
   const whitelistStr = ICON_WHITELIST.join(', ');
 
-  const step1SystemPrompt = `あなたは英語脳再配線アプリ「Project Rewire」の3人の専門AI社員（データアナリスト・コアイメージ先生・カリキュラム職人）です。
+  const step1SystemPrompt = `あなたは英語脳再配線アプリ「Project Rewire」の専属AI講師チーム（弱点分析AI講師・コアイメージ解説AI講師・問題作成AI講師）です。
 【絶対ルール】
 - 出題中（回答前）に日本語を英訳させることは禁止ですが、回答後の解説（coreImageJa）では何を言っている文なのか100%理解できるよう、必ず「【言いたいこと】自然な場面の意味・ニュアンス ／ 【英語の語順】前から順のチャンク理解と空間コアイメージ」の形式で記述すること。
 - 新規問題は5問（日常会話85%：Miami Heat 15%の比率、パターンプラクティスとチャンク・ビルディングを混合）。
@@ -432,8 +478,8 @@ export async function runFourAiEmployeesPipeline(params: {
       fetchImpl,
     });
 
-    // コール2（temperature 0.2、独立した品質チェッカー）
-    const step2SystemPrompt = `あなたは独立した英語・認知言語学の品質チェッカーです。
+    // コール2（temperature 0.2、独立した品質監査AI講師）
+    const step2SystemPrompt = `あなたは独立した英語・認知言語学の品質監査AI講師です。
 入力されたJSONについて以下の2点を厳格に監査・修正し、同じJSONスキーマで最終版を納品してください：
 1. 日本語解説（coreImageJa）が抽象的で意味不明になっていないか検査し、必ず「【言いたいこと】その場面で伝えたい自然な意味 ／ 【英語の語順】英語の語順のまま前から区切ったチャンク理解とコアイメージ」の形式に整える。タグは8文字以内の名詞（場所・相手・感情）に修正する。
 2. 英文（enText, blocks, acceptableOrders）から「ネイティブとして不自然な英語」を排除し、自然で語順が1通りに定まりやすいチャンク（3〜9語、80文字以内）に修正する。`;
@@ -508,11 +554,223 @@ export async function runFourAiEmployeesPipeline(params: {
 }
 
 /**
- * AIコーチ質問チャットの回答生成（直訳を使わずコアイメージと例文だけで答える・要件4-5）
+ * オフライン時やAPI一時混雑時でも、ユーザーの質問内容（フレーズ・単語・学習テーマ）に合わせて個別に回答を生成するスマートフォールバック
+ */
+export function buildQuestionAwareCoachFallback(
+  question: string,
+  chunks: Chunk[] = ALL_SEED_CHUNKS
+): {
+  answer: string;
+  examples: string[];
+  usedMock: true;
+} {
+  const qLower = question.toLowerCase();
+  const pool = chunks.length > 0 ? chunks : ALL_SEED_CHUNKS;
+
+  // 1. 質問内に含まれる引用フレーズ（"..." や 「...」）またはチャンクとの一致を検索
+  const quotedMatch =
+    question.match(/"([^"]+)"/) ?? question.match(/「([^」]+)」/);
+  const quotedPhrase = quotedMatch?.[1]?.trim().toLowerCase();
+
+  let matchedChunk = quotedPhrase
+    ? pool.find(
+        (c) =>
+          c.enText.toLowerCase().includes(quotedPhrase) ||
+          c.coreImageJa.toLowerCase().includes(quotedPhrase)
+      )
+    : undefined;
+
+  if (!matchedChunk) {
+    matchedChunk = pool.find((c) => {
+      const enLower = c.enText.toLowerCase().replace(/[.!?]+$/, '');
+      const meaning = extractSituationMeaning(c);
+      if (qLower.includes(enLower) || (meaning && question.includes(meaning))) {
+        return true;
+      }
+      // 3文字以上の主要キーワードが2語以上一致するチャンクを検索
+      const contentWords = enLower
+        .split(/\s+/)
+        .filter(
+          (w) =>
+            w.length >= 4 &&
+            !['that', 'this', 'with', 'from', 'have', 'will', 'what'].includes(
+              w
+            )
+        );
+      const hitCount = contentWords.filter((w) => qLower.includes(w)).length;
+      return hitCount >= 2 || (contentWords.length === 1 && hitCount === 1);
+    });
+  }
+
+  if (matchedChunk) {
+    const meaning = extractSituationMeaning(matchedChunk);
+    const breakdown = extractWordOrderBreakdown(matchedChunk);
+    const related = pool
+      .filter(
+        (c) =>
+          c.id !== matchedChunk!.id &&
+          (c.grammarPattern === matchedChunk!.grammarPattern ||
+            c.sceneCategory === matchedChunk!.sceneCategory)
+      )
+      .slice(0, 2)
+      .map((c) => `${c.enText} （${extractSituationMeaning(c)}）`);
+
+    return {
+      answer: `『${matchedChunk.enText}』は、「${meaning}」と伝えたい場面でネイティブがそのまま塊（チャンク）で使う表現です。\n・英語の語順イメージ：${breakdown}\n・発音とリズムのコツ：${matchedChunk.pronunciationTip}`,
+      examples: [
+        `${matchedChunk.enText} （${meaning}）`,
+        ...related,
+        ...(related.length < 2
+          ? [
+              'Let me get back to you on that. （その件は確認して折り返します）',
+              'That sounds good to me. （それでバッチリです・賛成です）',
+            ].slice(0, 2 - related.length)
+          : []),
+      ],
+      usedMock: true,
+    };
+  }
+
+  // 2. 特定の重要英語表現（Let me get vs Can I get / gonna vs about to / take over / pull off / sleep on it 等）
+  if (qLower.includes('let me get') || qLower.includes('can i get')) {
+    return {
+      answer:
+        '『Let me get...』は「（メニューが決まったので）私に〜を取らせて＝〜をください」と自分の意志でスッと注文する軽快な響きです。一方『Can I get...?』は「〜をもらえますか？」と店員さんに軽く許可を求める丁寧さがあります。カフェやファストフードではどちらも毎日使われます。',
+      examples: [
+        'Let me get a cold brew. （水出しコーヒーを1つください：決断が早い響き）',
+        'Can I get an iced latte? （アイスラテを1つもらえますか？：少し丁寧な響き）',
+        'Let me grab another cup of coffee. （コーヒーをもう1杯もらおうかな）',
+      ],
+      usedMock: true,
+    };
+  }
+
+  if (qLower.includes('gonna') || qLower.includes('about to')) {
+    return {
+      answer:
+        '『gonna (going to)』は「すでにそっちの方向へ気持ちが向かっている・予定している」という進行方向のイメージです。一方『about to』は「まさに今、あと数秒〜数分で飛び出す直前（時計の針がそこに触れる寸前）」という切迫感があります。',
+      examples: [
+        'I am about to leave the office. （まさに今からオフィスを出るところです）',
+        'It is about to rain soon. （もう今にも雨が降り出しそうです）',
+        'I am gonna check it right now. （今からそれをチェックするつもりです）',
+      ],
+      usedMock: true,
+    };
+  }
+
+  if (qLower.includes('take over')) {
+    return {
+      answer:
+        '『take over』のコアイメージは「相手の上に手を被せて（over）、主導権やバトンを自分の手に引き取る（take）動き」です。仕事の引き継ぎから、バスケ（Miami Heat）でエースが試合を支配する場面まで幅広く使えます。',
+      examples: [
+        'Jimmy took over in the fourth quarter. （ジミーが第4Qで完全に試合の主導権を握った）',
+        'I can take over from here. （ここからは私が引き継ぎますよ）',
+        'Let me take over the driving. （運転を交代して私が引き受けるよ）',
+      ],
+      usedMock: true,
+    };
+  }
+
+  if (qLower.includes('sleep on it')) {
+    return {
+      answer:
+        '『sleep on it』は「その問題を枕の下に敷いて（on it）一晩寝かせる＝即答せず一晩じっくり考える」というコアイメージです。ビジネス会議でも「一晩検討させてください（Let me sleep on it.）」として非常に自然に使えます。',
+      examples: [
+        'Let me sleep on it tonight. （今夜一晩じっくり考えさせてください）',
+        'Why do not we sleep on it and decide tomorrow? （一晩寝かせて明日決めませんか？）',
+        'I slept on it and made my decision. （一晩しっかり考えて決断しました）',
+      ],
+      usedMock: true,
+    };
+  }
+
+  if (qLower.includes('pull off')) {
+    return {
+      answer:
+        '『pull off』のコアイメージは「重くて引っかかっているものをグッと引っ張って（pull）完全に引き剥がす（off）＝難しいことを最後までやり遂げる・奇跡的に成功させる」という感覚です。',
+      examples: [
+        'Miami pulled off a huge comeback win. （マイアミが大逆転勝利をやってのけた）',
+        'We can pull it off if we work together. （協力すればこの難題もやり遂げられる）',
+        'How did you pull that off in time? （どうやって時間内にそれを成し遂げたの？）',
+      ],
+      usedMock: true,
+    };
+  }
+
+  // 3. 学習法・発音・語順に関する質問
+  if (
+    question.includes('発音') ||
+    question.includes('音') ||
+    question.includes('聴') ||
+    question.includes('リエゾン')
+  ) {
+    return {
+      answer:
+        'ネイティブの英語が速く聴こえる理由は、1語ずつ発音せず「重要な動詞・名詞だけを強く言い、to / of / a / it などの機能語を前の単語の語尾にくっつけて弱く一息で流す」からです。文字を頭に浮かべず、「レミ（Let me）」「カッポヴ（cup of）」「テキリージー（take it easy）」のように音の塊のまま耳と口に馴染ませましょう。',
+      examples: [
+        'Let me get back to you. （Let me＝レミ、get back to＝ゲッバックトゥと一息で繋ぐ）',
+        'You should take it easy today. （take it easy＝テイキッイージーと連結する）',
+        'I am on my way there. （on my way＝オンマイウェイと滑らかに繋ぐ）',
+      ],
+      usedMock: true,
+    };
+  }
+
+  if (
+    question.includes('語順') ||
+    question.includes('訳') ||
+    question.includes('チャンク') ||
+    question.includes('前から')
+  ) {
+    return {
+      answer:
+        '日本語に訳さず英語の語順のまま理解するコツは、「①誰がどうする（結論・動詞の矢印）→ ②何を／誰に → ③どこで・いつ」の順番で、前のブロックを忘れないまま映像を足していくことです。後ろから前へ返り読みせず、回答後カードの【英語の語順】矢印（→）のリズムのまま声に出すと英語脳の回路が定着します。',
+      examples: [
+        'I left my umbrella / on the train. （傘を置いて離れた → 電車の上に接触したまま）',
+        'We are running out / of time. （私たちは外へ走り出している → 時間の枠から＝時間切れ寸前）',
+        'Let me check / my schedule first. （確認させて → 私の予定を・まず最初に）',
+      ],
+      usedMock: true,
+    };
+  }
+
+  if (
+    question.includes('2秒') ||
+    question.includes('発話') ||
+    question.includes('話') ||
+    question.includes('口から')
+  ) {
+    return {
+      answer:
+        '2秒以内に英語が口から出るようにする最大のコツは、「全文を頭で組み立ててから話し始めない」ことです。場面を見た瞬間に、最初の2〜3語（"Let me...", "I am on...", "How about...", "That sounds..."）だけを反射的に口から出し、残りの目的語を後から繋げる訓練を発話ドリルで繰り返しましょう。',
+      examples: [
+        'Let me... + check my schedule first. （まず「Let me」を0.5秒で口に出す）',
+        'I am on... + my way there. （まず「I am on」で動き出す状態を宣言する）',
+        'That sounds... + good to me. （まず「That sounds」で相手の話への反応を始める）',
+      ],
+      usedMock: true,
+    };
+  }
+
+  // 4. その他の自由質問
+  return {
+    answer: `「${question}」についてのAI講師アドバイス：英語を話す・聴くときは、日本語の1対1の直訳単語を当てはめるのではなく、「①その場面で相手にどういう行動・感情を伝えたいか（言いたいこと）」と「②主語から順番に矢印がどこへ向かうか（英語の語順チャンク）」の2つをセットで掴むのが最も効果的です。まずは最初の3語を1つの音の塊として口に馴染ませましょう。`,
+    examples: [
+      'Let me get back to you on that. （その件は確認して折り返します）',
+      'I am on my way there right now. （今ちょうどそっちに向かっているところです）',
+      'That lines up with our plan. （それは私たちの計画とピタッと一致しています）',
+    ],
+    usedMock: true,
+  };
+}
+
+/**
+ * AI講師質問チャットの回答生成（直訳の丸暗記ではなく場面のニュアンス・語順コアイメージ・発音と例文で答える・要件4-5）
  */
 export async function askAiCoachQuestion(params: {
   question: string;
   settings: Settings;
+  chunks?: Chunk[];
   fetchImpl?: typeof fetch;
 }): Promise<{
   answer: string;
@@ -522,28 +780,22 @@ export async function askAiCoachQuestion(params: {
   const {
     question,
     settings,
+    chunks = ALL_SEED_CHUNKS,
     fetchImpl = typeof fetch !== 'undefined' ? fetch : undefined,
   } = params;
 
   const isOffline =
     typeof navigator !== 'undefined' && navigator.onLine === false;
 
-  const fallbackResponse = {
-    answer:
-      'この表現のコアイメージは「中心にある核をそのまま相手の手元へスッと差し出す動き」です。日本語に置き換えず、空間の矢印と口のリズムだけで捉えましょう。',
-    examples: [
-      'Let me get back to you on that.',
-      'That lines up with our plan.',
-      'Jimmy took over in the final two minutes.',
-    ],
-    usedMock: true,
-  };
+  const fallbackResponse = buildQuestionAwareCoachFallback(question, chunks);
 
   const hasLocalKey = Boolean(settings.geminiApiKey?.trim());
-  const useServerProxy =
-    !hasLocalKey &&
-    !params.fetchImpl &&
-    getCachedCloudStatus().serverHasGeminiKey;
+  let serverHasKey = getCachedCloudStatus().serverHasGeminiKey;
+  if (!hasLocalKey && !params.fetchImpl && !serverHasKey && !isOffline) {
+    const refreshed = await checkCloudAuthStatus();
+    serverHasKey = refreshed.serverHasGeminiKey;
+  }
+  const useServerProxy = !hasLocalKey && !params.fetchImpl && serverHasKey;
 
   if (
     (!hasLocalKey && !useServerProxy) ||
@@ -568,7 +820,7 @@ export async function askAiCoachQuestion(params: {
       apiKey: settings.geminiApiKey ?? '',
       model: settings.geminiModel,
       systemInstruction:
-        'あなたは英語コーチです。日本語の直訳は一切使わず、「空間・動き・感情のコアイメージ」と「発音のコツ」、および自然な英語の例文3つだけで質問に答えてください。',
+        'あなたは英語脳再配線アプリ「Project Rewire」の専属AI英語講師です。ユーザーの質問に対して、単なる辞書的な直訳ではなく、①どんな場面・ニュアンスで使うか、②英語の語順のまま前からどうイメージするか（空間・動きのコアイメージ）、③ネイティブの発音・音の繋がりのコツ を自然な日本語でわかりやすく解説してください。また、実践ですぐ使える英語の例文を3つ（各例文の後ろにカッコ書きで自然な場面の意味を添えて）挙げてください。',
       userPrompt: question,
       temperature: 0.4,
       responseSchema: schema,

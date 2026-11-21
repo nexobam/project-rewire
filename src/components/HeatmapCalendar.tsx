@@ -181,7 +181,7 @@ export const HeatmapCalendar: React.FC<HeatmapCalendarProps> = ({
           <div className="space-y-2 pt-2 border-t" style={{ borderColor: palette.border }}>
             <div className="flex items-center gap-1.5 font-bold">
               <FileText size={14} strokeWidth={1.75} color="currentColor" />
-              <span>AI社員レポート・Live総評 ({selectedReports.length}件)</span>
+              <span>AI講師レポート・Live総評 ({selectedReports.length}件)</span>
             </div>
             {selectedReports.map((rep) => (
               <div

@@ -16,10 +16,13 @@ import {
 import { THEME_PALETTES } from '../domain/contrast';
 import { evaluatePromotionGate } from '../domain/promotionGate';
 import { recomposeChunk } from '../domain/scheduler';
+import { CoachChatPage } from '../pages/CoachChatPage';
+import { SettingsPage } from '../pages/SettingsPage';
 import { SilentModePage } from '../pages/SilentModePage';
 import { SpeakModePage } from '../pages/SpeakModePage';
+import { askAiCoachQuestion } from '../services/geminiService';
 import * as ttsService from '../services/ttsService';
-import { DEFAULT_SETTINGS } from '../types';
+import { DEFAULT_SETTINGS, type CoachMessage } from '../types';
 
 describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマイク継続表示・音声とミッションと答えの一致', () => {
   const spokenTexts: string[] = [];
@@ -342,5 +345,86 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
       screen.getByTestId('push-to-talk-mic-button')
     );
     expect(mic2).toBeInTheDocument();
+  });
+
+  it('シナリオ6（専属AI講師質問チャット＆新設定画面）：Lv.1でも1タップ質問ボタンが表示され、質問ごとに内容に合った異なる回答が返り、設定画面で出題スタイルを切り替えられること', async () => {
+    // 1. 異なる3つの質問に対して、スマートフォールバックでも全く異なる質問固有の回答が返ること
+    const res1 = await askAiCoachQuestion({
+      question: '"Let me get a cold brew." はどういう場面で使う？',
+      settings: { ...DEFAULT_SETTINGS, level: 1 },
+      chunks: ALL_SEED_CHUNKS,
+    });
+    const res2 = await askAiCoachQuestion({
+      question: 'ネイティブの英語が繋がって速く聴こえるときの発音のコツは？',
+      settings: { ...DEFAULT_SETTINGS, level: 1 },
+      chunks: ALL_SEED_CHUNKS,
+    });
+    const res3 = await askAiCoachQuestion({
+      question: '2秒以内にパッと英語を発話するコツは？',
+      settings: { ...DEFAULT_SETTINGS, level: 1 },
+      chunks: ALL_SEED_CHUNKS,
+    });
+
+    expect(res1.answer).not.toBe(res2.answer);
+    expect(res2.answer).not.toBe(res3.answer);
+    expect(res1.answer).toContain('Let me get a cold brew.');
+
+    // 2. CoachChatPage UIで学習中フレーズの1タップ質問セクションとよく聞かれる質問テンプレートが表示されること
+    const savedMessages: CoachMessage[] = [];
+    render(
+      <CoachChatPage
+        settings={{ ...DEFAULT_SETTINGS, level: 1 }}
+        messages={savedMessages}
+        palette={THEME_PALETTES.light}
+        chunks={ALL_SEED_CHUNKS}
+        cloudEnabled={true}
+        serverHasGeminiKey={true}
+        onUpsertMessage={async (m) => {
+          savedMessages.push(m);
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('chunk-quick-ask-section')).toBeInTheDocument();
+    expect(screen.getByTestId('quick-question-templates')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('ai-coach-connection-badge')
+    ).toHaveTextContent('AI講師オンライン接続中');
+
+    // 1タップテンプレートをクリックすると即座に質問が送信されること
+    fireEvent.click(screen.getByTestId('quick-template-0'));
+    await waitFor(() => expect(savedMessages.length).toBe(1));
+    expect(savedMessages[0].answer).toContain('Let me get');
+
+    // 3. SettingsPage UIでサイレント出題スタイル（絵カード4択／語順ブロック）の切り替えと速度試聴ができること
+    const onUpdate = vi.fn(async (patch) => ({
+      ...DEFAULT_SETTINGS,
+      ...patch,
+    }));
+    render(
+      <SettingsPage
+        settings={{ ...DEFAULT_SETTINGS, level: 1, lv1Phase: 'picture' }}
+        chunks={ALL_SEED_CHUNKS}
+        reviewStates={[]}
+        attempts={[]}
+        sessions={[]}
+        aiReports={[]}
+        coachMessages={[]}
+        palette={THEME_PALETTES.light}
+        cloudEnabled={true}
+        serverHasGeminiKey={true}
+        onUpdateSettings={onUpdate}
+        onStartRecalibration={vi.fn()}
+        onApplyImportedBackup={vi.fn(async () => {})}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('select-lv1-phase-blocks'));
+    expect(onUpdate).toHaveBeenCalledWith({ lv1Phase: 'blocks' });
+
+    fireEvent.click(screen.getByTestId('test-tts-rate-button'));
+    expect(spokenTexts[spokenTexts.length - 1]).toBe(
+      'Let me get a cold brew.'
+    );
   });
 });

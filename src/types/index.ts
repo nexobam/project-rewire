@@ -226,7 +226,7 @@ export const DEFAULT_SETTINGS: Settings = {
   level: 0,
   lv1Phase: 'picture',
   perTapMs: 500,
-  geminiModel: 'gemini-2.5-flash',
+  geminiModel: 'gemini-3.8-flash',
   dailyApiCallLimit: 40,
   ttsRate: 1.0,
   clickSound: true,

@@ -159,7 +159,7 @@ export default {
         return jsonResponse({ ok: true, updatedAt: now });
       }
 
-      // Gemini API プロキシ（サーバー側Secretの GEMINI_API_KEY を使用）
+      // Gemini API プロキシ（サーバー側Secretの GEMINI_API_KEY を使用・モデル廃止や503過負荷時の自動フォールバック付き）
       if (url.pathname === '/api/gemini' && request.method === 'POST') {
         const apiKey = env.GEMINI_API_KEY?.trim();
         if (!apiKey) {
@@ -177,38 +177,80 @@ export default {
           responseSchema?: Record<string, unknown>;
         };
 
-        const model = body.model || 'gemini-2.5-flash';
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-          model
-        )}:generateContent`;
+        const rawRequestedModel = (body.model || 'gemini-3.8-flash').trim();
+        const normalizedPrimary =
+          rawRequestedModel === 'gemini-2.5-flash' ||
+          rawRequestedModel === 'gemini-2.0-flash' ||
+          rawRequestedModel === 'gemini-1.5-flash'
+            ? 'gemini-3.8-flash'
+            : rawRequestedModel;
 
-        const geminiRes = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': apiKey,
+        const candidateModels = Array.from(
+          new Set([
+            normalizedPrimary,
+            'gemini-3.8-flash',
+            'gemini-3.8-flash-lite',
+            'gemini-2.5-flash-lite',
+            'gemini-flash-latest',
+            'gemini-3.8-pro',
+          ])
+        );
+
+        const requestPayload = JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: body.systemInstruction ?? '' }],
           },
-          body: JSON.stringify({
-            systemInstruction: {
-              parts: [{ text: body.systemInstruction ?? '' }],
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: body.userPrompt ?? '' }],
             },
-            contents: [
-              {
-                role: 'user',
-                parts: [{ text: body.userPrompt ?? '' }],
-              },
-            ],
-            generationConfig: {
-              temperature: body.temperature ?? 0.7,
-              responseMimeType: 'application/json',
-              responseSchema: body.responseSchema,
-            },
-          }),
+          ],
+          generationConfig: {
+            temperature: body.temperature ?? 0.7,
+            responseMimeType: 'application/json',
+            responseSchema: body.responseSchema,
+          },
         });
 
-        const text = await geminiRes.text();
-        return new Response(text, {
-          status: geminiRes.status,
+        let lastStatus = 503;
+        let lastText = '';
+
+        for (const candidateModel of candidateModels) {
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+            candidateModel
+          )}:generateContent`;
+
+          const geminiRes = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey,
+            },
+            body: requestPayload,
+          });
+
+          lastStatus = geminiRes.status;
+          lastText = await geminiRes.text();
+
+          if (geminiRes.ok) {
+            return new Response(lastText, {
+              status: 200,
+              headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Cache-Control': 'no-store',
+              },
+            });
+          }
+
+          // 404（旧モデル廃止）または 503（特定モデルの一時的な混雑）は次の候補モデルで即リトライ
+          if (geminiRes.status !== 404 && geminiRes.status !== 503) {
+            break;
+          }
+        }
+
+        return new Response(lastText, {
+          status: lastStatus,
           headers: {
             'Content-Type': 'application/json; charset=utf-8',
             'Cache-Control': 'no-store',

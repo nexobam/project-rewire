@@ -147,7 +147,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex items-center gap-1 px-2.5 py-1 rounded border text-xs font-semibold tactile-btn"
             >
               <MessageSquare size={15} strokeWidth={1.75} color="currentColor" />
-              <span>AIコーチ</span>
+              <span>AI講師</span>
             </button>
             <button
               type="button"

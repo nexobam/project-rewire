@@ -391,7 +391,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               </button>
             </div>
 
-            {/* 5. AIコーチ質問チャット */}
+            {/* 5. AI講師に質問チャット */}
             <div
               style={{ borderColor: palette.border }}
               className="border-t pt-3 flex items-center justify-between gap-3"
@@ -399,10 +399,10 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div className="space-y-1">
                 <div className="flex items-center gap-2 font-bold text-sm">
                   <MessageSquare size={17} strokeWidth={1.75} color="currentColor" />
-                  <span>5. AIコーチ質問チャット（直訳禁止解説）</span>
+                  <span>5. 専属AI講師に質問チャット（語順イメージ・発音解説）</span>
                 </div>
                 <p className="text-xs opacity-80">
-                  コアイメージと例文だけで疑問を解消。オフライン時の質問保存＆再送にも対応。
+                  学習中フレーズの1タップ質問やテンプレートから、ニュアンス・語順・発音をすぐ解消。
                 </p>
               </div>
               <button
@@ -416,7 +416,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 className="min-h-[44px] px-4 py-2 rounded-lg border font-bold text-xs tactile-block shrink-0"
                 data-testid="open-coach-chat"
               >
-                質問する
+                AI講師に聞く
               </button>
             </div>
           </div>
@@ -441,7 +441,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             currentStudyDate={currentStudyDate}
           />
 
-          {/* 問題バンク内訳 ＆ 4人のAI社員による新規問題生成パネル */}
+          {/* 問題バンク内訳 ＆ 専属AI講師による新規問題生成パネル */}
           <div
             style={{
               backgroundColor: palette.card,
@@ -454,7 +454,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-bold text-sm">
                 <Sparkles size={16} strokeWidth={1.75} color="currentColor" />
-                <span>問題バンク ＆ 4人のAI社員ステータス</span>
+                <span>問題バンク ＆ 専属AI講師ステータス</span>
               </div>
               <span className="font-mono font-bold">
                 全 {activeChunks.length} 問
@@ -479,7 +479,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 }}
                 className="p-2.5 rounded border"
               >
-                <div className="opacity-75">AI生成問題</div>
+                <div className="opacity-75">AI講師作成問題</div>
                 <div
                   style={{ color: palette.amberText ?? palette.text }}
                   className="text-base font-bold font-mono"
@@ -502,7 +502,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             <p className="opacity-80">
-              セッション完了時（「終了して集計」時）にAI社員が自動で新問題を5問作りますが、下のボタンから今すぐ追加作成することもできます。
+              セッション完了時（「終了して集計」時）にAI講師が自動で新問題を5問作りますが、下のボタンから今すぐ追加作成することもできます。
             </p>
 
             {onGenerateAiQuestionsNow && (
@@ -515,7 +515,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   try {
                     const res = await onGenerateAiQuestionsNow();
                     setAiGenNotice(
-                      `AI社員が新しく ${res.addedCount} 問を作成しました！（次回のバッチで優先出題されます）`
+                      `AI講師が新しく ${res.addedCount} 問を作成しました！（次回のバッチで優先出題されます）`
                     );
                   } finally {
                     setGeneratingAi(false);
@@ -530,8 +530,8 @@ export const HomePage: React.FC<HomePageProps> = ({
                 data-testid="generate-ai-questions-now-button"
               >
                 {generatingAi
-                  ? '4人のAI社員が新問題を作成・品質監査中...'
-                  : '今すぐAI社員に新問題を5問作らせる'}
+                  ? '専属AI講師が新問題を作成・品質監査中...'
+                  : '今すぐAI講師に新問題を5問作らせる'}
               </button>
             )}
 
@@ -542,7 +542,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             )}
           </div>
 
-          {/* 直近のAI社員コメントサマリー */}
+          {/* 直近のAI講師コメントサマリー */}
           {aiReports.filter((r) => r.analyst).length > 0 && (
             <div
               style={{
@@ -554,7 +554,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             >
               <div className="flex items-center gap-2 font-bold text-sm">
                 <Sparkles size={16} strokeWidth={1.75} color="currentColor" />
-                <span>AI社員からの最新フィードバック</span>
+                <span>AI講師からの最新フィードバック</span>
               </div>
               {(() => {
                 const latest = [...aiReports]
