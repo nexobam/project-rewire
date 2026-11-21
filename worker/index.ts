@@ -189,12 +189,9 @@ export default {
           new Set([
             normalizedPrimary,
             'gemini-3.8-flash',
-            'gemini-3.8-flash-lite',
-            'gemini-2.5-flash-lite',
             'gemini-flash-latest',
-            'gemini-3.8-pro',
           ])
-        );
+        ).slice(0, 3);
 
         const requestPayload = JSON.stringify({
           systemInstruction: {
@@ -210,42 +207,57 @@ export default {
             temperature: body.temperature ?? 0.7,
             responseMimeType: 'application/json',
             responseSchema: body.responseSchema,
+            thinkingConfig: {
+              thinkingBudget: 0,
+            },
           },
         });
 
         let lastStatus = 503;
-        let lastText = '';
+        let lastText = JSON.stringify({
+          error: { message: 'Gemini API request timed out or unavailable' },
+        });
 
         for (const candidateModel of candidateModels) {
           const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
             candidateModel
           )}:generateContent`;
 
-          const geminiRes = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-goog-api-key': apiKey,
-            },
-            body: requestPayload,
-          });
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-          lastStatus = geminiRes.status;
-          lastText = await geminiRes.text();
-
-          if (geminiRes.ok) {
-            return new Response(lastText, {
-              status: 200,
+          try {
+            const geminiRes = await fetch(endpoint, {
+              method: 'POST',
               headers: {
-                'Content-Type': 'application/json; charset=utf-8',
-                'Cache-Control': 'no-store',
+                'Content-Type': 'application/json',
+                'x-goog-api-key': apiKey,
               },
+              body: requestPayload,
+              signal: controller.signal,
             });
-          }
+            clearTimeout(timeoutId);
 
-          // 404（旧モデル廃止）または 503（特定モデルの一時的な混雑）は次の候補モデルで即リトライ
-          if (geminiRes.status !== 404 && geminiRes.status !== 503) {
-            break;
+            lastStatus = geminiRes.status;
+            lastText = await geminiRes.text();
+
+            if (geminiRes.ok) {
+              return new Response(lastText, {
+                status: 200,
+                headers: {
+                  'Content-Type': 'application/json; charset=utf-8',
+                  'Cache-Control': 'no-store',
+                },
+              });
+            }
+
+            // 404（旧モデル廃止）または 503（一時的な混雑）は次の候補モデルで即リトライ
+            if (geminiRes.status !== 404 && geminiRes.status !== 503) {
+              break;
+            }
+          } catch {
+            clearTimeout(timeoutId);
+            lastStatus = 504;
           }
         }
 

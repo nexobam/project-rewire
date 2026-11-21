@@ -21,6 +21,7 @@ import { SettingsPage } from '../pages/SettingsPage';
 import { SilentModePage } from '../pages/SilentModePage';
 import { SpeakModePage } from '../pages/SpeakModePage';
 import { askAiCoachQuestion } from '../services/geminiService';
+import * as geminiService from '../services/geminiService';
 import * as ttsService from '../services/ttsService';
 import { DEFAULT_SETTINGS, type CoachMessage } from '../types';
 
@@ -361,7 +362,12 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
     expect(res2.answer).not.toBe(res3.answer);
     expect(res1.answer).toContain('Let me get a cold brew.');
 
-    // 2. CoachChatPage UIで1タップ質問、タップで回答を閉じる操作、履歴の全削除ができること
+    // 2. CoachChatPage UIで自由入力、タップで回答を閉じる操作、履歴の全削除ができること
+    vi.spyOn(geminiService, 'askAiCoachQuestion').mockResolvedValueOnce({
+      answer: '"Let me get..." はカフェ等で自然に注文する定番フレーズです。',
+      examples: ['Let me get a cold brew.'],
+      usedMock: false,
+    });
     let savedMessages: CoachMessage[] = [];
     const { rerender } = render(
       <CoachChatPage

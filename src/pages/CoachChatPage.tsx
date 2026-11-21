@@ -99,6 +99,17 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
         settings,
         chunks,
       });
+      if (res.usedMock && isAiConnected) {
+        // オンライン連携中にもかかわらずAPI一時混雑等でフォールバックになった場合は、無関係な定型文を出さず再送可能な保留状態にする
+        const retryMsg: CoachMessage = {
+          id: `coach_${Date.now()}`,
+          question: trimmed,
+          status: 'pending_offline',
+          createdAt: Date.now(),
+        };
+        await onUpsertMessage(retryMsg);
+        return;
+      }
       const answeredMsg: CoachMessage = {
         id: `coach_${Date.now()}`,
         question: trimmed,
@@ -123,6 +134,9 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
         settings,
         chunks,
       });
+      if (res.usedMock && isAiConnected) {
+        return;
+      }
       await onUpsertMessage({
         ...msg,
         answer: res.answer,
@@ -186,8 +200,8 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
             data-testid="offline-pending-questions"
           >
             <p className="font-bold">
-              オフライン時に保存された未送信の質問が {pendingOfflineMessages.length}{' '}
-              件あります。再送しますか？
+              未送信（オフラインまたはAIサーバー混雑）の質問が{' '}
+              {pendingOfflineMessages.length} 件あります。再送しますか？
             </p>
             <div className="space-y-2">
               {pendingOfflineMessages.map((m) => (
