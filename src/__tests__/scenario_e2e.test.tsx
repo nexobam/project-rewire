@@ -396,7 +396,7 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
     await waitFor(() => expect(savedMessages.length).toBe(1));
     expect(savedMessages[0].answer).toContain('Let me get');
 
-    // 3. SettingsPage UIでサイレント出題スタイル（絵カード4択／語順ブロック）の切り替えと速度試聴ができること
+    // 3. SettingsPage UIで不要なJSON設定や手動フェーズ切替がなく、制限時間プリセット・速度試聴・自動ステップアップ表示が動作すること
     const onUpdate = vi.fn(async (patch) => ({
       ...DEFAULT_SETTINGS,
       ...patch,
@@ -404,23 +404,22 @@ describe('E2E User Scenarios - サイレントモード解説・Push-to-Talkマ�
     render(
       <SettingsPage
         settings={{ ...DEFAULT_SETTINGS, level: 1, lv1Phase: 'picture' }}
-        chunks={ALL_SEED_CHUNKS}
-        reviewStates={[]}
-        attempts={[]}
-        sessions={[]}
-        aiReports={[]}
-        coachMessages={[]}
         palette={THEME_PALETTES.light}
         cloudEnabled={true}
         serverHasGeminiKey={true}
         onUpdateSettings={onUpdate}
         onStartRecalibration={vi.fn()}
-        onApplyImportedBackup={vi.fn(async () => {})}
       />
     );
 
-    fireEvent.click(screen.getByTestId('select-lv1-phase-blocks'));
-    expect(onUpdate).toHaveBeenCalledWith({ lv1Phase: 'blocks' });
+    expect(screen.queryByTestId('export-backup-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('select-lv1-phase-blocks')).not.toBeInTheDocument();
+    expect(screen.getByTestId('learning-phase-status')).toHaveTextContent(
+      'アプリ側で自動判定'
+    );
+
+    fireEvent.click(screen.getByTestId('pertap-preset-620'));
+    expect(onUpdate).toHaveBeenCalledWith({ perTapMs: 620 });
 
     fireEvent.click(screen.getByTestId('test-tts-rate-button'));
     expect(spokenTexts[spokenTexts.length - 1]).toBe(

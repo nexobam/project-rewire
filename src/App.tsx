@@ -49,7 +49,6 @@ export const App: React.FC = () => {
     saveLiveLogResult,
     upsertCoachMessage,
     generateAiQuestionsNow,
-    applyImportedBackup,
   } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<NavTab>('home');
@@ -369,18 +368,11 @@ export const App: React.FC = () => {
       ) : activeTab === 'settings' ? (
         <SettingsPage
           settings={settings}
-          chunks={chunks}
-          reviewStates={reviewStates}
-          attempts={attempts}
-          sessions={sessions}
-          aiReports={aiReports}
-          coachMessages={coachMessages}
           palette={palette}
           cloudEnabled={cloudEnabled}
           serverHasGeminiKey={serverHasGeminiKey}
           onUpdateSettings={updateSettings}
           onStartRecalibration={() => setIsRecalibrating(true)}
-          onApplyImportedBackup={applyImportedBackup}
         />
       ) : (
         <HomePage
