@@ -204,7 +204,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
         },
       });
     },
-    [allChunks, currentIndex, settings.level, settings.ttsRate]
+    [allChunks, settings.level, settings.ttsRate]
   );
 
   useEffect(() => {

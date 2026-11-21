@@ -346,7 +346,7 @@ export function useAppStore() {
         }
       }
     },
-    [attempts, reviewStates, settings, updateSettings]
+    [attempts, reviewStates, sessions, settings, updateSettings]
   );
 
   // セッション終了と非同期AIレポート登録・実行
