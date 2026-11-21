@@ -59,24 +59,21 @@ body {
   animation: rewireCardEnter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* 回答後カード・完了カード・緑クリア時の弾むポップ演出 */
+/* 回答後カード・完了カード：オーバーシュートなしのキレのあるスライド＆フェードイン */
 @keyframes rewirePopIn {
   0% {
     opacity: 0;
-    transform: scale(0.96) translateY(6px);
-  }
-  65% {
-    opacity: 1;
-    transform: scale(1.01) translateY(0);
+    transform: translate3d(0, 16px, 0);
   }
   100% {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 .animate-pop-in {
-  animation: rewirePopIn 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: opacity, transform;
+  animation: rewirePopIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* コンボ増加・連続記録の跳ねるアクセント */

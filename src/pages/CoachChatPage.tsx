@@ -12,6 +12,7 @@ import {
   Volume2,
 } from 'lucide-react';
 import { ALL_SEED_CHUNKS } from '../data/seed';
+import { ScrollReveal } from '../components/ScrollReveal';
 import type { ThemePalette } from '../domain/contrast';
 import { playTactileClick } from '../services/audioService';
 import { getCachedCloudStatus } from '../services/cloudSyncService';
@@ -135,6 +136,7 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+      <ScrollReveal delayMs={40}>
       <div
         style={{
           backgroundColor: palette.card,
@@ -423,6 +425,7 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
           )}
         </div>
       </div>
+      </ScrollReveal>
     </div>
   );
 };

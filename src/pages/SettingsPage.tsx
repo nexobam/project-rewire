@@ -7,6 +7,7 @@ import {
   Sliders,
   Volume2,
 } from 'lucide-react';
+import { ScrollReveal } from '../components/ScrollReveal';
 import type { ThemePalette } from '../domain/contrast';
 import { clampPerTapMs } from '../domain/timingJudge';
 import {
@@ -50,6 +51,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       </div>
 
       {/* 1. 英語音声・操作・判定ゆとり設定 */}
+      <ScrollReveal delayMs={40}>
       <div
         style={{
           backgroundColor: palette.card,
@@ -214,8 +216,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
         </div>
       </div>
+      </ScrollReveal>
 
       {/* 2. 画面のカラーテーマ ＆ 学習フェーズ表示 */}
+      <ScrollReveal delayMs={120}>
       <div
         style={{
           backgroundColor: palette.card,
@@ -322,6 +326,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
         )}
       </div>
+      </ScrollReveal>
     </div>
   );
 };
