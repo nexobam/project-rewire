@@ -13,6 +13,7 @@ import {
 import { evaluateStreakAndTickets } from '../domain/studyDate';
 import { mergeCloudAndLocalStores } from '../hooks/useAppStore';
 import { BossBattlePage } from '../pages/BossBattlePage';
+import { CoachChatPage } from '../pages/CoachChatPage';
 import { SettingsPage } from '../pages/SettingsPage';
 import { SilentModePage } from '../pages/SilentModePage';
 import { SpeakModePage } from '../pages/SpeakModePage';
@@ -336,5 +337,33 @@ describe('本番運用エッジケース & シナリオ検証', () => {
     fireEvent.change(input, { target: { value: '450' } });
     fireEvent.blur(input);
     expect(onUpdate).toHaveBeenCalledWith({ perTapMs: 450 });
+  });
+
+  it('CoachChatPage はオフラインやAI未接続（usedMock: true）のとき偽の回答を answered として保存しないこと', async () => {
+    const onUpsert = vi.fn(async () => {});
+    render(
+      <CoachChatPage
+        settings={{ ...DEFAULT_SETTINGS, geminiApiKey: '' }}
+        messages={[]}
+        palette={THEME_PALETTES.light}
+        serverHasGeminiKey={false}
+        onUpsertMessage={onUpsert}
+      />
+    );
+
+    expect(screen.getByTestId('ai-coach-connection-badge')).toHaveTextContent(
+      'オフライン / AI未接続（回答停止中）'
+    );
+
+    fireEvent.change(screen.getByTestId('coach-question-input'), {
+      target: { value: 'ヒート最高ってなんて言う？' },
+    });
+    fireEvent.click(screen.getByTestId('coach-send-button'));
+
+    await vi.waitFor(() => {
+      expect(screen.getByTestId('coach-error-banner')).toBeInTheDocument();
+    });
+    // answered として偽回答が保存されていないこと
+    expect(onUpsert).not.toHaveBeenCalled();
   });
 });

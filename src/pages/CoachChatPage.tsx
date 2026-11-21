@@ -33,9 +33,9 @@ export interface CoachChatPageProps {
 }
 
 const ERROR_CODE_MESSAGES: Record<CoachErrorCode, string> = {
-  offline: 'オフラインのため、質問を保留リストに保存しました。オンライン復帰後に再送できます。',
+  offline: 'オフラインのためAI質問は回答を行いません。オンライン復帰後に「再送する」からお試しください。',
   daily_limit: '本日のAI利用上限回数に達しました。設定画面から上限を調整するか、明日またお試しください。',
-  no_api_key: 'AIキーが未設定のため、オフライン向けの基本ガイドで回答しました。',
+  no_api_key: 'AIキーが未設定またはオフラインのため、AI回答を行えません。設定画面をご確認ください。',
   rate_limit: 'AIサーバーが混み合っています（429）。少し時間を置いてから「再送する」を押してください。',
   auth_error: 'AIサーバーまたはAPIキーの認証に失敗しました。設定画面またはログイン状態をご確認ください。',
   server_error: 'AIサーバーとの通信で一時的なエラーが発生しました。時間をおいて「再送する」をお試しください。',
@@ -114,24 +114,25 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
         settings,
         chunks,
       });
-      if (res.usedMock && isAiConnected) {
-        if (res.errorCode) {
-          setErrorBanner(ERROR_CODE_MESSAGES[res.errorCode]);
+      // オフライン・APIエラー・キー未設定などで実際のAI回答が得られなかった場合は、ローカルの代替回答を返さない
+      if (res.usedMock) {
+        setErrorBanner(
+          res.errorCode
+            ? ERROR_CODE_MESSAGES[res.errorCode]
+            : ERROR_CODE_MESSAGES.offline
+        );
+        if (isAiConnected && res.errorCode !== 'no_api_key') {
+          const retryMsg: CoachMessage = {
+            id: makeCoachId(),
+            question: trimmed,
+            status: 'pending_offline',
+            createdAt: Date.now(),
+          };
+          await onUpsertMessage(retryMsg);
         }
-        const retryMsg: CoachMessage = {
-          id: makeCoachId(),
-          question: trimmed,
-          status: 'pending_offline',
-          createdAt: Date.now(),
-        };
-        await onUpsertMessage(retryMsg);
         return;
       }
-      if (!res.usedMock) {
-        onRecordApiCall?.();
-      } else if (res.errorCode && res.errorCode !== 'no_api_key') {
-        setErrorBanner(ERROR_CODE_MESSAGES[res.errorCode]);
-      }
+      onRecordApiCall?.();
       const answeredMsg: CoachMessage = {
         id: makeCoachId(),
         question: trimmed,
@@ -157,15 +158,15 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
         settings,
         chunks,
       });
-      if (res.usedMock && isAiConnected) {
-        if (res.errorCode) {
-          setErrorBanner(ERROR_CODE_MESSAGES[res.errorCode]);
-        }
+      if (res.usedMock) {
+        setErrorBanner(
+          res.errorCode
+            ? ERROR_CODE_MESSAGES[res.errorCode]
+            : ERROR_CODE_MESSAGES.offline
+        );
         return;
       }
-      if (!res.usedMock) {
-        onRecordApiCall?.();
-      }
+      onRecordApiCall?.();
       await onUpsertMessage({
         ...msg,
         answer: res.answer,
@@ -207,7 +208,7 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
             <span>
               {isAiConnected
                 ? 'AI講師オンライン接続中'
-                : 'AI講師スマート解説モード'}
+                : 'オフライン / AI未接続（回答停止中）'}
             </span>
           </span>
         </div>
