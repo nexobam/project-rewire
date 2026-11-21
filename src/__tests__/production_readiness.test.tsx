@@ -309,27 +309,24 @@ describe('本番運用エッジケース & シナリオ検証', () => {
     expect(screen.getByText(/ボス戦に出題できる問題が見つかりませんでした/)).toBeInTheDocument();
   });
 
-  it('SettingsPage にバックアップエクスポート・インポートUIが存在し、perTapMsを自由に入力し直せること', () => {
+  it('SettingsPage で perTapMs を自由に入力し直せ、不要なバックアップ/APIキー欄が表示されないこと', () => {
     const onUpdate = vi.fn(async (patch) => ({ ...DEFAULT_SETTINGS, ...patch }));
-    const onExport = vi.fn();
-    const onImport = vi.fn(async () => {});
 
     render(
       <SettingsPage
         settings={DEFAULT_SETTINGS}
-        sessions={[]}
         palette={THEME_PALETTES.light}
         onUpdateSettings={onUpdate}
         onStartRecalibration={vi.fn()}
-        onExportBackup={onExport}
-        onImportBackup={onImport}
       />
     );
 
-    const exportBtn = screen.getByTestId('settings-export-backup-button');
-    fireEvent.click(exportBtn);
-    expect(onExport).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('settings-import-file-input')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('settings-export-backup-button')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('settings-gemini-key-input')
+    ).not.toBeInTheDocument();
 
     const input = screen.getByLabelText('perTapMs') as HTMLInputElement;
     fireEvent.change(input, { target: { value: '' } });

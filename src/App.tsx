@@ -53,7 +53,6 @@ export const App: React.FC = () => {
     deleteCoachMessage,
     clearCoachMessages,
     generateAiQuestionsNow,
-    applyImportedBackup,
   } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<NavTab>('home');
@@ -428,14 +427,9 @@ export const App: React.FC = () => {
       ) : activeTab === 'settings' ? (
         <SettingsPage
           settings={settings}
-          sessions={sessions}
           palette={palette}
-          cloudEnabled={cloudEnabled}
-          serverHasGeminiKey={serverHasGeminiKey}
           onUpdateSettings={updateSettings}
           onStartRecalibration={() => setIsRecalibrating(true)}
-          onExportBackup={handleOneTapBackup}
-          onImportBackup={applyImportedBackup}
         />
       ) : (
         <HomePage

@@ -2,20 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  Download,
-  Key,
   RefreshCw,
   Settings as SettingsIcon,
   Sliders,
-  Upload,
   Volume2,
 } from 'lucide-react';
 import { ScrollReveal } from '../components/ScrollReveal';
-import {
-  validateAndPreviewImportJson,
-  type ImportComparisonSummary,
-  type ValidatedBackupBundle,
-} from '../db/backup';
 import type { ThemePalette } from '../domain/contrast';
 import { clampPerTapMs } from '../domain/timingJudge';
 import {
@@ -23,77 +15,36 @@ import {
   MIN_TTS_RATE,
   speakEnglishText,
 } from '../services/ttsService';
-import type { Session, Settings } from '../types';
+import type { Settings } from '../types';
 
 export interface SettingsPageProps {
   settings: Settings;
-  sessions?: Session[];
   palette: ThemePalette;
-  cloudEnabled?: boolean;
-  serverHasGeminiKey?: boolean;
   onUpdateSettings: (patch: Partial<Settings>) => Promise<Settings>;
   onStartRecalibration: () => void;
-  onExportBackup?: () => Promise<void> | void;
-  onImportBackup?: (bundle: ValidatedBackupBundle) => Promise<void>;
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
   settings,
-  sessions = [],
   palette,
-  cloudEnabled,
-  serverHasGeminiKey,
   onUpdateSettings,
   onStartRecalibration,
-  onExportBackup,
-  onImportBackup,
 }) => {
   const [perTapInput, setPerTapInput] = useState(String(settings.perTapMs));
-  const [apiKeyInput, setApiKeyInput] = useState(settings.geminiApiKey ?? '');
-  const [apiKeySavedMsg, setApiKeySavedMsg] = useState('');
-  const [importPreview, setImportPreview] =
-    useState<ImportComparisonSummary | null>(null);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [importDoneMsg, setImportDoneMsg] = useState<string | null>(null);
 
   useEffect(() => {
     setPerTapInput(String(settings.perTapMs));
   }, [settings.perTapMs]);
 
-  useEffect(() => {
-    setApiKeyInput(settings.geminiApiKey ?? '');
-  }, [settings.geminiApiKey]);
-
   const commitPerTapInput = (raw: string) => {
     const parsed = Number(raw);
-    const clamped = Number.isFinite(parsed) && raw.trim() !== ''
-      ? clampPerTapMs(parsed)
-      : settings.perTapMs;
+    const clamped =
+      Number.isFinite(parsed) && raw.trim() !== ''
+        ? clampPerTapMs(parsed)
+        : settings.perTapMs;
     setPerTapInput(String(clamped));
     if (clamped !== settings.perTapMs) {
       void onUpdateSettings({ perTapMs: clamped });
-    }
-  };
-
-  const handleSelectBackupFile = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    setImportError(null);
-    setImportDoneMsg(null);
-    setImportPreview(null);
-    try {
-      const text = await file.text();
-      const summary = validateAndPreviewImportJson(text, sessions);
-      setImportPreview(summary);
-    } catch (err) {
-      setImportError(
-        err instanceof Error
-          ? err.message
-          : 'バックアップファイルの読み込みに失敗しました。'
-      );
     }
   };
 
@@ -390,198 +341,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
         )}
       </div>
-      </ScrollReveal>
-
-      {/* 3. バックアップ出力・復元（JSON） */}
-      {(onExportBackup || onImportBackup) && (
-        <ScrollReveal delayMs={160}>
-          <div
-            style={{
-              backgroundColor: palette.card,
-              borderColor: palette.border,
-              color: palette.text,
-            }}
-            className="border rounded-xl p-5 space-y-4"
-          >
-            <div className="flex items-center gap-2 font-bold text-base">
-              <Download size={18} strokeWidth={1.75} color="currentColor" />
-              <span>3. データバックアップ・復元（JSON）</span>
-            </div>
-            <p className="text-xs opacity-80">
-              学習履歴やAI問題のバックアップを手動で保存・復元できます。
-              {cloudEnabled ? '（クラウド同期も有効です）' : ''}
-            </p>
-
-            <div className="flex flex-wrap items-center gap-3">
-              {onExportBackup && (
-                <button
-                  type="button"
-                  onClick={() => void onExportBackup()}
-                  style={{
-                    borderColor: palette.border,
-                    borderBottomWidth: '3px',
-                  }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-bold tactile-block"
-                  data-testid="settings-export-backup-button"
-                >
-                  <Download size={14} strokeWidth={1.75} color="currentColor" />
-                  <span>JSONバックアップを保存</span>
-                </button>
-              )}
-
-              {onImportBackup && (
-                <label
-                  style={{
-                    borderColor: palette.border,
-                    borderBottomWidth: '3px',
-                  }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-bold tactile-block cursor-pointer"
-                >
-                  <Upload size={14} strokeWidth={1.75} color="currentColor" />
-                  <span>JSONファイルから復元</span>
-                  <input
-                    type="file"
-                    accept=".json,application/json"
-                    onChange={(e) => void handleSelectBackupFile(e)}
-                    className="hidden"
-                    data-testid="settings-import-file-input"
-                  />
-                </label>
-              )}
-            </div>
-
-            {importError && (
-              <p
-                style={{ color: palette.crimsonText }}
-                className="text-xs font-semibold"
-              >
-                {importError}
-              </p>
-            )}
-
-            {importDoneMsg && (
-              <p
-                style={{ color: palette.greenText }}
-                className="text-xs font-semibold"
-              >
-                {importDoneMsg}
-              </p>
-            )}
-
-            {importPreview && onImportBackup && (
-              <div
-                style={{
-                  backgroundColor: palette.background,
-                  borderColor: palette.border,
-                }}
-                className="p-3.5 rounded-lg border text-xs space-y-2"
-                data-testid="import-preview-box"
-              >
-                <p className="font-bold">復元データのプレビュー確認</p>
-                <p>
-                  現在：累計 {importPreview.currentTotalMinutes}分（最終{' '}
-                  {importPreview.currentLastStudyDate}）
-                </p>
-                <p>
-                  復元先：Lv.{importPreview.bundle.settings.level}・累計{' '}
-                  {importPreview.incomingTotalMinutes}分（最終{' '}
-                  {importPreview.incomingLastStudyDate}）
-                </p>
-                <div className="flex items-center gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await onImportBackup(importPreview.bundle);
-                      setImportPreview(null);
-                      setImportDoneMsg('バックアップを復元しました。');
-                    }}
-                    style={{
-                      backgroundColor: palette.text,
-                      color: palette.card,
-                      borderColor: palette.text,
-                    }}
-                    className="px-3 py-1.5 rounded font-bold"
-                    data-testid="confirm-import-backup-button"
-                  >
-                    この内容で復元を実行
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setImportPreview(null)}
-                    style={{ borderColor: palette.border }}
-                    className="px-3 py-1.5 rounded border"
-                  >
-                    キャンセル
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </ScrollReveal>
-      )}
-
-      {/* 4. AI連携（Gemini API キー設定） */}
-      <ScrollReveal delayMs={200}>
-        <div
-          style={{
-            backgroundColor: palette.card,
-            borderColor: palette.border,
-            color: palette.text,
-          }}
-          className="border rounded-xl p-5 space-y-3"
-        >
-          <div className="flex items-center gap-2 font-bold text-base">
-            <Key size={18} strokeWidth={1.75} color="currentColor" />
-            <span>4. AI連携（Gemini API キー）</span>
-          </div>
-          <p className="text-xs opacity-80">
-            {serverHasGeminiKey
-              ? 'サーバー側の Gemini API キーと連携中です（通常は空欄のままで利用できます）。個人用キーを使う場合のみ入力してください。'
-              : '個人用の Gemini API キーを入力すると、AI講師チャットや自動問題生成がオンラインで動作します（この端末のローカルストレージのみに保存されます）。'}
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              type="password"
-              value={apiKeyInput}
-              onChange={(e) => setApiKeyInput(e.target.value)}
-              placeholder="AIza..."
-              style={{
-                backgroundColor: palette.background,
-                borderColor: palette.border,
-              }}
-              className="flex-1 min-w-[200px] px-3 py-2 rounded-lg border text-base sm:text-sm font-mono"
-              aria-label="Gemini API キー"
-              data-testid="settings-gemini-key-input"
-            />
-            <button
-              type="button"
-              onClick={async () => {
-                const trimmed = apiKeyInput.trim();
-                await onUpdateSettings({
-                  geminiApiKey: trimmed.length > 0 ? trimmed : undefined,
-                });
-                setApiKeySavedMsg(
-                  trimmed.length > 0
-                    ? 'APIキーを保存しました。'
-                    : 'APIキーをクリアしました。'
-                );
-                setTimeout(() => setApiKeySavedMsg(''), 3000);
-              }}
-              style={{
-                backgroundColor: palette.text,
-                color: palette.card,
-                borderColor: palette.text,
-              }}
-              className="px-4 py-2 rounded-lg text-xs font-bold tactile-btn"
-              data-testid="settings-save-gemini-key-button"
-            >
-              保存
-            </button>
-          </div>
-          {apiKeySavedMsg && (
-            <p className="text-xs font-semibold">{apiKeySavedMsg}</p>
-          )}
-        </div>
       </ScrollReveal>
     </div>
   );
