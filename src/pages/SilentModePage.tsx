@@ -664,6 +664,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
               palette={palette}
               allEnglishMode={isAllEnglish}
               showSituationMeaning={Boolean(answeredResult)}
+              showCategoryBadge={Boolean(answeredResult)}
               showEnglishSubtitle={
                 allowSimultaneousSubtitle || Boolean(answeredResult)
               }
@@ -735,6 +736,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
                     palette={palette}
                     compact
                     showSituationMeaning={false}
+                    showCategoryBadge={false}
                     showEnglishSubtitle={false}
                     onClick={() => handleSelectPictureCard(card)}
                   />

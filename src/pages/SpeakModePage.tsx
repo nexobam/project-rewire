@@ -417,12 +417,13 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <div className="space-y-3">
-          {/* 状況ビジュアルカード（回答前はアイコン＋3タグのみ、回答後に意味と正解英文を表示） */}
+          {/* 状況ビジュアルカード（回答前はアイコン＋3タグのみ、回答後に意味・カテゴリバッジ・正解英文を表示） */}
           <VisualCard
             chunk={currentChunk}
             palette={palette}
             allEnglishMode={isAllEnglish}
             showSituationMeaning={Boolean(answeredResult)}
+            showCategoryBadge={Boolean(answeredResult)}
             showEnglishSubtitle={Boolean(answeredResult)}
           />
 

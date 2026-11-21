@@ -12,6 +12,7 @@ export interface VisualCardProps {
   allEnglishMode?: boolean;
   showEnglishSubtitle?: boolean;
   showSituationMeaning?: boolean;
+  showCategoryBadge?: boolean;
   compact?: boolean;
   onClick?: () => void;
   selected?: boolean;
@@ -23,6 +24,7 @@ export const VisualCard: React.FC<VisualCardProps> = ({
   allEnglishMode = false,
   showEnglishSubtitle = false,
   showSituationMeaning = false,
+  showCategoryBadge = false,
   compact = false,
   onClick,
   selected = false,
@@ -94,8 +96,8 @@ export const VisualCard: React.FC<VisualCardProps> = ({
                   : 'コア問題'}
           </span>
 
-          {/* Miami Heat タグのみクリムゾンを許可（要件7・背景トークンと組み合わせて4.5:1以上を確保） */}
-          {isHeat && (
+          {/* Miami Heat タグは回答前のネタバレ防止のため、回答後（showCategoryBadge時）のみ表示（要件7・背景トークンと組み合わせて4.5:1以上を確保） */}
+          {isHeat && showCategoryBadge && (
             <span
               style={{
                 backgroundColor: palette.background,
