@@ -192,20 +192,27 @@ export const HomePage: React.FC<HomePageProps> = ({
         />
       )}
 
-      {/* ライブ・パルスバー（常時動く波形＋切り替わる英語フレーズ＋1タップ試聴） */}
+      {/* 常時稼働ライブ・ティッカーバー（動く大きめ波形＋横に流れ続ける英語フレーズ＋1タップ試聴） */}
       <div
         style={{
           backgroundColor: palette.card,
           borderColor: palette.border,
           color: palette.text,
         }}
-        className="mb-5 border rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 animate-card-enter"
+        className="mb-5 border rounded-xl px-4 py-3 flex items-center justify-between gap-3 animate-card-enter overflow-hidden"
         data-testid="home-live-pulse-bar"
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex items-end gap-1 h-5 shrink-0" aria-hidden="true">
+        <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
+          <div
+            className="flex items-end gap-1 h-7 shrink-0 px-1.5 py-1 rounded border"
+            style={{
+              backgroundColor: palette.background,
+              borderColor: palette.border,
+            }}
+            aria-hidden="true"
+          >
             <span
-              style={{ backgroundColor: palette.text }}
+              style={{ backgroundColor: palette.crimsonText ?? palette.text }}
               className="w-1 h-5 rounded-full audio-wave-bar"
             />
             <span
@@ -213,7 +220,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               className="w-1 h-5 rounded-full audio-wave-bar"
             />
             <span
-              style={{ backgroundColor: palette.text }}
+              style={{ backgroundColor: palette.amberText ?? palette.text }}
               className="w-1 h-5 rounded-full audio-wave-bar"
             />
             <span
@@ -221,19 +228,22 @@ export const HomePage: React.FC<HomePageProps> = ({
               className="w-1 h-5 rounded-full audio-wave-bar"
             />
             <span
-              style={{ backgroundColor: palette.text }}
+              style={{ backgroundColor: palette.crimsonText ?? palette.text }}
               className="w-1 h-5 rounded-full audio-wave-bar"
             />
           </div>
 
-          <div
-            key={tickerIndex}
-            className="min-w-0 animate-card-enter"
-          >
-            <p className="text-sm font-bold truncate">{currentLivePhrase.en}</p>
-            <p className="text-[11px] opacity-75 truncate">
-              {currentLivePhrase.ja}
-            </p>
+          <div className="min-w-0 flex-1 overflow-hidden relative">
+            <div className="animate-marquee whitespace-nowrap text-xs sm:text-sm font-bold tracking-wide">
+              {[...livePhrases, ...livePhrases].map((item, idx) => (
+                <span key={idx} className="inline-flex items-center gap-2 mr-8">
+                  <span>{item.en}</span>
+                  <span className="opacity-65 font-normal text-xs">
+                    — {item.ja}
+                  </span>
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -258,20 +268,41 @@ export const HomePage: React.FC<HomePageProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-card-enter">
         {/* 左カラム */}
         <div className="space-y-5">
-          {/* 親指が届くメインCTA：「迷ったらこれ（1タップですぐ開始）」 */}
+          {/* 親指が届くメインCTA：「今日のおすすめ（1タップですぐ開始）」＋常時回転シナプス・オービット */}
           <div
             style={{
               backgroundColor: palette.card,
               borderColor: palette.text,
               color: palette.text,
             }}
-            className="border-2 rounded-xl p-5 space-y-3"
+            className="border-2 rounded-xl p-5 space-y-3 relative overflow-hidden"
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider opacity-75">
-                今日のおすすめ（1タップですぐ開始）
-              </span>
-              <span className="text-xs font-semibold">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                {/* 常時ゆっくり回転するシナプスリング */}
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="animate-spin-slow shrink-0"
+                  aria-hidden="true"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="9"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeDasharray="4 3"
+                  />
+                  <circle cx="12" cy="12" r="3" fill="currentColor" />
+                </svg>
+                <span className="text-xs font-bold uppercase tracking-wider opacity-80">
+                  今日のおすすめ（1タップですぐ開始）
+                </span>
+              </div>
+              <span className="text-xs font-semibold shrink-0">
                 今日の復習: {dueCount}問
               </span>
             </div>
@@ -287,9 +318,13 @@ export const HomePage: React.FC<HomePageProps> = ({
                 borderColor: palette.text,
                 borderBottomWidth: '3px',
               }}
-              className="group w-full min-h-[56px] px-5 py-3.5 rounded-lg border font-bold text-base flex items-center justify-center gap-2 tactile-block"
+              className="relative overflow-hidden group w-full min-h-[56px] px-5 py-3.5 rounded-lg border font-bold text-base flex items-center justify-center gap-2 tactile-block"
               data-testid="one-tap-start-button"
             >
+              <span
+                className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-white/25 animate-shimmer"
+                aria-hidden="true"
+              />
               <Play
                 size={20}
                 strokeWidth={1.75}

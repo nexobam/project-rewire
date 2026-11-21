@@ -155,12 +155,63 @@ body {
   animation: rewireNudge 1.6s ease-in-out infinite;
 }
 
+/* ホーム画面の常時流れる英語フレーズ・マーキー */
+@keyframes rewireMarquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: inline-flex;
+  width: max-content;
+  animation: rewireMarquee 22s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* ゆっくり回転する英語脳シナプス・オービットリング */
+@keyframes rewireSpinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: rewireSpinSlow 16s linear infinite;
+}
+
+/* おすすめボタン上をスッと走る控えめなシマー効果 */
+@keyframes rewireShimmer {
+  0% {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  35%, 100% {
+    transform: translateX(260%) skewX(-20deg);
+  }
+}
+
+.animate-shimmer {
+  animation: rewireShimmer 3.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-card-enter,
   .animate-pop-in,
   .animate-combo-bump,
   .animate-mic-pulse,
   .animate-nudge,
+  .animate-marquee,
+  .animate-spin-slow,
+  .animate-shimmer,
   .audio-wave-bar {
     animation: none !important;
   }
