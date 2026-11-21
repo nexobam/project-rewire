@@ -1,4 +1,4 @@
-// スクロール連動リビールコンポーネント（画面内に入ったタイミングで滑らかにアニメーション表示・jsdomテスト環境では即時表示）
+// 双方向スクロール連動リビールコンポーネント（下スクロール・上スクロールの両方で画面内に入るたびに滑らかに表示）
 
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -17,6 +17,7 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
   const [isVisible, setIsVisible] = useState<boolean>(
     () => typeof IntersectionObserver === 'undefined'
   );
+  const [enterFrom, setEnterFrom] = useState<'bottom' | 'top'>('bottom');
 
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') {
@@ -32,13 +33,17 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
         for (const entry of entries) {
           if (entry.isIntersecting) {
             setIsVisible(true);
-            observer.unobserve(entry.target);
+          } else {
+            // 画面外に出たら方向を記録してリセットし、上スクロール時も再アニメーションさせる
+            const rectTop = entry.boundingClientRect.top;
+            setEnterFrom(rectTop < 0 ? 'top' : 'bottom');
+            setIsVisible(false);
           }
         }
       },
       {
-        threshold: 0.08,
-        rootMargin: '0px 0px -24px 0px',
+        threshold: 0.05,
+        rootMargin: '0px 0px -10px 0px',
       }
     );
 
@@ -46,11 +51,14 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
     return () => observer.disconnect();
   }, []);
 
+  const directionClass =
+    enterFrom === 'top' ? 'reveal-from-top' : 'reveal-from-bottom';
+
   return (
     <div
       ref={containerRef}
-      style={{ transitionDelay: `${delayMs}ms` }}
-      className={`reveal-item ${isVisible ? 'is-visible' : ''} ${className}`}
+      style={{ transitionDelay: isVisible ? `${delayMs}ms` : '0ms' }}
+      className={`reveal-item ${directionClass} ${isVisible ? 'is-visible' : ''} ${className}`}
     >
       {children}
     </div>

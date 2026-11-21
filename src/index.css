@@ -201,14 +201,21 @@ body {
   animation: rewireShimmer 3.2s ease-in-out infinite;
 }
 
-/* スクロール連動リビールアニメーション（iOS Safari GPUレイヤー対応） */
+/* スクロール連動リビールアニメーション（上下双方向・iOS Safari GPUレイヤー対応） */
 .reveal-item {
   opacity: 0;
-  transform: translate3d(0, 22px, 0) scale(0.985);
   transition:
-    opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 440ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 440ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
+}
+
+.reveal-item.reveal-from-bottom {
+  transform: translate3d(0, 20px, 0) scale(0.985);
+}
+
+.reveal-item.reveal-from-top {
+  transform: translate3d(0, -20px, 0) scale(0.985);
 }
 
 .reveal-item.is-visible {
