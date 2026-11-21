@@ -24,17 +24,22 @@ project-rewire/
 │   │   ├── backup.ts          # APIキー除外エクスポート、10MB上限・プロトタイプ汚染再帰検査・zod検証・比較プレビュー付きインポート
 │   │   ├── database.ts        # idbストア定義、永続化要求、1問ごとのアトミックトランザクション保存
 │   │   └── migration.ts       # schemaVersion検査および旧バージョンからのマイグレーション変換
-│   ├── services/          # 外部API・ブラウザAPI連携
+│   ├── services/          # 外部API・ブラウザAPI・クラウド同期連携
 │   │   ├── audioService.ts    # Web Audio APIによるクリック音合成、navigator.vibrate?.(20)、Lv.3環境ノイズ生成
-│   │   ├── geminiService.ts   # 4人のAI社員（Call 1: temp 0.7 → 機械検証 → Call 2: temp 0.2）、429指数バックオフ、ローカルモック代替
+│   │   ├── cloudSyncService.ts# Cloudflare Workers + D1 認証・全ストア自動同期・サーバー側Geminiプロキシ通信
+│   │   ├── geminiService.ts   # 4人のAI社員（Call 1: temp 0.7 → 機械検証 → Call 2: temp 0.2）、サーバープロキシ対応、ローカルモック代替
 │   │   ├── logger.ts          # APIキー・トークンの自動マスク付きセキュアロガー
-│   │   ├── sttService.ts      # SpeechRecognition制御（1.5s/1.0s無音区切り、非対応・オフライン時の自動フォールバック）
-│   │   └── ttsService.ts      # speechSynthesis制御（タップ時アンロック、直前cancel()、onendタイムアウト保護、複数話者・ピッチ変化）
+│   │   ├── sttService.ts      # SpeechRecognition制御（Push-to-Talk手動録音および無音区切り、非対応時の自動フォールバック）
+│   │   └── ttsService.ts      # speechSynthesis制御（タップ時同期アンロック、直前cancel()、onendタイムアウト保護、複数話者・ピッチ変化）
 │   ├── components/        # 再利用可能なUIコンポーネント（Header, BackupBanner, VisualCard, WordOrderBoard, PostAnswerCard等）
 │   ├── pages/             # 各画面コンポーネント（HomePage, DiagnosisPage, SilentModePage, SpeakModePage, LiveModePage, SleepModePage, BossBattlePage, CoachChatPage, SettingsPage）
 │   ├── hooks/             # カスタムフック（useAppStore, useTheme, useKeyboardShortcuts）
 │   ├── types/             # 共通型定義（Level, Rating, Chunk, ReviewState, Attempt, Session, AiReport, Settings, IconName等）
-│   └── __tests__/         # 単体・結合・UI・セキュリティテストスイート
+│   └── __tests__/         # 単体・結合・UI・セキュリティ・Cloudflare Workerテストスイート
+├── worker/                # Cloudflare Workers バックエンド＆D1スキーマ
+│   ├── index.ts           # パスコード認証 (/api/auth/*)、D1同期 (/api/sync)、Geminiプロキシ (/api/gemini)、静的アセット配信
+│   └── schema.sql         # D1 sync_store テーブル定義
+├── wrangler.toml          # Cloudflare Workers + D1 + Assets 設定
 └── README.md
 ```
 
