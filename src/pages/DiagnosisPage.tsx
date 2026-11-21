@@ -1,6 +1,6 @@
 // Lv.0 初回レベル診断（3分・全15問：音変化と語順タップ、perTapMs中央値計測・設定画面からの再測定対応・要件2-1-3, 3）
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle, Play, Volume2 } from 'lucide-react';
 import { VisualCard } from '../components/VisualCard';
 import { WordOrderBoard } from '../components/WordOrderBoard';
@@ -32,7 +32,10 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
   onCompleteDiagnosis,
   onCancel,
 }) => {
-  const questions: Chunk[] = LV0_DIAGNOSIS_CHUNKS.slice(0, 15);
+  const questions: Chunk[] = useMemo(
+    () => LV0_DIAGNOSIS_CHUNKS.slice(0, 15),
+    []
+  );
   const [started, setStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
@@ -42,6 +45,7 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
   const [finishedPerTapMs, setFinishedPerTapMs] = useState<number | null>(null);
 
   const lastTapTimeRef = useRef<number | null>(null);
+  const preparedIndexRef = useRef<number | null>(null);
   const currentChunk = questions[currentIndex];
 
   // 前半5問は音変化4択、後半10問は語順ブロックタップ（合計15問）
@@ -76,21 +80,31 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
   );
 
   useEffect(() => {
-    if (started && finishedPerTapMs === null && currentChunk) {
+    if (
+      started &&
+      finishedPerTapMs === null &&
+      currentChunk &&
+      preparedIndexRef.current !== currentIndex
+    ) {
+      preparedIndexRef.current = currentIndex;
       prepareQuestion(currentIndex);
     }
   }, [started, currentIndex, finishedPerTapMs, currentChunk, prepareQuestion]);
 
   const advanceOrFinish = useCallback(
     (updatedIntervals: number[]) => {
-      if (currentIndex + 1 >= questions.length) {
+      const nextIdx = currentIndex + 1;
+      if (nextIdx >= questions.length) {
         const median = calculateMedianPerTapMs(updatedIntervals);
         setFinishedPerTapMs(median);
       } else {
-        setCurrentIndex((prev) => prev + 1);
+        // iOS Safariのタップコンテキスト内で次問題の音声を同期的に再生するため直接準備する
+        preparedIndexRef.current = nextIdx;
+        prepareQuestion(nextIdx);
+        setCurrentIndex(nextIdx);
       }
     },
-    [currentIndex, questions.length]
+    [currentIndex, prepareQuestion, questions.length]
   );
 
   const handleSelectBlock = (block: Block) => {
@@ -162,10 +176,12 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
             <button
               type="button"
               onClick={() => {
-                // 開始ボタンのタップイベント内で音声とAudioContextをアンロック（要件6-1）
+                // 開始ボタンのタップイベント内で音声とAudioContextをアンロックし、1問目を同期的に開始（要件6-1・iOS Safari対策）
                 unlockSpeechSynthesis();
                 unlockAudioContext();
                 playTactileClick(clickSound);
+                preparedIndexRef.current = 0;
+                prepareQuestion(0);
                 setStarted(true);
               }}
               style={{

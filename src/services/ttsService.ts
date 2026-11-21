@@ -31,6 +31,22 @@ export function selectEnglishVoices(
 }
 
 let voicesLoaded = false;
+let cachedVoices: SpeechSynthesisVoice[] = [];
+
+/**
+ * 同期的に英語音声一覧を取得する（iOS Safariのユーザータップコンテキストを維持するため）
+ */
+function getEnglishVoicesSync(): SpeechSynthesisVoice[] {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    return [];
+  }
+  const current = window.speechSynthesis.getVoices();
+  if (current.length > 0) {
+    cachedVoices = current;
+    voicesLoaded = true;
+  }
+  return selectEnglishVoices(cachedVoices);
+}
 
 /**
  * voiceschanged イベントを待ってから英語音声一覧を取得する（要件6-3）
@@ -45,8 +61,9 @@ export async function getAvailableEnglishVoices(): Promise<
   const synth = window.speechSynthesis;
   const initial = synth.getVoices();
   if (initial.length > 0 || voicesLoaded) {
+    if (initial.length > 0) cachedVoices = initial;
     voicesLoaded = true;
-    return selectEnglishVoices(initial);
+    return selectEnglishVoices(cachedVoices);
   }
 
   return new Promise<SpeechSynthesisVoice[]>((resolve) => {
@@ -55,7 +72,8 @@ export async function getAvailableEnglishVoices(): Promise<
       if (settled) return;
       settled = true;
       voicesLoaded = true;
-      resolve(selectEnglishVoices(synth.getVoices()));
+      cachedVoices = synth.getVoices();
+      resolve(selectEnglishVoices(cachedVoices));
     };
 
     const timer = setTimeout(finish, 300);
@@ -78,12 +96,29 @@ export function unlockSpeechSynthesis(): void {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       return;
     }
-    window.speechSynthesis.cancel();
+    const synth = window.speechSynthesis;
+    // 音声リストの事前ウォームアップ
+    const voices = synth.getVoices();
+    if (voices.length > 0) {
+      cachedVoices = voices;
+      voicesLoaded = true;
+    } else if (!voicesLoaded) {
+      synth.addEventListener(
+        'voiceschanged',
+        () => {
+          cachedVoices = synth.getVoices();
+          voicesLoaded = true;
+        },
+        { once: true }
+      );
+    }
+
+    synth.cancel();
     if (typeof SpeechSynthesisUtterance !== 'undefined') {
-      const silentUtterance = new SpeechSynthesisUtterance('');
+      const silentUtterance = new SpeechSynthesisUtterance(' ');
       silentUtterance.volume = 0;
       silentUtterance.lang = 'en-US';
-      window.speechSynthesis.speak(silentUtterance);
+      synth.speak(silentUtterance);
     }
   } catch {
     // 非対応環境では無視
@@ -132,7 +167,8 @@ export async function speakEnglishText(
   // 読み上げの直前には必ず cancel() を呼ぶ（要件6-1）
   synth.cancel();
 
-  const voices = await getAvailableEnglishVoices();
+  // iOS Safariのタップイベント同期コンテキストを維持するため、awaitを挟まず同期的に音声を取得する
+  const voices = getEnglishVoicesSync();
 
   return new Promise<void>((resolve) => {
     let completed = false;
