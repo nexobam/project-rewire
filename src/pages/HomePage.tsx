@@ -15,6 +15,7 @@ import {
 import { BackupBanner } from '../components/BackupBanner';
 import { HeatmapCalendar } from '../components/HeatmapCalendar';
 import { PromotionProgress } from '../components/PromotionProgress';
+import { ScrollReveal } from '../components/ScrollReveal';
 import type { ThemePalette } from '../domain/contrast';
 import type { GateStatus } from '../domain/promotionGate';
 import { isReviewDue } from '../domain/srs';
@@ -141,10 +142,10 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   const livePhrases = React.useMemo(
     () => [
-      { en: "Let's lock in today.", ja: '今日も集中して英語回路を回そう' },
-      { en: 'Trust your ears, not translation.', ja: '訳さずに音の塊をそのまま掴もう' },
-      { en: 'Think in chunks, speak in two seconds.', ja: 'チャンクで捉えて2秒で口に出そう' },
-      { en: 'Miami Heat tempo. Keep the pace up.', ja: 'マイアミの速攻リズムでテンポよく進もう' },
+      { en: "Let's do this!", ja: '今日も自分のペースで頑張ろう！' },
+      { en: 'Keep going!', ja: '毎日の積み重ねが必ず力になる' },
+      { en: 'You got this!', ja: '1日5分でも確実に英語に近づいてる' },
+      { en: 'Step by step!', ja: '焦らず楽しくトレーニングしよう' },
     ],
     []
   );
@@ -265,9 +266,10 @@ export const HomePage: React.FC<HomePageProps> = ({
       </div>
 
       {/* PCでは2カラム表示（左：1タップ開始＆学習モード、右：タブ統合パネル） */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-card-enter">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 左カラム */}
         <div className="space-y-5">
+          <ScrollReveal delayMs={40}>
           {/* 親指が届くメインCTA：「今日のおすすめ（1タップですぐ開始）」＋常時回転シナプス・オービット */}
           <div
             style={{
@@ -340,6 +342,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               />
             </button>
           </div>
+          </ScrollReveal>
 
           {/* 2日以上空いたときのリハビリメニュー提案カード */}
           {suggestRehab && (
@@ -378,6 +381,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           )}
 
           {/* 学習モード一覧（1日に何回でも実行可能） */}
+          <ScrollReveal delayMs={120}>
           <div
             style={{
               backgroundColor: palette.card,
@@ -510,10 +514,11 @@ export const HomePage: React.FC<HomePageProps> = ({
               </button>
             </div>
           </div>
+          </ScrollReveal>
         </div>
 
         {/* 右カラム：タブ切り替えで1枚に集約（昇格ゲート / 学習カレンダー / ライブラリ） */}
-        <div className="space-y-4">
+        <ScrollReveal delayMs={180} className="space-y-4">
           <div
             style={{
               backgroundColor: palette.card,
@@ -707,7 +712,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
           )}
           </div>
-        </div>
+        </ScrollReveal>
       </div>
     </div>
   );
