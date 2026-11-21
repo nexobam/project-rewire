@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // Vite & Vitest 設定ファイル
 export default defineConfig({
+  base: '/project-rewire/',
   plugins: [
     react(),
     tailwindcss(),
@@ -19,7 +20,8 @@ export default defineConfig({
         background_color: '#F7F6F2',
         display: 'standalone',
         orientation: 'portrait-primary',
-        start_url: '/',
+        start_url: '/project-rewire/',
+        scope: '/project-rewire/',
         icons: [
           {
             src: 'icons/icon-192.svg',
