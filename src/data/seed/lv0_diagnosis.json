@@ -110,14 +110,6 @@
         "head",
         "out",
         "now."
-      ],
-      [
-        "now.",
-        "I",
-        "am",
-        "gonna",
-        "head",
-        "out"
       ]
     ],
     "speakOnly": false,
@@ -352,9 +344,9 @@
     "promptAudioText": "How about tacos for lunch?",
     "soundChangeChoices": [
       "That sounds pretty good to me.",
-      "That found pretty good to me.",
-      "That sounds pretty bad to me.",
-      "This sounds pretty good to you."
+      "That sounded pretty good to me.",
+      "That sound is pretty good for me.",
+      "It sounds pretty good with me."
     ]
   },
   {
@@ -413,7 +405,7 @@
       ]
     },
     "coreImageJa": "【言いたいこと】今日は料理をする気分じゃないな ／ 【英語の語順】I do not feel like（〜したい感触がない）→ cooking.（料理することを）",
-    "pronunciationTip": "do not はドンと短く切り、feel like の l を重ねてフィーライクと繋ぐ。",
+    "pronunciationTip": "do not はドゥナッ（口語ではドン）、going out の t は軽く止める。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": false,
@@ -538,14 +530,6 @@
         "the",
         "paint",
         "tonight."
-      ],
-      [
-        "tonight.",
-        "Bam",
-        "locked",
-        "down",
-        "the",
-        "paint"
       ]
     ],
     "speakOnly": false,
@@ -771,7 +755,7 @@
       ]
     },
     "coreImageJa": "【言いたいこと】すぐに折り返し電話します ／ 【英語の語順】I will call you（あなたに電話します）→ right back.（すぐ折り返して）",
-    "pronunciationTip": "I will はアイル、right back の t は寸止めしてライバッと跳ねる。",
+    "pronunciationTip": "I will はアイウィル（口語ではアイル）と繋ぎ、get back は t を飲み込む。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": false,
@@ -826,14 +810,6 @@
         "it",
         "out",
         "later."
-      ],
-      [
-        "later.",
-        "We",
-        "can",
-        "figure",
-        "it",
-        "out"
       ]
     ],
     "speakOnly": false,
@@ -918,7 +894,7 @@
         "信頼"
       ]
     },
-    "coreImageJa": "【言いたいこと】ヒートは簡単には諦めない ／ 【英語の語順】The Heat never give up（ヒートは決して手放さない）→ easily.（簡単には）",
+    "coreImageJa": "【言いたいこと】マイアミ・ヒートは簡単には絶対に諦めない（※チーム名なので複数扱いで give） ／ 【英語の語順】The Heat never give up（ヒートは決して上へ投げ出さない）→ easily.（簡単には）",
     "pronunciationTip": "give up easily はギヴァッピーズィリーと v・u・p・ea を一息で繋ぐ。",
     "hasSoundChange": true,
     "source": "seed",
@@ -989,7 +965,7 @@
       ]
     },
     "coreImageJa": "【言いたいこと】完全にあなたにお任せします ／ 【英語の語順】It is totally（それは完全に）→ up to you.（あなた次第）",
-    "pronunciationTip": "It is はイッツ、up to you はアプトゥユーと p を軽く止めて渡す。",
+    "pronunciationTip": "It is はイッティズ（口語ではイッツ）と軽く切り、up to you を一気に繋ぐ。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": false,
@@ -998,9 +974,9 @@
     "promptAudioText": "Where do you want to sit?",
     "soundChangeChoices": [
       "It is totally up to you.",
-      "It was totally up to you.",
-      "It is totally out to you.",
-      "It isally up for you."
+      "It is totally out for you.",
+      "This is totally up to you.",
+      "It is really up for you."
     ]
   },
   {

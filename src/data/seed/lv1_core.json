@@ -180,14 +180,6 @@
         "you",
         "know",
         "tomorrow."
-      ],
-      [
-        "tomorrow.",
-        "I",
-        "will",
-        "let",
-        "you",
-        "know"
       ]
     ],
     "speakOnly": false,
@@ -212,9 +204,9 @@
     "promptAudioText": "Do you have the final numbers?",
     "soundChangeChoices": [
       "I will let you know tomorrow.",
-      "I will let him know tomorrow.",
-      "I would let you now tomorrow.",
-      "We will let you know today."
+      "I will let you go tomorrow.",
+      "I would let you know tomorrow.",
+      "I can let you know tomorrow."
     ]
   },
   {
@@ -468,14 +460,6 @@
         "to",
         "rain",
         "tonight."
-      ],
-      [
-        "tonight.",
-        "It",
-        "is",
-        "supposed",
-        "to",
-        "rain"
       ]
     ],
     "speakOnly": false,
@@ -561,7 +545,7 @@
       ]
     },
     "coreImageJa": "【言いたいこと】サッと軽く何か食べよう ／ 【英語の語順】Let us grab（パッと掴もう）→ a quick bite.（素早いひと口＝軽食を）",
-    "pronunciationTip": "Let us はレッツ、grab a はグラバと連結してリズミカルに。",
+    "pronunciationTip": "Let us はレタス（口語ではレッツ）、grab a はグラバ、bite to はバイトゥと繋げる。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
@@ -710,9 +694,9 @@
     "promptAudioText": "How did Miami stop their guards?",
     "soundChangeChoices": [
       "Spo switched to a zone defense.",
-      "Spo wished to a zone defense.",
-      "Spo switched on a man defense.",
-      "They switched to a zone offense."
+      "Spo wanted a zone defense.",
+      "Spo sticks to a zone defense.",
+      "Spo went to a zone defense."
     ]
   },
   {
@@ -756,14 +740,6 @@
         "it",
         "easy",
         "today."
-      ],
-      [
-        "today.",
-        "You",
-        "should",
-        "take",
-        "it",
-        "easy"
       ]
     ],
     "speakOnly": false,
@@ -849,7 +825,7 @@
       ]
     },
     "coreImageJa": "【言いたいこと】この会議をそろそろ締めくくりましょう ／ 【英語の語順】Let us wrap up（包んでまとめよう）→ this meeting.（この会議を）",
-    "pronunciationTip": "wrap up はラッパップと w を発音せず p と u を小気味よく連結する。",
+    "pronunciationTip": "Let us はレタス（口語ではレッツ）、wrap up はラッパップと滑らかに連結する。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
@@ -858,9 +834,9 @@
     "promptAudioText": "We have covered all the agenda items.",
     "soundChangeChoices": [
       "Let us wrap up this meeting.",
-      "Let me wrap up that meeting.",
-      "Let us wake up this meeting.",
-      "Let us暖 up this meeting."
+      "Let us wrap on this meeting.",
+      "Let us back up this meeting.",
+      "Let us warm up this meeting."
     ]
   },
   {
@@ -1059,7 +1035,7 @@
       ]
     },
     "coreImageJa": "【言いたいこと】あの泥臭いハッスルこそ純粋なヒートカルチャーだ ／ 【英語の語順】That hustle is（あのハッスルは）→ pure Heat culture.（純粋なヒートの文化だ）",
-    "pronunciationTip": "That hustle is はザッハッスィズと t と l を最小限の舌の動きで処理。",
+    "pronunciationTip": "That hustle is はザッハッソゥイズと t を止めながら子音を繋ぐ。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
@@ -1204,7 +1180,7 @@
       ]
     },
     "coreImageJa": "【言いたいこと】コーヒーでも飲みながら近況報告しよう ／ 【英語の語順】Let us catch up（遅れを取り戻して近況を話そう）→ over coffee.（コーヒーを挟んで）",
-    "pronunciationTip": "catch up over はキャッチャッポーヴァーと ch・u・p・o を滑らかに結ぶ。",
+    "pronunciationTip": "Let us はレタス（口語ではレッツ）、play it はプレイッ、by ear はバイイヤーと滑らかに。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
@@ -1609,14 +1585,6 @@
         "on",
         "it",
         "tonight."
-      ],
-      [
-        "tonight.",
-        "Let",
-        "me",
-        "sleep",
-        "on",
-        "it"
       ]
     ],
     "speakOnly": false,
@@ -1757,14 +1725,6 @@
         "me",
         "this",
         "time."
-      ],
-      [
-        "this",
-        "time.",
-        "Coffee",
-        "is",
-        "on",
-        "me"
       ]
     ],
     "speakOnly": false,
@@ -2120,14 +2080,6 @@
         "fourth",
         "quarter",
         "tonight."
-      ],
-      [
-        "tonight.",
-        "Miami",
-        "owns",
-        "the",
-        "fourth",
-        "quarter"
       ]
     ],
     "speakOnly": false,
@@ -2143,7 +2095,7 @@
       ]
     },
     "coreImageJa": "【言いたいこと】今夜の第4クォーターはマイアミが完全に支配している ／ 【英語の語順】Miami owns（マイアミが所有・支配している）→ the fourth quarter tonight.（今夜の第4Qを）",
-    "pronunciationTip": "fourth quarter はフォースクォーラーと th から kw へ素早く唇を丸める。",
+    "pronunciationTip": "fourth quarter はフォースクォーターと息を切らずに繋げる。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,

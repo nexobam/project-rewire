@@ -200,13 +200,24 @@ export function upgradeSeedChunksWithLatestExplanations(chunks: Chunk[]): {
     const latestSeed =
       seedById.get(c.id) ?? seedByEnText.get(c.enText.trim());
     if (latestSeed) {
+      const seedOrderJson = JSON.stringify(latestSeed.acceptableOrders);
+      const curOrderJson = JSON.stringify(c.acceptableOrders);
+      const seedChoicesJson = JSON.stringify(latestSeed.soundChangeChoices ?? null);
+      const curChoicesJson = JSON.stringify(c.soundChangeChoices ?? null);
       if (
+        c.enText !== latestSeed.enText ||
         c.coreImageJa !== latestSeed.coreImageJa ||
-        c.pronunciationTip !== latestSeed.pronunciationTip
+        c.pronunciationTip !== latestSeed.pronunciationTip ||
+        seedOrderJson !== curOrderJson ||
+        seedChoicesJson !== curChoicesJson
       ) {
         changed = true;
         return {
           ...c,
+          enText: latestSeed.enText,
+          blocks: latestSeed.blocks,
+          acceptableOrders: latestSeed.acceptableOrders,
+          soundChangeChoices: latestSeed.soundChangeChoices,
           coreImageJa: latestSeed.coreImageJa,
           pronunciationTip: latestSeed.pronunciationTip,
         };

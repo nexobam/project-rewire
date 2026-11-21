@@ -104,7 +104,15 @@ export function recomposeChunk(baseChunk: Chunk, indexSuffix: number): Chunk {
     },
   ];
 
-  const mod = modifiers[indexSuffix % modifiers.length];
+  // 元文にすでに時間表現（tomorrow, today, right now, tonight 等）がある場合は時間系修飾子を除外して衝突を防ぐ
+  const hasTimeAdverb = /\b(tomorrow|today|tonight|right now|now)\b/i.test(
+    baseChunk.enText
+  );
+  const eligibleModifiers = hasTimeAdverb
+    ? modifiers.filter((m) => m.suffix !== 'right now' && m.suffix !== 'today')
+    : modifiers;
+
+  const mod = eligibleModifiers[indexSuffix % eligibleModifiers.length];
   const baseWords = baseChunk.blocks.map((b) => b.text);
   let newWords: string[];
   let appliedModifier = false;

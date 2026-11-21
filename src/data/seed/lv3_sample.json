@@ -151,7 +151,7 @@
     "contentCategory": "daily",
     "sceneCategory": "street",
     "grammarPattern": "paraphrase_understand",
-    "enText": "I see exactly where you come from.",
+    "enText": "I see exactly where you are coming from.",
     "blocks": [
       {
         "id": "lv3_03_b0",
@@ -175,10 +175,14 @@
       },
       {
         "id": "lv3_03_b5",
-        "text": "come"
+        "text": "are"
       },
       {
         "id": "lv3_03_b6",
+        "text": "coming"
+      },
+      {
+        "id": "lv3_03_b7",
         "text": "from."
       }
     ],
@@ -189,7 +193,8 @@
         "exactly",
         "where",
         "you",
-        "come",
+        "are",
+        "coming",
         "from."
       ]
     ],
@@ -205,8 +210,8 @@
         "共感"
       ]
     },
-    "coreImageJa": "【言いたいこと】あなたの気持ち・立場はよく分かります（understand禁止） ／ 【英語の語順】I see exactly（はっきり見える）→ where you come from.（あなたがどこから来ているか＝立場が）",
-    "pronunciationTip": "where you はウェアユー、come from の m をしっかり閉じて余韻を残す。",
+    "coreImageJa": "【言いたいこと】あなたの気持ち・立場はよく分かります（understand禁止） ／ 【英語の語順】I see exactly（はっきり見えている）→ where you are coming from.（あなたがどの立場から話しているか）",
+    "pronunciationTip": "you are はユア、coming from の ng と f を軽く繋ぐ。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,

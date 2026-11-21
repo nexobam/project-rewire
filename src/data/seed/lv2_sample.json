@@ -212,7 +212,7 @@
     "contentCategory": "heat",
     "sceneCategory": "arena",
     "grammarPattern": "chunk_build_heat",
-    "enText": "Bam passed out to open the shooter.",
+    "enText": "Bam kicked it out to the open shooter.",
     "blocks": [
       {
         "id": "lv2_04_b0",
@@ -220,19 +220,19 @@
       },
       {
         "id": "lv2_04_b1",
-        "text": "passed"
+        "text": "kicked"
       },
       {
         "id": "lv2_04_b2",
-        "text": "out"
+        "text": "it"
       },
       {
         "id": "lv2_04_b3",
-        "text": "to"
+        "text": "out"
       },
       {
         "id": "lv2_04_b4",
-        "text": "open"
+        "text": "to"
       },
       {
         "id": "lv2_04_b5",
@@ -240,17 +240,22 @@
       },
       {
         "id": "lv2_04_b6",
+        "text": "open"
+      },
+      {
+        "id": "lv2_04_b7",
         "text": "shooter."
       }
     ],
     "acceptableOrders": [
       [
         "Bam",
-        "passed",
+        "kicked",
+        "it",
         "out",
         "to",
-        "open",
         "the",
+        "open",
         "shooter."
       ]
     ],
@@ -266,8 +271,8 @@
         "高揚"
       ]
     },
-    "coreImageJa": "【言いたいこと】バムが外へパスを出してシューターをフリーにした ／ 【英語の語順】Bam passed out（バムが外へパスを出した）→ to open the shooter.（シューターを空けるために）",
-    "pronunciationTip": "passed out to はパスターウトゥと3語を一塊のパス軌道のように繋ぐ。",
+    "coreImageJa": "【言いたいこと】バムが外へパスを蹴り出して空いているシューターに繋いだ ／ 【英語の語順】Bam kicked it out（バムがボールを外へ弾き出した）→ to the open shooter.（フリーのシューターへ向けて）",
+    "pronunciationTip": "kicked it out はキッティラウッと子音と母音を滑らかに連結する。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,

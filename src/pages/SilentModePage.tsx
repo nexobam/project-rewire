@@ -196,9 +196,9 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
             ];
       setShuffledSoundChoices(shuffleArray(baseSoundChoices));
 
-      // 絵カード4択用のダミー選択肢3枚（場面の意味も異なるもの）＋正解1枚をランダムに混ぜて作成
+      // 絵カード4択用のダミー選択肢3枚（場面・場所タグ・アイコンが被らないカードを優先）＋正解1枚を作成
       const targetMeaning = extractSituationMeaning(chunk);
-      const distractors = shuffleArray(
+      const basePool = shuffleArray(
         allChunks.filter(
           (c) =>
             c.id !== chunk.id &&
@@ -206,8 +206,45 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
             c.enText !== chunk.enText &&
             extractSituationMeaning(c) !== targetMeaning
         )
-      ).slice(0, 3);
-      const fourCards = shuffleArray([...distractors, chunk]);
+      );
+      const pickedDistractors: Chunk[] = [];
+      const usedPlaces = new Set<string>([chunk.visual.tags[0]]);
+      const usedIcons = new Set<string>([chunk.visual.icons.join('|')]);
+
+      // 第1優先：sceneCategory・場所タグ・アイコンペアすべてが異なるカードを選ぶ
+      for (const cand of basePool) {
+        if (pickedDistractors.length >= 3) break;
+        const place = cand.visual.tags[0];
+        const iconPair = cand.visual.icons.join('|');
+        if (
+          cand.sceneCategory !== chunk.sceneCategory &&
+          !usedPlaces.has(place) &&
+          !usedIcons.has(iconPair)
+        ) {
+          pickedDistractors.push(cand);
+          usedPlaces.add(place);
+          usedIcons.add(iconPair);
+        }
+      }
+      // 第2優先：不足分は場所タグのみ重複しないカードで補充
+      for (const cand of basePool) {
+        if (pickedDistractors.length >= 3) break;
+        if (pickedDistractors.some((d) => d.id === cand.id)) continue;
+        const place = cand.visual.tags[0];
+        if (!usedPlaces.has(place)) {
+          pickedDistractors.push(cand);
+          usedPlaces.add(place);
+        }
+      }
+      // 第3優先：それでも3枚未満なら残りから補充
+      for (const cand of basePool) {
+        if (pickedDistractors.length >= 3) break;
+        if (!pickedDistractors.some((d) => d.id === cand.id)) {
+          pickedDistractors.push(cand);
+        }
+      }
+
+      const fourCards = shuffleArray([...pickedDistractors, chunk]);
       setPictureChoices(fourCards);
 
       void speakEnglishText({

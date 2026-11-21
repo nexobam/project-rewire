@@ -129,7 +129,7 @@
       ]
     },
     "coreImageJa": "【言いたいこと】明日は状況を見ながら臨機応変にいこう ／ 【英語の語順】Let us play it by ear（楽譜を見ず耳で聴きながら即興でやろう）→ tomorrow.（明日は）",
-    "pronunciationTip": "play it by ear はプレイッバイイヤーと母音同士を滑らかに渡す。",
+    "pronunciationTip": "Let us はレタス（口語ではレッツ）、play it by ear はプレイッバイイヤーと繋ぐ。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
@@ -212,7 +212,7 @@
     "contentCategory": "daily",
     "sceneCategory": "cafe",
     "grammarPattern": "native_banter_3",
-    "enText": "That project fell through at the end.",
+    "enText": "That project fell through in the end.",
     "blocks": [
       {
         "id": "lv4_04_b0",
@@ -232,7 +232,7 @@
       },
       {
         "id": "lv4_04_b4",
-        "text": "at"
+        "text": "in"
       },
       {
         "id": "lv4_04_b5",
@@ -249,7 +249,7 @@
         "project",
         "fell",
         "through",
-        "at",
+        "in",
         "the",
         "end."
       ]
@@ -266,8 +266,8 @@
         "冷静"
       ]
     },
-    "coreImageJa": "【言いたいこと】あの企画は最後の最後で白紙（頓挫）になった ／ 【英語の語順】That project fell through（あの計画は床が抜けて落ちた＝頓挫した）→ at the end.（最後に）",
-    "pronunciationTip": "fell through at はフェルスルーアッと th から r へ舌を素早く引く。",
+    "coreImageJa": "【言いたいこと】あの企画は結局のところ白紙（頓挫）になった ／ 【英語の語順】That project fell through（あの計画は床が抜けて落ちた＝頓挫した）→ in the end.（最終的には）",
+    "pronunciationTip": "through in はスルーイン、the end はジエンドと母音前で滑らかに繋ぐ。",
     "hasSoundChange": true,
     "source": "seed",
     "isCore": true,
