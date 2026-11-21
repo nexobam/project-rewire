@@ -110,18 +110,19 @@ body {
   animation: rewirePulseSoft 1.1s ease-in-out infinite;
 }
 
-/* 音声再生・録音中の3本波形アニメーション */
+/* 音声再生・録音中の3本・5本波形アニメーション（iOS Safari GPUレイヤー強制） */
 @keyframes rewireWave {
   0%, 100% {
-    transform: scaleY(0.35);
+    transform: scaleY(0.35) translateZ(0);
   }
   50% {
-    transform: scaleY(1);
+    transform: scaleY(1) translateZ(0);
   }
 }
 
 .audio-wave-bar {
   transform-origin: center bottom;
+  will-change: transform;
   animation: rewireWave 0.75s ease-in-out infinite;
 }
 
@@ -144,75 +145,61 @@ body {
 /* おすすめボタンの矢印やアイコンが軽く前後に弾むモーション */
 @keyframes rewireNudge {
   0%, 100% {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
   50% {
-    transform: translateX(3px);
+    transform: translate3d(4px, 0, 0);
   }
 }
 
 .animate-nudge {
-  animation: rewireNudge 1.6s ease-in-out infinite;
+  will-change: transform;
+  animation: rewireNudge 1.4s ease-in-out infinite;
 }
 
-/* ホーム画面の常時流れる英語フレーズ・マーキー */
+/* ホーム画面の常時流れる英語フレーズ・マーキー（iOS Safari対応 translate3d） */
 @keyframes rewireMarquee {
   0% {
-    transform: translateX(0%);
+    transform: translate3d(0%, 0, 0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
 .animate-marquee {
   display: inline-flex;
   width: max-content;
+  will-change: transform;
   animation: rewireMarquee 22s linear infinite;
-}
-
-.animate-marquee:hover {
-  animation-play-state: paused;
 }
 
 /* ゆっくり回転する英語脳シナプス・オービットリング */
 @keyframes rewireSpinSlow {
   from {
-    transform: rotate(0deg);
+    transform: rotate(0deg) translateZ(0);
   }
   to {
-    transform: rotate(360deg);
+    transform: rotate(360deg) translateZ(0);
   }
 }
 
 .animate-spin-slow {
-  animation: rewireSpinSlow 16s linear infinite;
+  will-change: transform;
+  animation: rewireSpinSlow 14s linear infinite;
 }
 
 /* おすすめボタン上をスッと走る控えめなシマー効果 */
 @keyframes rewireShimmer {
   0% {
-    transform: translateX(-120%) skewX(-20deg);
+    transform: translate3d(-140%, 0, 0) skewX(-20deg);
   }
   35%, 100% {
-    transform: translateX(260%) skewX(-20deg);
+    transform: translate3d(320%, 0, 0) skewX(-20deg);
   }
 }
 
 .animate-shimmer {
-  animation: rewireShimmer 3.6s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-card-enter,
-  .animate-pop-in,
-  .animate-combo-bump,
-  .animate-mic-pulse,
-  .animate-nudge,
-  .animate-marquee,
-  .animate-spin-slow,
-  .animate-shimmer,
-  .audio-wave-bar {
-    animation: none !important;
-  }
+  will-change: transform;
+  animation: rewireShimmer 3.2s ease-in-out infinite;
 }

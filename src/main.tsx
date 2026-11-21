@@ -8,6 +8,17 @@ import '@fontsource/inter/700.css';
 import './index.css';
 import { App } from './App';
 
+// PWA Service Worker の新しいバージョンを検知したら即座に有効化して最新UIを反映（iPhone Safariキャッシュ滞留防止）
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
+}
+
 const rootElement = document.getElementById('root');
 if (rootElement) {
   createRoot(rootElement).render(
