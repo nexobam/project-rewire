@@ -186,6 +186,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       {!cloudEnabled && (
         <BackupBanner
           lastBackupAt={settings.lastBackupAt}
+          firstUsedAt={settings.firstUsedAt}
           justPromoted={justPromotedBanner}
           palette={palette}
           onOneTapBackup={onOneTapBackup}
@@ -680,9 +681,15 @@ export const HomePage: React.FC<HomePageProps> = ({
                     setAiGenNotice(null);
                     try {
                       const res = await onGenerateAiQuestionsNow();
-                      setAiGenNotice(
-                        `新しく ${res.addedCount} 問を追加しました！（次回のトレーニングで優先出題されます）`
-                      );
+                      if (res.addedCount > 0) {
+                        setAiGenNotice(
+                          `新しく ${res.addedCount} 問を追加しました！（次回のトレーニングで優先出題されます）`
+                        );
+                      } else {
+                        setAiGenNotice(
+                          '現在追加できる新しいフレーズがありません（重複またはAPI制限・未設定のため）。'
+                        );
+                      }
                     } finally {
                       setGeneratingAi(false);
                     }

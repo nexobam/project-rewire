@@ -36,6 +36,7 @@ import {
 } from '../services/sttService';
 import {
   speakEnglishText,
+  stopSpeechSynthesis,
   unlockSpeechSynthesis,
 } from '../services/ttsService';
 import type {
@@ -121,6 +122,10 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
   const micPressStartMsRef = useRef<number>(0);
   const questionStartMsRef = useRef<number>(performance.now());
   const sessionStartMsRef = useRef<number>(Date.now());
+  const pausedTotalMsRef = useRef<number>(0);
+  const hiddenAtMsRef = useRef<number | null>(null);
+  const submittingAnswerRef = useRef<boolean>(false);
+  const navigatingNextRef = useRef<boolean>(false);
   // バックグラウンド同期や設定更新で現在の問題や回答後解説がリセットされないためのガード
   const preparedQuestionKeyRef = useRef<string | null>(null);
 
@@ -135,14 +140,31 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
         : 'speak';
 
   useEffect(() => {
+    const onVisChange = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenAtMsRef.current = Date.now();
+      } else if (document.visibilityState === 'visible' && hiddenAtMsRef.current !== null) {
+        pausedTotalMsRef.current += Date.now() - hiddenAtMsRef.current;
+        hiddenAtMsRef.current = null;
+      }
+    };
+    document.addEventListener('visibilitychange', onVisChange);
+    return () => document.removeEventListener('visibilitychange', onVisChange);
+  }, []);
+
+  const getActiveElapsedMs = () =>
+    Math.max(0, Date.now() - sessionStartMsRef.current - pausedTotalMsRef.current);
+
+  useEffect(() => {
     unlockSpeechSynthesis();
     unlockAudioContext();
-    if (settings.level === 3) {
+    if (settings.level >= 3) {
       startAmbientNoise();
     }
     return () => {
       stopAmbientNoise();
       sttControllerRef.current?.stop();
+      stopSpeechSynthesis();
     };
   }, [settings.level]);
 
@@ -232,114 +254,162 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
 
   // 自己判定ボタン（緑／黄／赤）タップ（回答確定と同時に正解の英語音声 currentChunk.enText を再生し、発音・ミッション・答えを100%一致させる）
   const handleSelfJudge = async (selfRating: Rating) => {
-    playTactileClick(settings.clickSound);
-    sttControllerRef.current?.stop();
-    setSttActive(false);
+    if (submittingAnswerRef.current || answeredResult || !currentChunk) return;
+    submittingAnswerRef.current = true;
+    try {
+      playTactileClick(settings.clickSound);
+      sttControllerRef.current?.stop();
+      setSttActive(false);
 
-    const completionMs = Math.max(
-      1,
-      Math.round(performance.now() - questionStartMsRef.current)
-    );
-    const resolved = resolveSpeechRating({
-      selfJudgedRating: selfRating,
-      sttMatchRate,
-    });
+      const completionMs = Math.max(
+        1,
+        Math.round(performance.now() - questionStartMsRef.current)
+      );
+      const resolved = resolveSpeechRating({
+        selfJudgedRating: selfRating,
+        sttMatchRate,
+      });
 
-    setAnsweredResult({
-      rating: resolved.finalRating,
-      completionMs,
-    });
-    setSessionResults((prev) => [...prev, resolved.finalRating]);
+      setAnsweredResult({
+        rating: resolved.finalRating,
+        completionMs,
+      });
+      setSessionResults((prev) => [...prev, resolved.finalRating]);
 
-    // 回答確定時にミッションと完全一致する正解英語音声（currentChunk.enText）を再生
-    void speakEnglishText({
-      text: currentChunk.enText,
-      rate: settings.ttsRate,
-      multiSpeakerRandom: settings.level >= 2,
-    });
+      // 回答確定時にミッションと完全一致する正解英語音声（currentChunk.enText）を再生
+      void speakEnglishText({
+        text: currentChunk.enText,
+        rate: settings.ttsRate,
+        multiSpeakerRandom: settings.level >= 2,
+      });
 
-    const elapsedSeconds = Math.max(
-      1,
-      Math.round((Date.now() - sessionStartMsRef.current) / 1000)
-    );
-    const updatedSession: Session = {
-      ...session,
-      activeSeconds: elapsedSeconds,
-    };
+      const elapsedSeconds = Math.max(
+        1,
+        Math.round(getActiveElapsedMs() / 1000)
+      );
+      const updatedSession: Session = {
+        ...session,
+        activeSeconds: elapsedSeconds,
+      };
 
-    const attempt: Attempt = {
-      id: `att_speak_${Date.now()}_${currentIndex}`,
-      chunkId: currentChunk.id,
-      sessionId: session.id,
-      exerciseType,
-      studyDate: currentStudyDate,
-      startedAt: Date.now(),
-      reactionMs: completionMs,
-      completionMs,
-      replayBeforeShown: 0,
-      replayAfterShown: 0,
-      rating: resolved.finalRating,
-      missType: resolved.finalRating === 'red' ? 'speech_block' : undefined,
-      inputMode: 'voice',
-      selfJudged: true,
-      sttTranscript: sttTranscript || undefined,
-      sttMatch: resolved.sttMatch,
-    };
+      const attempt: Attempt = {
+        id: `att_speak_${Date.now()}_b${batchGeneration}_${currentIndex}_${Math.random().toString(36).slice(2, 6)}`,
+        chunkId: currentChunk.id,
+        sessionId: session.id,
+        exerciseType,
+        studyDate: currentStudyDate,
+        startedAt: Date.now(),
+        reactionMs: completionMs,
+        completionMs,
+        replayBeforeShown: 0,
+        replayAfterShown: 0,
+        rating: resolved.finalRating,
+        missType: resolved.finalRating === 'red' ? 'speech_block' : undefined,
+        inputMode: 'voice',
+        selfJudged: true,
+        sttTranscript: sttTranscript || undefined,
+        sttMatch: resolved.sttMatch,
+      };
 
-    await onRecordAttempt({
-      attempt,
-      session: updatedSession,
-      updateSrs: true,
-    });
+      await onRecordAttempt({
+        attempt,
+        session: updatedSession,
+        updateSrs: true,
+      });
+    } finally {
+      submittingAnswerRef.current = false;
+    }
   };
 
   const handleNextQuestion = async () => {
-    const elapsedMinutes =
-      (Date.now() - sessionStartMsRef.current) / (60 * 1000);
-    if (elapsedMinutes >= plannedMinutes) {
-      const finalSession: Session = {
-        ...session,
-        activeSeconds: Math.max(
-          60,
-          Math.round((Date.now() - sessionStartMsRef.current) / 1000)
-        ),
-        endedAt: Date.now(),
-      };
-      setSessionFinished(true);
-      await onCompleteSession(finalSession);
-      return;
-    }
+    if (navigatingNextRef.current) return;
+    navigatingNextRef.current = true;
+    stopSpeechSynthesis();
+    try {
+      const elapsedMinutes = getActiveElapsedMs() / (60 * 1000);
+      if (elapsedMinutes >= plannedMinutes) {
+        const finalSession: Session = {
+          ...session,
+          activeSeconds:
+            sessionResults.length > 0
+              ? Math.max(60, Math.round(getActiveElapsedMs() / 1000))
+              : 0,
+          endedAt: Date.now(),
+        };
+        setSessionFinished(true);
+        await onCompleteSession(finalSession);
+        return;
+      }
 
-    if (currentIndex + 1 < batch.length) {
-      setCurrentIndex((prev) => prev + 1);
-    } else {
-      const nextBatch = buildSessionBatch({
-        allChunks,
-        reviewStates,
-        recentAttempts,
-        currentStudyDate,
-        currentLevel: settings.level,
-        mode: 'speak',
-      });
-      setBatch(nextBatch);
-      setBatchGeneration((prev) => prev + 1);
-      setCurrentIndex(0);
+      if (currentIndex + 1 < batch.length) {
+        setCurrentIndex((prev) => prev + 1);
+      } else {
+        const nextBatch = buildSessionBatch({
+          allChunks,
+          reviewStates,
+          recentAttempts,
+          currentStudyDate,
+          currentLevel: settings.level,
+          mode: 'speak',
+        });
+        setBatch(nextBatch);
+        setBatchGeneration((prev) => prev + 1);
+        setCurrentIndex(0);
+      }
+    } finally {
+      navigatingNextRef.current = false;
     }
   };
 
   const handleFinishEarly = async () => {
+    if (navigatingNextRef.current) return;
+    navigatingNextRef.current = true;
     sttControllerRef.current?.stop();
-    const finalSession: Session = {
-      ...session,
-      activeSeconds: Math.max(
-        60,
-        Math.round((Date.now() - sessionStartMsRef.current) / 1000)
-      ),
-      endedAt: Date.now(),
-    };
-    setSessionFinished(true);
-    await onCompleteSession(finalSession);
+    stopSpeechSynthesis();
+    try {
+      const finalSession: Session = {
+        ...session,
+        activeSeconds:
+          sessionResults.length > 0
+            ? Math.max(60, Math.round(getActiveElapsedMs() / 1000))
+            : 0,
+        endedAt: Date.now(),
+      };
+      setSessionFinished(true);
+      await onCompleteSession(finalSession);
+    } finally {
+      navigatingNextRef.current = false;
+    }
   };
+
+  if (!currentChunk && !sessionFinished) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-10">
+        <div
+          style={{
+            backgroundColor: palette.card,
+            borderColor: palette.border,
+            color: palette.text,
+          }}
+          className="border rounded-xl p-6 space-y-4 text-center"
+        >
+          <p className="font-bold">現在、発話ドリルに出題できる問題がありません。</p>
+          <button
+            type="button"
+            onClick={onExitHome}
+            style={{
+              backgroundColor: palette.text,
+              color: palette.card,
+              borderColor: palette.text,
+            }}
+            className="px-5 py-2.5 rounded-lg font-bold text-sm"
+          >
+            ホームへ戻る
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (sessionFinished) {
     const total = Math.max(1, sessionResults.length);
@@ -567,10 +637,25 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
               }}
               className="border rounded-lg p-5 space-y-4"
             >
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <p className="font-bold text-sm">
-                  状況ビジュアルカード（場所・相手・感情）を見て英語を発話してください（回答後に正解英文と解説が表示されます）
+                  以下のミッションを2秒以内に英語で発話してください（回答後に正解英文と解説が表示されます）
                 </p>
+                <div
+                  style={{
+                    backgroundColor: palette.background,
+                    borderColor: palette.border,
+                  }}
+                  className="p-3 rounded-lg border text-sm font-bold space-y-1"
+                  data-testid="speak-mission-prompt"
+                >
+                  {!isAllEnglish && <p>{situationMeaning}</p>}
+                  {currentChunk.promptAudioText && (
+                    <p className="text-xs font-normal opacity-80">
+                      相手・状況: &ldquo;{currentChunk.promptAudioText}&rdquo;
+                    </p>
+                  )}
+                </div>
                 <p className="text-xs opacity-75">
                   下のマイクボタンを押している間（またはタップで）話し、発話後に3つのボタンで自己判定してください。
                 </p>
@@ -589,8 +674,21 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
               >
                 <button
                   type="button"
-                  onPointerDown={handleMicPointerDown}
+                  onPointerDown={(e) => {
+                    try {
+                      e.currentTarget.setPointerCapture?.(e.pointerId);
+                    } catch {
+                      // 無視
+                    }
+                    handleMicPointerDown();
+                  }}
                   onPointerUp={handleMicPointerUp}
+                  onPointerCancel={() => {
+                    if (sttActive) stopMicRecording();
+                  }}
+                  onLostPointerCapture={() => {
+                    if (sttActive) stopMicRecording();
+                  }}
                   onContextMenu={(e) => e.preventDefault()}
                   style={{
                     backgroundColor: sttActive
@@ -605,7 +703,7 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
                     userSelect: 'none',
                     WebkitUserSelect: 'none',
                   }}
-                  className="w-full min-h-[56px] px-4 py-3 rounded-lg border-2 font-bold text-sm flex items-center justify-center gap-2 tactile-block select-none"
+                  className="w-full min-h-[56px] px-4 py-3 rounded-lg border-2 font-bold text-sm flex items-center justify-center gap-2 tactile-block select-none no-touch-callout"
                   data-testid="push-to-talk-mic-button"
                 >
                   <Mic
@@ -674,6 +772,7 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
               <div className="grid grid-cols-1 gap-3 pt-2">
                 <button
                   type="button"
+                  disabled={violatedNgWords.length > 0}
                   onClick={() => handleSelfJudge('green')}
                   style={{
                     backgroundColor: palette.card,
@@ -681,7 +780,7 @@ export const SpeakModePage: React.FC<SpeakModePageProps> = ({
                     borderBottomWidth: '3px',
                     color: palette.greenText ?? palette.text,
                   }}
-                  className="min-h-[56px] px-4 py-3 rounded-lg border-2 font-bold text-sm flex items-center justify-center gap-2 tactile-block"
+                  className="min-h-[56px] px-4 py-3 rounded-lg border-2 font-bold text-sm flex items-center justify-center gap-2 tactile-block disabled:opacity-40"
                   data-testid="self-judge-green"
                 >
                   <CheckCircle

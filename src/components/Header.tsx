@@ -54,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
         borderColor: palette.border,
         color: palette.text,
       }}
-      className="border-b px-4 py-3 sticky top-0 z-20"
+      className="border-b pt-[max(0.6rem,env(safe-area-inset-top))] pb-2.5 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sticky top-0 z-20"
     >
       <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -94,14 +94,17 @@ export const Header: React.FC<HeaderProps> = ({
             <span data-testid="streak-days">{streakDays}日連続</span>
           </div>
 
-          {/* お休みチケット残数 */}
+          {/* お休みチケット残数（スマホ幅でも表示） */}
           <div
             style={{ borderColor: palette.border, color: palette.text }}
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded border text-xs font-medium"
+            className="flex items-center gap-1 px-2 py-1 rounded border text-xs font-medium"
             title="お休みチケット（毎週月曜午前4時に最大2枚まで補充）"
           >
-            <Ticket size={15} strokeWidth={1.75} color="currentColor" />
-            <span>休票 {restTickets}/2</span>
+            <Ticket size={14} strokeWidth={1.75} color="currentColor" />
+            <span>
+              <span className="hidden sm:inline">休票 </span>
+              {restTickets}/2
+            </span>
           </div>
 
           {/* ナビゲーションボタン */}

@@ -205,6 +205,8 @@ export function startAuxiliaryStt(params: {
     resetSilenceTimer();
   };
 
+  let restartCount = 0;
+
   recognition.onerror = (event) => {
     const errCode = event?.error ?? '';
     // Push-to-Talk中に一時的な無音（no-speech）が発生した場合は停止せず継続する
@@ -217,8 +219,9 @@ export function startAuxiliaryStt(params: {
   };
 
   recognition.onend = () => {
-    // Push-to-Talk（ボタンを押している間）にブラウザが自動区切りした場合は再起動して聞き取りを継続
-    if (disableSilenceTimeout && !manualStopped && !finished) {
+    // Push-to-Talk（ボタンを押している間）にブラウザが自動区切りした場合は最大2回まで再起動して聞き取りを継続
+    if (disableSilenceTimeout && !manualStopped && !finished && restartCount < 2) {
+      restartCount += 1;
       if (currentSegmentTranscript) {
         committedTranscript = getCombinedTranscript();
         currentSegmentTranscript = '';
@@ -238,9 +241,7 @@ export function startAuxiliaryStt(params: {
     resetSilenceTimer();
   } catch {
     onFallbackToSelfJudge?.();
-    if (!disableSilenceTimeout) {
-      finishOnce();
-    }
+    finishOnce();
   }
 
   return {

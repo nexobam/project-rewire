@@ -11,6 +11,7 @@ import { calculateMedianPerTapMs } from '../domain/timingJudge';
 import { playTactileClick, unlockAudioContext } from '../services/audioService';
 import {
   speakEnglishText,
+  stopSpeechSynthesis,
   unlockSpeechSynthesis,
 } from '../services/ttsService';
 import type { Block, Chunk } from '../types';
@@ -39,6 +40,7 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
   const [started, setStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [completing, setCompleting] = useState(false);
   const [shuffledBlocks, setShuffledBlocks] = useState<Block[]>([]);
   const [shuffledSoundChoices, setShuffledSoundChoices] = useState<string[]>([]);
   const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
@@ -82,6 +84,12 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
     },
     [playQuestionAudio, questions]
   );
+
+  useEffect(() => {
+    return () => {
+      stopSpeechSynthesis();
+    };
+  }, []);
 
   useEffect(() => {
     if (
@@ -244,14 +252,19 @@ export const DiagnosisPage: React.FC<DiagnosisPageProps> = ({
           </p>
           <button
             type="button"
-            onClick={() => onCompleteDiagnosis(finishedPerTapMs)}
+            disabled={completing}
+            onClick={() => {
+              if (completing) return;
+              setCompleting(true);
+              onCompleteDiagnosis(finishedPerTapMs);
+            }}
             style={{
               backgroundColor: palette.text,
               color: palette.card,
               borderColor: palette.text,
               borderBottomWidth: '3px',
             }}
-            className="w-full min-h-[56px] px-5 py-3 rounded-lg font-bold text-base tactile-block"
+            className="w-full min-h-[56px] px-5 py-3 rounded-lg font-bold text-base tactile-block disabled:opacity-50"
             data-testid="finish-diagnosis-button"
           >
             {isRecalibration ? '設定を保存して戻る' : 'Lv.1 トレーニングへ進む'}

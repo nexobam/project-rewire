@@ -28,10 +28,36 @@ export interface CloudSyncStores {
   coachMessages?: CoachMessage[];
 }
 
+function isAsciiHeaderSafe(value: string): boolean {
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i);
+    if (code < 0x20 || code > 0x7e) return false;
+  }
+  return true;
+}
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs: number
+): Promise<Response> {
+  const controller = new AbortController();
+  const timerId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timerId);
+  }
+}
+
 export function getSavedPasscode(): string {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return '';
-    return window.localStorage.getItem(PASSCODE_STORAGE_KEY) ?? '';
+    const raw = window.localStorage.getItem(PASSCODE_STORAGE_KEY) ?? '';
+    return isAsciiHeaderSafe(raw) ? raw : '';
   } catch {
     return '';
   }
@@ -75,10 +101,14 @@ export async function checkCloudAuthStatus(): Promise<CloudAuthStatus> {
     return cachedCloudStatus;
   }
   try {
-    const res = await fetch('/api/auth/status', {
-      method: 'GET',
-      cache: 'no-store',
-    });
+    const res = await fetchWithTimeout(
+      '/api/auth/status',
+      {
+        method: 'GET',
+        cache: 'no-store',
+      },
+      4500
+    );
     if (!res.ok) {
       cachedCloudStatus = {
         cloudAvailable: false,
@@ -117,16 +147,24 @@ export async function checkCloudAuthStatus(): Promise<CloudAuthStatus> {
  * パスコードをサーバーで検証する
  */
 export async function verifyCloudPasscode(passcode: string): Promise<boolean> {
+  const trimmed = passcode.trim();
+  if (!trimmed || !isAsciiHeaderSafe(trimmed)) {
+    return false;
+  }
   try {
-    const res = await fetch('/api/auth/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ passcode: passcode.trim() }),
-    });
+    const res = await fetchWithTimeout(
+      '/api/auth/verify',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passcode: trimmed }),
+      },
+      6000
+    );
     if (!res.ok) return false;
     const data = (await res.json()) as { ok?: boolean };
     if (data.ok) {
-      savePasscode(passcode);
+      savePasscode(trimmed);
       return true;
     }
     return false;
@@ -145,11 +183,15 @@ export async function fetchCloudStores(): Promise<{
 }> {
   try {
     const passcode = getSavedPasscode();
-    const res = await fetch('/api/sync', {
-      method: 'GET',
-      headers: passcode ? { 'X-App-Passcode': passcode } : {},
-      cache: 'no-store',
-    });
+    const res = await fetchWithTimeout(
+      '/api/sync',
+      {
+        method: 'GET',
+        headers: passcode ? { 'X-App-Passcode': passcode } : {},
+        cache: 'no-store',
+      },
+      7000
+    );
     if (res.status === 401) {
       return { ok: false, unauthorized: true };
     }
@@ -164,22 +206,33 @@ export async function fetchCloudStores(): Promise<{
 }
 
 /**
- * Cloudflare D1 へストアデータを保存（同期）する
+ * Cloudflare D1 へストアデータを保存（同期）する（送信前にAPIキーを必ず除去）
  */
 export async function pushCloudStores(stores: CloudSyncStores): Promise<boolean> {
   if (!cachedCloudStatus.cloudAvailable) {
     return false;
   }
   try {
+    const safeStores: CloudSyncStores = { ...stores };
+    if (safeStores.settings) {
+      const settingsCopy = { ...safeStores.settings };
+      delete settingsCopy.geminiApiKey;
+      safeStores.settings = settingsCopy;
+    }
+
     const passcode = getSavedPasscode();
-    const res = await fetch('/api/sync', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(passcode ? { 'X-App-Passcode': passcode } : {}),
+    const res = await fetchWithTimeout(
+      '/api/sync',
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(passcode ? { 'X-App-Passcode': passcode } : {}),
+        },
+        body: JSON.stringify({ stores: safeStores }),
       },
-      body: JSON.stringify({ stores }),
-    });
+      8000
+    );
     return res.ok;
   } catch {
     return false;
@@ -197,12 +250,16 @@ export async function fetchGeminiViaCloudProxy(params: {
   responseSchema: Record<string, unknown>;
 }): Promise<Response> {
   const passcode = getSavedPasscode();
-  return fetch('/api/gemini', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(passcode ? { 'X-App-Passcode': passcode } : {}),
+  return fetchWithTimeout(
+    '/api/gemini',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(passcode ? { 'X-App-Passcode': passcode } : {}),
+      },
+      body: JSON.stringify(params),
     },
-    body: JSON.stringify(params),
-  });
+    26000
+  );
 }

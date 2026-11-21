@@ -1,6 +1,6 @@
-// アプリ全体の状態管理・非同期AIレポート再試行・1問ごとの自動保存フック
+// アプリ全体の状態管理・非同期AIレポート再試行・1問ごとの自動保存・安全マージ同期フック
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   commitValidatedBackupToDb,
   type ValidatedBackupBundle,
@@ -31,6 +31,7 @@ import {
   fetchCloudStores,
   pushCloudStores,
   verifyCloudPasscode,
+  type CloudSyncStores,
 } from '../services/cloudSyncService';
 import {
   normalizeGeminiModelName,
@@ -48,6 +49,187 @@ import {
   type Settings,
 } from '../types';
 
+const PENDING_SYNC_KEY = 'rewire_pending_cloud_sync';
+
+function setPendingSyncFlag(pending: boolean): void {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    if (pending) {
+      window.localStorage.setItem(PENDING_SYNC_KEY, '1');
+    } else {
+      window.localStorage.removeItem(PENDING_SYNC_KEY);
+    }
+  } catch {
+    // 無視
+  }
+}
+
+function hasPendingSyncFlag(): boolean {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return false;
+    return window.localStorage.getItem(PENDING_SYNC_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * クラウド側とローカル側のストアを安全に和集合マージする（オフライン学習データの消失防止）
+ */
+export function mergeCloudAndLocalStores(
+  local: {
+    settings: Settings;
+    chunks: Chunk[];
+    reviewStates: ReviewState[];
+    attempts: Attempt[];
+    sessions: Session[];
+    aiReports: AiReport[];
+    coachMessages: CoachMessage[];
+  },
+  cloud: CloudSyncStores
+) {
+  const localSettings: Settings = { ...DEFAULT_SETTINGS, ...local.settings };
+  const cloudSettings: Settings | undefined = cloud.settings
+    ? { ...DEFAULT_SETTINGS, ...cloud.settings }
+    : undefined;
+
+  // Settings マージ：レベル・バックアップ・APIカウント・評価日は進んでいる方を採用し、ローカルのAPIキーは保持
+  const mergedSettings: Settings = cloudSettings
+    ? {
+        ...cloudSettings,
+        ...localSettings,
+        level: Math.max(localSettings.level, cloudSettings.level) as Level,
+        lv1Phase:
+          localSettings.lv1Phase === 'blocks' || cloudSettings.lv1Phase === 'blocks'
+            ? 'blocks'
+            : 'picture',
+        geminiApiKey: localSettings.geminiApiKey || cloudSettings.geminiApiKey,
+        geminiModel: normalizeGeminiModelName(
+          localSettings.geminiModel || cloudSettings.geminiModel
+        ),
+        lastBackupAt:
+          Math.max(localSettings.lastBackupAt ?? 0, cloudSettings.lastBackupAt ?? 0) ||
+          undefined,
+        levelPromotedAt:
+          Math.max(
+            localSettings.levelPromotedAt ?? 0,
+            cloudSettings.levelPromotedAt ?? 0
+          ) || undefined,
+        firstUsedAt:
+          Math.min(
+            localSettings.firstUsedAt ?? Number.MAX_SAFE_INTEGER,
+            cloudSettings.firstUsedAt ?? Number.MAX_SAFE_INTEGER
+          ) === Number.MAX_SAFE_INTEGER
+            ? undefined
+            : Math.min(
+                localSettings.firstUsedAt ?? Number.MAX_SAFE_INTEGER,
+                cloudSettings.firstUsedAt ?? Number.MAX_SAFE_INTEGER
+              ),
+      }
+    : localSettings;
+
+  // Chunks マージ：disabled: true と isCore: true は安全側に優先
+  const chunkMap = new Map<string, Chunk>();
+  for (const c of cloud.chunks ?? []) {
+    chunkMap.set(c.id, c);
+  }
+  for (const c of local.chunks) {
+    const prev = chunkMap.get(c.id);
+    if (!prev) {
+      chunkMap.set(c.id, c);
+    } else {
+      chunkMap.set(c.id, {
+        ...prev,
+        ...c,
+        disabled: prev.disabled || c.disabled,
+        isCore: prev.isCore || c.isCore,
+      });
+    }
+  }
+  const upgraded = upgradeSeedChunksWithLatestExplanations([...chunkMap.values()]);
+  const mergedChunks = upgraded.chunks;
+
+  // ReviewStates マージ：より学習履歴が進んでいる方を優先
+  const reviewMap = new Map<string, ReviewState>();
+  for (const rs of cloud.reviewStates ?? []) {
+    reviewMap.set(rs.chunkId, rs);
+  }
+  for (const rs of local.reviewStates) {
+    const prev = reviewMap.get(rs.chunkId);
+    if (
+      !prev ||
+      rs.recentRatings.length > prev.recentRatings.length ||
+      (rs.recentRatings.length === prev.recentRatings.length &&
+        rs.stage >= prev.stage)
+    ) {
+      reviewMap.set(rs.chunkId, rs);
+    }
+  }
+
+  // Attempts マージ：ID和集合
+  const attemptMap = new Map<string, Attempt>();
+  for (const a of cloud.attempts ?? []) attemptMap.set(a.id, a);
+  for (const a of local.attempts) attemptMap.set(a.id, a);
+
+  // Sessions マージ：endedAt がある方や activeSeconds が大きい方を優先
+  const sessionMap = new Map<string, Session>();
+  for (const s of cloud.sessions ?? []) sessionMap.set(s.id, s);
+  for (const s of local.sessions) {
+    const prev = sessionMap.get(s.id);
+    if (!prev) {
+      sessionMap.set(s.id, s);
+    } else {
+      sessionMap.set(s.id, {
+        ...prev,
+        ...s,
+        activeSeconds: Math.max(prev.activeSeconds, s.activeSeconds),
+        endedAt: s.endedAt ?? prev.endedAt,
+      });
+    }
+  }
+
+  // AiReports マージ：done を優先
+  const reportMap = new Map<string, AiReport>();
+  for (const r of cloud.aiReports ?? []) reportMap.set(r.id, r);
+  for (const r of local.aiReports) {
+    const prev = reportMap.get(r.id);
+    if (!prev || (prev.status !== 'done' && r.status === 'done')) {
+      reportMap.set(r.id, r);
+    }
+  }
+
+  // CoachMessages マージ：answered を優先
+  const coachMap = new Map<string, CoachMessage>();
+  for (const m of cloud.coachMessages ?? []) coachMap.set(m.id, m);
+  for (const m of local.coachMessages) {
+    const prev = coachMap.get(m.id);
+    if (!prev || (prev.status !== 'answered' && m.status === 'answered')) {
+      coachMap.set(m.id, m);
+    }
+  }
+
+  const hasLocalOnlyChanges =
+    local.attempts.length > (cloud.attempts?.length ?? 0) ||
+    local.sessions.length > (cloud.sessions?.length ?? 0) ||
+    local.chunks.length > (cloud.chunks?.length ?? 0) ||
+    local.coachMessages.length > (cloud.coachMessages?.length ?? 0) ||
+    hasPendingSyncFlag() ||
+    upgraded.changed;
+
+  return {
+    merged: {
+      settings: mergedSettings,
+      chunks: mergedChunks,
+      reviewStates: [...reviewMap.values()],
+      attempts: [...attemptMap.values()].sort((a, b) => a.startedAt - b.startedAt),
+      sessions: [...sessionMap.values()].sort((a, b) => a.startedAt - b.startedAt),
+      aiReports: [...reportMap.values()].sort((a, b) => a.createdAt - b.createdAt),
+      coachMessages: [...coachMap.values()].sort((a, b) => a.createdAt - b.createdAt),
+    },
+    hasLocalOnlyChanges,
+  };
+}
+
 export function useAppStore() {
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
@@ -64,237 +246,375 @@ export function useAppStore() {
   const [cloudAuthNeeded, setCloudAuthNeeded] = useState(false);
   const [serverHasGeminiKey, setServerHasGeminiKey] = useState(false);
 
-  // pending状態のAIレポートを非同期に処理する（最大3回リトライ、失敗したら status:'failed'）
-  const processPendingAiReports = useCallback(
-    async (
-      currentReports: AiReport[],
-      currentAttempts: Attempt[],
-      currentChunks: Chunk[],
-      currentSettings: Settings
-    ) => {
-      const pendings = currentReports.filter((r) => r.status === 'pending');
-      if (pendings.length === 0) return;
+  // 最新状態を参照するための Ref ミラー（Stale Closure による状態巻き戻り・消失を根絶）
+  const settingsRef = useRef<Settings>(settings);
+  const chunksRef = useRef<Chunk[]>(chunks);
+  const reviewStatesRef = useRef<ReviewState[]>(reviewStates);
+  const attemptsRef = useRef<Attempt[]>(attempts);
+  const sessionsRef = useRef<Session[]>(sessions);
+  const aiReportsRef = useRef<AiReport[]>(aiReports);
+  const coachMessagesRef = useRef<CoachMessage[]>(coachMessages);
+  const processingReportIdsRef = useRef<Set<string>>(new Set());
 
-      for (const report of pendings) {
-        if (report.retryCount >= 3) {
-          const failedReport: AiReport = { ...report, status: 'failed' };
-          await saveAiReportToDb(failedReport);
-          setAiReports((prev) =>
-            prev.map((r) => (r.id === failedReport.id ? failedReport : r))
-          );
-          continue;
-        }
+  const syncPushWithRetryFlag = useCallback(async (stores: CloudSyncStores) => {
+    const ok = await pushCloudStores(stores);
+    if (!ok) {
+      setPendingSyncFlag(true);
+    } else if (
+      stores.settings &&
+      stores.chunks &&
+      stores.attempts &&
+      stores.sessions
+    ) {
+      setPendingSyncFlag(false);
+    }
+    return ok;
+  }, []);
 
-        const sessionAttempts = currentAttempts.filter(
-          (a) => a.sessionId === report.sessionId
-        );
+  const applyAllStoresState = useCallback(
+    (next: {
+      settings: Settings;
+      chunks: Chunk[];
+      reviewStates: ReviewState[];
+      attempts: Attempt[];
+      sessions: Session[];
+      aiReports: AiReport[];
+      coachMessages: CoachMessage[];
+    }) => {
+      settingsRef.current = next.settings;
+      chunksRef.current = next.chunks;
+      reviewStatesRef.current = next.reviewStates;
+      attemptsRef.current = next.attempts;
+      sessionsRef.current = next.sessions;
+      aiReportsRef.current = next.aiReports;
+      coachMessagesRef.current = next.coachMessages;
 
-        const result = await runFourAiEmployeesPipeline({
-          sessionAttempts,
-          existingChunks: currentChunks,
-          settings: currentSettings,
-        });
-
-        const today = getStudyDate();
-        let nextSettings = currentSettings;
-        if (result.apiCallsMade > 0) {
-          const prevCount =
-            currentSettings.apiCallDate === today
-              ? (currentSettings.apiCallCount ?? 0)
-              : 0;
-          nextSettings = {
-            ...currentSettings,
-            apiCallDate: today,
-            apiCallCount: prevCount + result.apiCallsMade,
-          };
-          await saveSettingsToDb(nextSettings);
-          setSettings(nextSettings);
-        }
-
-        // 429エラー時は retryCount を増やし、3回以上なら failed、未満なら pending のままでもモック結果を格納
-        if (result.rateLimited) {
-          const nextRetry = report.retryCount + 1;
-          const nextStatus = nextRetry >= 3 ? 'failed' : 'pending';
-          const updated: AiReport = {
-            ...report,
-            retryCount: nextRetry,
-            status: nextStatus,
-            analyst: result.analyst,
-            teacher: result.teacher,
-          };
-          await saveAiReportToDb(updated);
-          setAiReports((prev) =>
-            prev.map((r) => (r.id === updated.id ? updated : r))
-          );
-          continue;
-        }
-
-        let latestChunks = currentChunks;
-        if (result.newChunks.length > 0) {
-          await saveChunksToDb(result.newChunks);
-          const existingIds = new Set(currentChunks.map((c) => c.id));
-          const uniqueNew = result.newChunks.filter(
-            (c) => !existingIds.has(c.id)
-          );
-          latestChunks = [...currentChunks, ...uniqueNew];
-          setChunks(latestChunks);
-        }
-
-        const doneReport: AiReport = {
-          ...report,
-          status: 'done',
-          analyst: result.analyst,
-          teacher: result.teacher,
-        };
-        await saveAiReportToDb(doneReport);
-        setAiReports((prev) => {
-          const nextList = prev.map((r) =>
-            r.id === doneReport.id ? doneReport : r
-          );
-          void pushCloudStores({
-            chunks: latestChunks,
-            aiReports: nextList,
-            settings: nextSettings,
-          });
-          return nextList;
-        });
-      }
+      setSettings(next.settings);
+      setChunks(next.chunks);
+      setReviewStates(next.reviewStates);
+      setAttempts(next.attempts);
+      setSessions(next.sessions);
+      setAiReports(next.aiReports);
+      setCoachMessages(next.coachMessages);
     },
     []
   );
 
-  // 初回ロード
-  useEffect(() => {
-    let mounted = true;
-    void (async () => {
-      const data = await initializeAndLoadAppData();
-      if (!mounted) return;
+  // pending状態のAIレポートを非同期に処理する（排他ロック＋最新Refマージで巻き戻り防止）
+  const processPendingAiReports = useCallback(
+    async (targetReports?: AiReport[]) => {
+      const pendings = (targetReports ?? aiReportsRef.current).filter(
+        (r) => r.status === 'pending'
+      );
+      if (pendings.length === 0) return;
 
-      let mergedData = data;
-      const cloudStatus = await checkCloudAuthStatus();
-      if (!mounted) return;
-      setCloudEnabled(cloudStatus.cloudAvailable);
-      setServerHasGeminiKey(cloudStatus.serverHasGeminiKey);
+      for (const report of pendings) {
+        if (processingReportIdsRef.current.has(report.id)) {
+          continue;
+        }
+        processingReportIdsRef.current.add(report.id);
 
-      if (cloudStatus.cloudAvailable) {
-        const cloudRes = await fetchCloudStores();
-        if (!mounted) return;
-        if (cloudRes.unauthorized) {
-          setCloudAuthNeeded(true);
-        } else if (cloudRes.ok && cloudRes.stores) {
-          const cs = cloudRes.stores;
-          if (cs.settings || (cs.chunks && cs.chunks.length > 0)) {
-            const rawChunks =
-              cs.chunks && cs.chunks.length > 0 ? cs.chunks : data.chunks;
-            const upgradedCloud =
-              upgradeSeedChunksWithLatestExplanations(rawChunks);
-            mergedData = {
-              settings: cs.settings ?? data.settings,
-              chunks: upgradedCloud.chunks,
-              reviewStates: cs.reviewStates ?? data.reviewStates,
-              attempts: cs.attempts ?? data.attempts,
-              sessions: cs.sessions ?? data.sessions,
-              aiReports: cs.aiReports ?? data.aiReports,
-              coachMessages: cs.coachMessages ?? data.coachMessages,
-            };
-            if (upgradedCloud.changed) {
-              void pushCloudStores({ chunks: upgradedCloud.chunks });
-            }
-            await commitValidatedBackupToDb(
-              {
-                schemaVersion: 1,
-                exportedAt: new Date().toISOString(),
-                settings: mergedData.settings,
-                chunks: mergedData.chunks,
-                reviewStates: mergedData.reviewStates,
-                attempts: mergedData.attempts,
-                sessions: mergedData.sessions,
-                aiReports: mergedData.aiReports,
-                coachMessages: mergedData.coachMessages,
-              },
-              data.settings.geminiApiKey
+        try {
+          if (report.retryCount >= 3) {
+            const failedReport: AiReport = { ...report, status: 'failed' };
+            await saveAiReportToDb(failedReport);
+            const nextList = aiReportsRef.current.map((r) =>
+              r.id === failedReport.id ? failedReport : r
             );
-          } else {
-            // D1が初回空状態の場合はローカル初期データをD1へ保存
-            void pushCloudStores({
-              settings: data.settings,
-              chunks: data.chunks,
-              reviewStates: data.reviewStates,
-              attempts: data.attempts,
-              sessions: data.sessions,
-              aiReports: data.aiReports,
-              coachMessages: data.coachMessages,
-            });
+            aiReportsRef.current = nextList;
+            setAiReports(nextList);
+            continue;
           }
+
+          const sessionAttempts = attemptsRef.current.filter(
+            (a) => a.sessionId === report.sessionId
+          );
+
+          const result = await runFourAiEmployeesPipeline({
+            sessionAttempts,
+            existingChunks: chunksRef.current,
+            settings: settingsRef.current,
+          });
+
+          const today = getStudyDate();
+          if (result.apiCallsMade > 0) {
+            const latestSettings = settingsRef.current;
+            const prevCount =
+              latestSettings.apiCallDate === today
+                ? (latestSettings.apiCallCount ?? 0)
+                : 0;
+            const patchedSettings: Settings = {
+              ...latestSettings,
+              apiCallDate: today,
+              apiCallCount: prevCount + result.apiCallsMade,
+            };
+            settingsRef.current = patchedSettings;
+            setSettings(patchedSettings);
+            await saveSettingsToDb(patchedSettings);
+          }
+
+          if (result.rateLimited) {
+            const nextRetry = report.retryCount + 1;
+            const nextStatus = nextRetry >= 3 ? 'failed' : 'pending';
+            const updated: AiReport = {
+              ...report,
+              retryCount: nextRetry,
+              status: nextStatus,
+              analyst: result.analyst,
+              teacher: result.teacher,
+            };
+            await saveAiReportToDb(updated);
+            const nextList = aiReportsRef.current.map((r) =>
+              r.id === updated.id ? updated : r
+            );
+            aiReportsRef.current = nextList;
+            setAiReports(nextList);
+            continue;
+          }
+
+          if (result.newChunks.length > 0) {
+            const existingIds = new Set(chunksRef.current.map((c) => c.id));
+            const existingEn = new Set(
+              chunksRef.current.map((c) => c.enText.trim().toLowerCase())
+            );
+            const uniqueNew = result.newChunks.filter(
+              (c) =>
+                !existingIds.has(c.id) &&
+                !existingEn.has(c.enText.trim().toLowerCase())
+            );
+            if (uniqueNew.length > 0) {
+              await saveChunksToDb(uniqueNew);
+              const nextChunks = [...chunksRef.current, ...uniqueNew];
+              chunksRef.current = nextChunks;
+              setChunks(nextChunks);
+            }
+          }
+
+          const doneReport: AiReport = {
+            ...report,
+            status: 'done',
+            analyst: result.analyst,
+            teacher: result.teacher,
+          };
+          await saveAiReportToDb(doneReport);
+          const nextReports = aiReportsRef.current.map((r) =>
+            r.id === doneReport.id ? doneReport : r
+          );
+          aiReportsRef.current = nextReports;
+          setAiReports(nextReports);
+
+          void syncPushWithRetryFlag({
+            chunks: chunksRef.current,
+            aiReports: nextReports,
+            settings: settingsRef.current,
+          });
+        } finally {
+          processingReportIdsRef.current.delete(report.id);
         }
       }
+    },
+    [syncPushWithRetryFlag]
+  );
 
+  // ストリークとチケットの再評価（午前4時跨ぎや日付変更時にも安全に呼び出し可能）
+  const refreshStudyDateEvaluation = useCallback(
+    async (baseSettings?: Settings, baseSessions?: Session[]) => {
+      const targetSettings = baseSettings ?? settingsRef.current;
+      const targetSessions = baseSessions ?? sessionsRef.current;
       const today = getStudyDate();
-      const activeDates = mergedData.sessions
+      const activeDates = targetSessions
         .filter((s) => s.activeSeconds > 0)
         .map((s) => s.studyDate);
 
       const streakEval = evaluateStreakAndTickets({
         currentStudyDate: today,
         activeStudyDates: activeDates,
-        currentTickets: mergedData.settings.restTickets,
-        lastTicketRefillWeek: mergedData.settings.lastTicketRefillWeek,
-        lastEvaluatedStudyDate: mergedData.settings.lastEvaluatedStudyDate,
+        currentTickets: targetSettings.restTickets,
+        lastTicketRefillWeek: targetSettings.lastTicketRefillWeek,
+        lastEvaluatedStudyDate: targetSettings.lastEvaluatedStudyDate,
       });
 
-      const updatedSettings: Settings = {
-        ...mergedData.settings,
-        geminiModel: normalizeGeminiModelName(mergedData.settings.geminiModel),
-        restTickets: streakEval.restTickets,
-        lastTicketRefillWeek: streakEval.lastTicketRefillWeek,
-        lastEvaluatedStudyDate: streakEval.lastEvaluatedStudyDate,
-      };
-      await saveSettingsToDb(updatedSettings);
-      if (
-        mergedData.settings.geminiModel !== updatedSettings.geminiModel &&
-        cloudStatus.cloudAvailable
-      ) {
-        void pushCloudStores({ settings: updatedSettings });
-      }
-
-      setSettings(updatedSettings);
-      setChunks(mergedData.chunks);
-      setReviewStates(mergedData.reviewStates);
-      setAttempts(mergedData.attempts);
-      setSessions(mergedData.sessions);
-      setAiReports(mergedData.aiReports);
-      setCoachMessages(mergedData.coachMessages);
       setStreakDays(streakEval.streakDays);
       setSuggestRehab(streakEval.suggestRehab);
-      setLoading(false);
 
-      // 起動時に未完了（pending）のAIレポートがあれば再実行
-      void processPendingAiReports(
-        mergedData.aiReports,
-        mergedData.attempts,
-        mergedData.chunks,
-        updatedSettings
-      );
+      if (
+        targetSettings.restTickets !== streakEval.restTickets ||
+        targetSettings.lastTicketRefillWeek !== streakEval.lastTicketRefillWeek ||
+        targetSettings.lastEvaluatedStudyDate !== streakEval.lastEvaluatedStudyDate
+      ) {
+        const nextSettings: Settings = {
+          ...targetSettings,
+          restTickets: streakEval.restTickets,
+          lastTicketRefillWeek: streakEval.lastTicketRefillWeek,
+          lastEvaluatedStudyDate: streakEval.lastEvaluatedStudyDate,
+        };
+        settingsRef.current = nextSettings;
+        setSettings(nextSettings);
+        await saveSettingsToDb(nextSettings);
+        void syncPushWithRetryFlag({ settings: nextSettings });
+      }
+    },
+    [syncPushWithRetryFlag]
+  );
+
+  // 初回ロード（ローカルDB読み込み完了で即起動し、クラウド同期はバックグラウンドで安全マージ）
+  useEffect(() => {
+    let mounted = true;
+    void (async () => {
+      try {
+        const data = await initializeAndLoadAppData();
+        if (!mounted) return;
+
+        const normalizedSettings: Settings = {
+          ...DEFAULT_SETTINGS,
+          ...data.settings,
+          geminiModel: normalizeGeminiModelName(data.settings.geminiModel),
+        };
+        const localBundle = { ...data, settings: normalizedSettings };
+        applyAllStoresState(localBundle);
+
+        const today = getStudyDate();
+        const activeDates = localBundle.sessions
+          .filter((s) => s.activeSeconds > 0)
+          .map((s) => s.studyDate);
+        const initialEval = evaluateStreakAndTickets({
+          currentStudyDate: today,
+          activeStudyDates: activeDates,
+          currentTickets: normalizedSettings.restTickets,
+          lastTicketRefillWeek: normalizedSettings.lastTicketRefillWeek,
+          lastEvaluatedStudyDate: normalizedSettings.lastEvaluatedStudyDate,
+        });
+        setStreakDays(initialEval.streakDays);
+        setSuggestRehab(initialEval.suggestRehab);
+        setLoading(false);
+
+        const cloudStatus = await checkCloudAuthStatus();
+        if (!mounted) return;
+        setCloudEnabled(cloudStatus.cloudAvailable);
+        setServerHasGeminiKey(cloudStatus.serverHasGeminiKey);
+
+        if (cloudStatus.cloudAvailable) {
+          const cloudRes = await fetchCloudStores();
+          if (!mounted) return;
+          if (cloudRes.unauthorized) {
+            setCloudAuthNeeded(true);
+            return;
+          }
+          if (cloudRes.ok && cloudRes.stores) {
+            const cs = cloudRes.stores;
+            if (cs.settings || (cs.chunks && cs.chunks.length > 0)) {
+              const { merged, hasLocalOnlyChanges } = mergeCloudAndLocalStores(
+                {
+                  settings: settingsRef.current,
+                  chunks: chunksRef.current,
+                  reviewStates: reviewStatesRef.current,
+                  attempts: attemptsRef.current,
+                  sessions: sessionsRef.current,
+                  aiReports: aiReportsRef.current,
+                  coachMessages: coachMessagesRef.current,
+                },
+                cs
+              );
+
+              await commitValidatedBackupToDb(
+                {
+                  schemaVersion: 1,
+                  exportedAt: new Date().toISOString(),
+                  settings: merged.settings,
+                  chunks: merged.chunks,
+                  reviewStates: merged.reviewStates,
+                  attempts: merged.attempts,
+                  sessions: merged.sessions,
+                  aiReports: merged.aiReports,
+                  coachMessages: merged.coachMessages,
+                },
+                settingsRef.current.geminiApiKey
+              );
+              if (!mounted) return;
+              applyAllStoresState(merged);
+              await refreshStudyDateEvaluation(merged.settings, merged.sessions);
+
+              if (hasLocalOnlyChanges) {
+                await syncPushWithRetryFlag(merged);
+              }
+            } else {
+              // D1が空ならローカルを全送信
+              await syncPushWithRetryFlag({
+                settings: settingsRef.current,
+                chunks: chunksRef.current,
+                reviewStates: reviewStatesRef.current,
+                attempts: attemptsRef.current,
+                sessions: sessionsRef.current,
+                aiReports: aiReportsRef.current,
+                coachMessages: coachMessagesRef.current,
+              });
+            }
+          }
+        }
+
+        if (!mounted) return;
+        await refreshStudyDateEvaluation(settingsRef.current, sessionsRef.current);
+        void processPendingAiReports(aiReportsRef.current);
+      } catch (err) {
+        console.error('Initialization failed:', err);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     })();
     return () => {
       mounted = false;
     };
-  }, [processPendingAiReports]);
+  }, [applyAllStoresState, processPendingAiReports, refreshStudyDateEvaluation, syncPushWithRetryFlag]);
+
+  // オンライン復帰時に未同期データがあれば再送信
+  useEffect(() => {
+    const handleOnline = () => {
+      if (hasPendingSyncFlag() && cloudEnabled && !cloudAuthNeeded) {
+        void syncPushWithRetryFlag({
+          settings: settingsRef.current,
+          chunks: chunksRef.current,
+          reviewStates: reviewStatesRef.current,
+          attempts: attemptsRef.current,
+          sessions: sessionsRef.current,
+          aiReports: aiReportsRef.current,
+          coachMessages: coachMessagesRef.current,
+        });
+      }
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [cloudAuthNeeded, cloudEnabled, syncPushWithRetryFlag]);
 
   // 設定の更新
   const updateSettings = useCallback(
     async (patch: Partial<Settings>) => {
-      const next: Settings = { ...settings, ...patch };
+      const next: Settings = { ...settingsRef.current, ...patch };
+      settingsRef.current = next;
       setSettings(next);
       await saveSettingsToDb(next);
-      void pushCloudStores({ settings: next });
+      void syncPushWithRetryFlag({ settings: next });
       return next;
     },
-    [settings]
+    [syncPushWithRetryFlag]
+  );
+
+  // AI質問チャット等でのAPI呼び出し回数記録
+  const recordAiApiCall = useCallback(
+    async (calls: number = 1) => {
+      const today = getStudyDate();
+      const latest = settingsRef.current;
+      const prevCount =
+        latest.apiCallDate === today ? (latest.apiCallCount ?? 0) : 0;
+      return updateSettings({
+        apiCallDate: today,
+        apiCallCount: prevCount + calls,
+      });
+    },
+    [updateSettings]
   );
 
   // 1問ごとの自動保存（Attempt + ReviewState + Session.activeSeconds を1トランザクションで保存）
-  // updateSrs: false の場合（スリープモードやLv.0診断）はSRSを更新しない
   const recordQuestionAttempt = useCallback(
     async (params: {
       attempt: Attempt;
@@ -306,7 +626,7 @@ export function useAppStore() {
 
       if (updateSrs) {
         const existingState =
-          reviewStates.find((s) => s.chunkId === attempt.chunkId) ??
+          reviewStatesRef.current.find((s) => s.chunkId === attempt.chunkId) ??
           createInitialReviewState(attempt.chunkId, attempt.studyDate);
         nextReviewState = updateReviewState(
           existingState,
@@ -322,69 +642,93 @@ export function useAppStore() {
         session,
       });
 
-      const nextAttempts = [...attempts, attempt];
+      const nextAttempts = [...attemptsRef.current, attempt];
+      attemptsRef.current = nextAttempts;
       setAttempts(nextAttempts);
 
-      let nextReviewStatesList = reviewStates;
+      let nextReviewStatesList = reviewStatesRef.current;
       if (nextReviewState) {
-        const idx = reviewStates.findIndex(
+        const idx = nextReviewStatesList.findIndex(
           (s) => s.chunkId === nextReviewState.chunkId
         );
         nextReviewStatesList =
           idx === -1
-            ? [...reviewStates, nextReviewState]
-            : reviewStates.map((s, i) => (i === idx ? nextReviewState! : s));
+            ? [...nextReviewStatesList, nextReviewState]
+            : nextReviewStatesList.map((s, i) =>
+                i === idx ? nextReviewState! : s
+              );
+        reviewStatesRef.current = nextReviewStatesList;
         setReviewStates(nextReviewStatesList);
       }
 
-      const sessIdx = sessions.findIndex((s) => s.id === session.id);
+      const currSessions = sessionsRef.current;
+      const sessIdx = currSessions.findIndex((s) => s.id === session.id);
       const nextSessionsList =
         sessIdx === -1
-          ? [...sessions, session]
-          : sessions.map((s) => (s.id === session.id ? session : s));
+          ? [...currSessions, session]
+          : currSessions.map((s) => (s.id === session.id ? session : s));
+      sessionsRef.current = nextSessionsList;
+      setSessions(nextSessionsList);
 
-      setSessions(() => {
-        const activeDates = nextSessionsList
-          .filter((s) => s.activeSeconds > 0)
-          .map((s) => s.studyDate);
-        const streakEval = evaluateStreakAndTickets({
-          currentStudyDate: getStudyDate(),
-          activeStudyDates: activeDates,
-          currentTickets: settings.restTickets,
-          lastTicketRefillWeek: settings.lastTicketRefillWeek,
-          lastEvaluatedStudyDate: settings.lastEvaluatedStudyDate,
-        });
-        setStreakDays(streakEval.streakDays);
-        setSuggestRehab(false);
-        return nextSessionsList;
+      const latestSettings = settingsRef.current;
+      const activeDates = nextSessionsList
+        .filter((s) => s.activeSeconds > 0)
+        .map((s) => s.studyDate);
+      const streakEval = evaluateStreakAndTickets({
+        currentStudyDate: getStudyDate(),
+        activeStudyDates: activeDates,
+        currentTickets: latestSettings.restTickets,
+        lastTicketRefillWeek: latestSettings.lastTicketRefillWeek,
+        lastEvaluatedStudyDate: latestSettings.lastEvaluatedStudyDate,
       });
+      setStreakDays(streakEval.streakDays);
+      setSuggestRehab(false);
 
-      void pushCloudStores({
+      void syncPushWithRetryFlag({
         attempts: nextAttempts,
         reviewStates: nextReviewStatesList,
         sessions: nextSessionsList,
       });
 
-      // Lv.1前半（絵カード期）→後半（語順ブロック期）の自動移行判定
-      if (settings.level === 1 && settings.lv1Phase === 'picture') {
+      if (
+        settingsRef.current.level === 1 &&
+        settingsRef.current.lv1Phase === 'picture'
+      ) {
         const phaseCheck = checkLv1PhaseTransition(nextAttempts);
         if (phaseCheck.readyForBlocks) {
           await updateSettings({ lv1Phase: 'blocks' });
         }
       }
     },
-    [attempts, reviewStates, sessions, settings, updateSettings]
+    [syncPushWithRetryFlag, updateSettings]
   );
 
-  // セッション終了と非同期AIレポート登録・実行
+  // セッション終了と非同期AIレポート登録・実行（skipAiGeneration=true のときは問題生成をスキップ）
   const completeSessionWithAiReport = useCallback(
-    async (finishedSession: Session) => {
+    async (
+      finishedSession: Session,
+      options?: { skipAiGeneration?: boolean }
+    ) => {
       await saveSessionToDb(finishedSession);
-      setSessions((prev) => {
-        const idx = prev.findIndex((s) => s.id === finishedSession.id);
-        if (idx === -1) return [...prev, finishedSession];
-        return prev.map((s) => (s.id === finishedSession.id ? finishedSession : s));
-      });
+      const currSessions = sessionsRef.current;
+      const idx = currSessions.findIndex((s) => s.id === finishedSession.id);
+      const nextSessions =
+        idx === -1
+          ? [...currSessions, finishedSession]
+          : currSessions.map((s) =>
+              s.id === finishedSession.id ? finishedSession : s
+            );
+      sessionsRef.current = nextSessions;
+      setSessions(nextSessions);
+
+      if (
+        options?.skipAiGeneration ||
+        finishedSession.mode === 'sleep' ||
+        finishedSession.activeSeconds <= 0
+      ) {
+        void syncPushWithRetryFlag({ sessions: nextSessions });
+        return;
+      }
 
       const pendingReport: AiReport = {
         id: `report_${finishedSession.id}`,
@@ -395,49 +739,52 @@ export function useAppStore() {
         createdAt: Date.now(),
       };
       await saveAiReportToDb(pendingReport);
-      const nextReports = [...aiReports, pendingReport];
+      const nextReports = [...aiReportsRef.current, pendingReport];
+      aiReportsRef.current = nextReports;
       setAiReports(nextReports);
 
-      // 裏側で非同期に4人のAI社員パイプラインを実行
-      void processPendingAiReports(
-        [pendingReport],
-        attempts,
-        chunks,
-        settings
-      );
-      void pushCloudStores({ sessions, aiReports: nextReports });
+      void syncPushWithRetryFlag({
+        sessions: nextSessions,
+        aiReports: nextReports,
+      });
+      void processPendingAiReports([pendingReport]);
     },
-    [aiReports, attempts, chunks, processPendingAiReports, sessions, settings]
+    [processPendingAiReports, syncPushWithRetryFlag]
   );
 
   // 「不自然」報告ボタンによる問題の無効化（disabled = true）
   const markChunkUnnatural = useCallback(
     async (chunkId: string) => {
-      const target = chunks.find((c) => c.id === chunkId);
+      const target = chunksRef.current.find((c) => c.id === chunkId);
       if (!target) return;
       const updated: Chunk = { ...target, disabled: true };
       await saveChunksToDb([updated]);
-      const nextChunks = chunks.map((c) => (c.id === chunkId ? updated : c));
+      const nextChunks = chunksRef.current.map((c) =>
+        c.id === chunkId ? updated : c
+      );
+      chunksRef.current = nextChunks;
       setChunks(nextChunks);
-      void pushCloudStores({ chunks: nextChunks });
+      void syncPushWithRetryFlag({ chunks: nextChunks });
     },
-    [chunks]
+    [syncPushWithRetryFlag]
   );
 
-  // ボス戦合格によるレベル昇格（Lv.2〜4のコアセット40チャンクを固定）
+  // ボス戦合格によるレベル昇格（Lv.2〜4のコアセット40チャンクを固定＋昇格日時記録）
   const promoteToLevel = useCallback(
     async (nextLevel: Level) => {
-      const lockedChunks = lockCoreSetForLevel(nextLevel, chunks);
+      const lockedChunks = lockCoreSetForLevel(nextLevel, chunksRef.current);
       await saveChunksToDb(lockedChunks);
+      chunksRef.current = lockedChunks;
       setChunks(lockedChunks);
       await updateSettings({
         level: nextLevel,
         bossCooldownUntil: undefined,
+        levelPromotedAt: Date.now(),
       });
-      void pushCloudStores({ chunks: lockedChunks });
+      void syncPushWithRetryFlag({ chunks: lockedChunks });
       setJustPromotedBanner(true);
     },
-    [chunks, updateSettings]
+    [syncPushWithRetryFlag, updateSettings]
   );
 
   // 新規チャンク群とセッション・レポートの追加（Live実戦モード等）
@@ -448,63 +795,104 @@ export function useAppStore() {
       newChunks: Chunk[];
     }) => {
       const { session, report, newChunks } = params;
+      const existingEn = new Set(
+        chunksRef.current.map((c) => c.enText.trim().toLowerCase())
+      );
+      const uniqueNewChunks = newChunks.filter(
+        (c) => !existingEn.has(c.enText.trim().toLowerCase())
+      );
+
       await saveSessionToDb(session);
       await saveAiReportToDb(report);
-      if (newChunks.length > 0) {
-        await saveChunksToDb(newChunks);
+      if (uniqueNewChunks.length > 0) {
+        await saveChunksToDb(uniqueNewChunks);
       }
 
-      const nextSessions = [...sessions, session];
-      const nextReports = [...aiReports, report];
+      const nextSessions = [...sessionsRef.current, session];
+      const nextReports = [...aiReportsRef.current, report];
       const nextChunks =
-        newChunks.length > 0 ? [...chunks, ...newChunks] : chunks;
+        uniqueNewChunks.length > 0
+          ? [...chunksRef.current, ...uniqueNewChunks]
+          : chunksRef.current;
+
+      sessionsRef.current = nextSessions;
+      aiReportsRef.current = nextReports;
+      chunksRef.current = nextChunks;
 
       setSessions(nextSessions);
       setAiReports(nextReports);
-      if (newChunks.length > 0) {
+      if (uniqueNewChunks.length > 0) {
         setChunks(nextChunks);
       }
-      void pushCloudStores({
+
+      await refreshStudyDateEvaluation(settingsRef.current, nextSessions);
+
+      void syncPushWithRetryFlag({
         sessions: nextSessions,
         aiReports: nextReports,
         chunks: nextChunks,
       });
     },
-    [aiReports, chunks, sessions]
+    [refreshStudyDateEvaluation, syncPushWithRetryFlag]
+  );
+
+  // バックアップのインポート適用
+  const applyImportedBackup = useCallback(
+    async (bundle: ValidatedBackupBundle) => {
+      const mergedSettings = await commitValidatedBackupToDb(
+        bundle,
+        settingsRef.current.geminiApiKey
+      );
+      const nextData = {
+        settings: { ...DEFAULT_SETTINGS, ...mergedSettings },
+        chunks: bundle.chunks,
+        reviewStates: bundle.reviewStates,
+        attempts: bundle.attempts,
+        sessions: bundle.sessions,
+        aiReports: bundle.aiReports,
+        coachMessages: bundle.coachMessages ?? [],
+      };
+      applyAllStoresState(nextData);
+      await refreshStudyDateEvaluation(nextData.settings, nextData.sessions);
+      void syncPushWithRetryFlag(nextData);
+    },
+    [applyAllStoresState, refreshStudyDateEvaluation, syncPushWithRetryFlag]
   );
 
   // AIコーチ質問メッセージの保存
   const upsertCoachMessage = useCallback(
     async (msg: CoachMessage) => {
       await saveCoachMessageToDb(msg);
-      const idx = coachMessages.findIndex((m) => m.id === msg.id);
+      const curr = coachMessagesRef.current;
+      const idx = curr.findIndex((m) => m.id === msg.id);
       const nextList =
-        idx === -1
-          ? [...coachMessages, msg]
-          : coachMessages.map((m) => (m.id === msg.id ? msg : m));
+        idx === -1 ? [...curr, msg] : curr.map((m) => (m.id === msg.id ? msg : m));
+      coachMessagesRef.current = nextList;
       setCoachMessages(nextList);
-      void pushCloudStores({ coachMessages: nextList });
+      void syncPushWithRetryFlag({ coachMessages: nextList });
     },
-    [coachMessages]
+    [syncPushWithRetryFlag]
   );
 
   // AI講師質問メッセージの1件削除
   const deleteCoachMessage = useCallback(
     async (id: string) => {
       await deleteCoachMessageFromDb(id);
-      const nextList = coachMessages.filter((m) => m.id !== id);
+      const nextList = coachMessagesRef.current.filter((m) => m.id !== id);
+      coachMessagesRef.current = nextList;
       setCoachMessages(nextList);
-      void pushCloudStores({ coachMessages: nextList });
+      void syncPushWithRetryFlag({ coachMessages: nextList });
     },
-    [coachMessages]
+    [syncPushWithRetryFlag]
   );
 
   // AI講師質問履歴の全削除
   const clearCoachMessages = useCallback(async () => {
     await clearCoachMessagesFromDb();
+    coachMessagesRef.current = [];
     setCoachMessages([]);
-    void pushCloudStores({ coachMessages: [] });
-  }, []);
+    void syncPushWithRetryFlag({ coachMessages: [] });
+  }, [syncPushWithRetryFlag]);
 
   // 手動で今すぐAI社員に新問題を5問生成させるアクション
   const generateAiQuestionsNow = useCallback(async (): Promise<{
@@ -512,33 +900,43 @@ export function useAppStore() {
     usedMock: boolean;
   }> => {
     const result = await runFourAiEmployeesPipeline({
-      sessionAttempts: attempts.slice(-15),
-      existingChunks: chunks,
-      settings,
+      sessionAttempts: attemptsRef.current.slice(-15),
+      existingChunks: chunksRef.current,
+      settings: settingsRef.current,
     });
 
     const today = getStudyDate();
-    let nextSettings = settings;
     if (result.apiCallsMade > 0) {
+      const latestSettings = settingsRef.current;
       const prevCount =
-        settings.apiCallDate === today ? (settings.apiCallCount ?? 0) : 0;
-      nextSettings = {
-        ...settings,
+        latestSettings.apiCallDate === today
+          ? (latestSettings.apiCallCount ?? 0)
+          : 0;
+      const nextSettings: Settings = {
+        ...latestSettings,
         apiCallDate: today,
         apiCallCount: prevCount + result.apiCallsMade,
       };
-      await saveSettingsToDb(nextSettings);
+      settingsRef.current = nextSettings;
       setSettings(nextSettings);
+      await saveSettingsToDb(nextSettings);
     }
 
     let addedCount = 0;
-    let nextChunks = chunks;
     if (result.newChunks.length > 0) {
-      const existingIds = new Set(chunks.map((c) => c.id));
-      const uniqueNew = result.newChunks.filter((c) => !existingIds.has(c.id));
+      const existingIds = new Set(chunksRef.current.map((c) => c.id));
+      const existingEn = new Set(
+        chunksRef.current.map((c) => c.enText.trim().toLowerCase())
+      );
+      const uniqueNew = result.newChunks.filter(
+        (c) =>
+          !existingIds.has(c.id) &&
+          !existingEn.has(c.enText.trim().toLowerCase())
+      );
       if (uniqueNew.length > 0) {
         await saveChunksToDb(uniqueNew);
-        nextChunks = [...chunks, ...uniqueNew];
+        const nextChunks = [...chunksRef.current, ...uniqueNew];
+        chunksRef.current = nextChunks;
         setChunks(nextChunks);
         addedCount = uniqueNew.length;
       }
@@ -555,37 +953,20 @@ export function useAppStore() {
       createdAt: Date.now(),
     };
     await saveAiReportToDb(manualReport);
-    const nextReports = [...aiReports, manualReport];
+    const nextReports = [...aiReportsRef.current, manualReport];
+    aiReportsRef.current = nextReports;
     setAiReports(nextReports);
 
-    void pushCloudStores({
-      chunks: nextChunks,
+    void syncPushWithRetryFlag({
+      chunks: chunksRef.current,
       aiReports: nextReports,
-      settings: nextSettings,
+      settings: settingsRef.current,
     });
 
     return { addedCount, usedMock: result.usedMock };
-  }, [aiReports, attempts, chunks, settings]);
+  }, [syncPushWithRetryFlag]);
 
-  // バックアップのインポート適用
-  const applyImportedBackup = useCallback(
-    async (bundle: ValidatedBackupBundle) => {
-      const mergedSettings = await commitValidatedBackupToDb(
-        bundle,
-        settings.geminiApiKey
-      );
-      setSettings(mergedSettings);
-      setChunks(bundle.chunks);
-      setReviewStates(bundle.reviewStates);
-      setAttempts(bundle.attempts);
-      setSessions(bundle.sessions);
-      setAiReports(bundle.aiReports);
-      setCoachMessages(bundle.coachMessages ?? []);
-    },
-    [settings.geminiApiKey]
-  );
-
-  // パスコード認証してD1と同期する
+  // パスコード認証してD1と安全マージ同期する
   const submitCloudPasscode = useCallback(
     async (passcode: string): Promise<boolean> => {
       const ok = await verifyCloudPasscode(passcode);
@@ -596,83 +977,54 @@ export function useAppStore() {
       if (cloudRes.ok && cloudRes.stores) {
         const cs = cloudRes.stores;
         if (cs.settings || (cs.chunks && cs.chunks.length > 0)) {
-          const rawNextSettings = cs.settings ?? settings;
-          const nextSettings: Settings = {
-            ...rawNextSettings,
-            geminiModel: normalizeGeminiModelName(rawNextSettings.geminiModel),
-          };
-          const rawChunks =
-            cs.chunks && cs.chunks.length > 0 ? cs.chunks : chunks;
-          const upgradedCloud =
-            upgradeSeedChunksWithLatestExplanations(rawChunks);
-          const nextChunks = upgradedCloud.chunks;
-          if (upgradedCloud.changed) {
-            void pushCloudStores({ chunks: nextChunks });
-          }
-          const nextReviews = cs.reviewStates ?? reviewStates;
-          const nextAttempts = cs.attempts ?? attempts;
-          const nextSessions = cs.sessions ?? sessions;
-          const nextReports = cs.aiReports ?? aiReports;
-          const nextCoach = cs.coachMessages ?? coachMessages;
+          const { merged, hasLocalOnlyChanges } = mergeCloudAndLocalStores(
+            {
+              settings: settingsRef.current,
+              chunks: chunksRef.current,
+              reviewStates: reviewStatesRef.current,
+              attempts: attemptsRef.current,
+              sessions: sessionsRef.current,
+              aiReports: aiReportsRef.current,
+              coachMessages: coachMessagesRef.current,
+            },
+            cs
+          );
 
           await commitValidatedBackupToDb(
             {
               schemaVersion: 1,
               exportedAt: new Date().toISOString(),
-              settings: nextSettings,
-              chunks: nextChunks,
-              reviewStates: nextReviews,
-              attempts: nextAttempts,
-              sessions: nextSessions,
-              aiReports: nextReports,
-              coachMessages: nextCoach,
+              settings: merged.settings,
+              chunks: merged.chunks,
+              reviewStates: merged.reviewStates,
+              attempts: merged.attempts,
+              sessions: merged.sessions,
+              aiReports: merged.aiReports,
+              coachMessages: merged.coachMessages,
             },
-            settings.geminiApiKey
+            settingsRef.current.geminiApiKey
           );
 
-          setSettings(nextSettings);
-          setChunks(nextChunks);
-          setReviewStates(nextReviews);
-          setAttempts(nextAttempts);
-          setSessions(nextSessions);
-          setAiReports(nextReports);
-          setCoachMessages(nextCoach);
-
-          const activeDates = nextSessions
-            .filter((s) => s.activeSeconds > 0)
-            .map((s) => s.studyDate);
-          const streakEval = evaluateStreakAndTickets({
-            currentStudyDate: getStudyDate(),
-            activeStudyDates: activeDates,
-            currentTickets: nextSettings.restTickets,
-            lastTicketRefillWeek: nextSettings.lastTicketRefillWeek,
-            lastEvaluatedStudyDate: nextSettings.lastEvaluatedStudyDate,
-          });
-          setStreakDays(streakEval.streakDays);
-          setSuggestRehab(streakEval.suggestRehab);
+          applyAllStoresState(merged);
+          await refreshStudyDateEvaluation(merged.settings, merged.sessions);
+          if (hasLocalOnlyChanges) {
+            await syncPushWithRetryFlag(merged);
+          }
         } else {
-          void pushCloudStores({
-            settings,
-            chunks,
-            reviewStates,
-            attempts,
-            sessions,
-            aiReports,
-            coachMessages,
+          await syncPushWithRetryFlag({
+            settings: settingsRef.current,
+            chunks: chunksRef.current,
+            reviewStates: reviewStatesRef.current,
+            attempts: attemptsRef.current,
+            sessions: sessionsRef.current,
+            aiReports: aiReportsRef.current,
+            coachMessages: coachMessagesRef.current,
           });
         }
       }
       return true;
     },
-    [
-      aiReports,
-      attempts,
-      chunks,
-      coachMessages,
-      reviewStates,
-      sessions,
-      settings,
-    ]
+    [applyAllStoresState, refreshStudyDateEvaluation, syncPushWithRetryFlag]
   );
 
   return {
@@ -693,6 +1045,8 @@ export function useAppStore() {
     justPromotedBanner,
     setJustPromotedBanner,
     updateSettings,
+    recordAiApiCall,
+    refreshStudyDateEvaluation,
     recordQuestionAttempt,
     completeSessionWithAiReport,
     markChunkUnnatural,

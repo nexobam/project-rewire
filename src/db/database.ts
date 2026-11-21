@@ -96,6 +96,16 @@ export function getDatabase(): Promise<IDBPDatabase<RewireDBSchema>> {
           db.createObjectStore('coachMessages', { keyPath: 'id' });
         }
       },
+      blocking() {
+        dbPromise?.then((db) => db.close()).catch(() => undefined);
+        dbPromise = null;
+      },
+      terminated() {
+        dbPromise = null;
+      },
+    }).catch((err) => {
+      dbPromise = null;
+      throw err;
     });
   }
   return dbPromise;
@@ -260,13 +270,22 @@ export async function initializeAndLoadAppData(): Promise<{
   await requestPersistentStorage();
   const db = await getDatabase();
 
-  // 設定の初期化
+  // 設定の初期化（DEFAULT_SETTINGS で欠損フィールドを安全に補完）
   let settingsRow = await db.get('settings', 'current');
   if (!settingsRow) {
-    settingsRow = { ...DEFAULT_SETTINGS, id: 'current' };
+    settingsRow = {
+      ...DEFAULT_SETTINGS,
+      firstUsedAt: Date.now(),
+      id: 'current',
+    };
     await db.put('settings', settingsRow);
   }
-  const { id: _ignoreId, ...settings } = settingsRow;
+  const { id: _ignoreId, ...rawSettings } = settingsRow;
+  const settings: Settings = {
+    ...DEFAULT_SETTINGS,
+    ...rawSettings,
+    firstUsedAt: rawSettings.firstUsedAt ?? Date.now(),
+  };
 
   // シード問題の初期投入および解説の最新化
   let chunks = await db.getAll('chunks');

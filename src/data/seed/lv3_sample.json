@@ -76,7 +76,7 @@
     "id": "lv3_02",
     "level": 3,
     "contentCategory": "daily",
-    "sceneCategory": "cafe",
+    "sceneCategory": "shop",
     "grammarPattern": "paraphrase_expensive",
     "enText": "That jacket costs way too much money.",
     "blocks": [
@@ -127,7 +127,7 @@
         "CreditCard"
       ],
       "tags": [
-        "カフェ",
+        "ショップ",
         "友人",
         "驚き"
       ]

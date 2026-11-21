@@ -49,6 +49,9 @@ export const LiveModePage: React.FC<LiveModePageProps> = ({
   onExitHome,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [lastImportedText, setLastImportedText] = useState<string | null>(null);
   const [logInput, setLogInput] = useState('');
   const [parseError, setParseError] = useState<string | null>(null);
   const [importedSummary, setImportedSummary] = useState<{
@@ -98,17 +101,30 @@ export const LiveModePage: React.FC<LiveModePageProps> = ({
 
   const handleCopyPrompt = async () => {
     playTactileClick(settings.clickSound);
+    setCopyError(null);
     try {
-      await navigator.clipboard?.writeText(generatedPrompt);
+      if (!navigator.clipboard?.writeText) {
+        throw new Error('Clipboard API unavailable');
+      }
+      await navigator.clipboard.writeText(generatedPrompt);
       setCopied(true);
     } catch {
-      setCopied(true);
+      setCopied(false);
+      setCopyError(
+        '自動コピーに失敗しました。下のプロンプト枠を選択して手動でコピーしてください。'
+      );
     }
   };
 
   const handleImportLog = async () => {
+    if (importing) return;
+    if (lastImportedText !== null && lastImportedText === logInput.trim()) {
+      setParseError('このログはすでに取り込み済みです。');
+      return;
+    }
     playTactileClick(settings.clickSound);
     setParseError(null);
+    setImporting(true);
     try {
       const parsed = parseLiveSessionLog(logInput, settings.level);
       const sessionId = `sess_live_${Date.now()}`;
@@ -139,6 +155,7 @@ export const LiveModePage: React.FC<LiveModePageProps> = ({
         newChunks: parsed.generatedChunks,
       });
 
+      setLastImportedText(logInput.trim());
       setImportedSummary({
         minutes: parsed.calendarMinutes,
         fluencyScore: parsed.summary.fluencyScore,
@@ -151,6 +168,8 @@ export const LiveModePage: React.FC<LiveModePageProps> = ({
           ? err.message
           : 'ログの解析に失敗しました。Finish後に出力されたJSONを貼り付けてください。'
       );
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -241,9 +260,15 @@ export const LiveModePage: React.FC<LiveModePageProps> = ({
             borderColor: palette.border,
             color: palette.text,
           }}
-          className="w-full p-3 rounded-lg border text-xs font-mono"
+          className="w-full p-3 rounded-lg border text-base sm:text-xs font-mono"
           data-testid="live-json-textarea"
         />
+
+        {copyError && (
+          <p className="text-xs font-semibold" style={{ color: palette.amberText }}>
+            {copyError}
+          </p>
+        )}
 
         {parseError && (
           <div
@@ -261,6 +286,7 @@ export const LiveModePage: React.FC<LiveModePageProps> = ({
 
         <button
           type="button"
+          disabled={importing || logInput.trim().length === 0}
           onClick={handleImportLog}
           style={{
             backgroundColor: palette.text,

@@ -139,6 +139,7 @@ export interface Attempt {
   selfJudged: boolean;
   sttTranscript?: string;
   sttMatch?: number;
+  isSleepPriming?: boolean;
 }
 
 export type SessionMode =
@@ -208,6 +209,8 @@ export interface Settings {
   lastTicketRefillWeek?: string;
   lastEvaluatedStudyDate?: string;
   allEnglishMode?: boolean;
+  levelPromotedAt?: number;
+  firstUsedAt?: number;
 }
 
 export interface CoachMessage {
@@ -226,7 +229,7 @@ export const DEFAULT_SETTINGS: Settings = {
   level: 0,
   lv1Phase: 'picture',
   perTapMs: 500,
-  geminiModel: 'gemini-3.8-flash',
+  geminiModel: 'gemini-2.5-flash',
   dailyApiCallLimit: 40,
   ttsRate: 1.0,
   clickSound: true,

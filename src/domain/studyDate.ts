@@ -126,27 +126,27 @@ export function evaluateStreakAndTickets(params: {
   }
 
   // 現在の連続記録（ストリーク）の計算
-  // 今日学習済みなら今日から、未学習なら昨日から遡り、未学習日は利用可能なチケット範囲で繋ぐ
+  // 今日学習済みなら今日から、未学習なら昨日から遡り、各週（月曜〜日曜）最大2枚のチケット範囲で未学習日を繋ぐ
+  // （順方向で消費済みの restTickets と二重引きしないよう週単位2枚枠で独立計算する）
   let streakDays = 0;
   if (sortedDates.length > 0) {
     const firstEverDate = sortedDates[0];
     let checkDate = activeSet.has(currentStudyDate)
       ? currentStudyDate
       : addDaysToStudyDate(currentStudyDate, -1);
-    let simulatedTicketsForStreak = tickets;
+    let simulatedTicketsForWeek = 2;
     let currentTrackWeek = getMondayOfStudyWeek(checkDate);
 
     while (checkDate >= firstEverDate) {
       const weekOfCheck = getMondayOfStudyWeek(checkDate);
       if (weekOfCheck < currentTrackWeek) {
-        // 過去の週を遡る際は週あたり最大2枚のチケットが使える想定
-        simulatedTicketsForStreak = Math.min(2, simulatedTicketsForStreak + 2);
+        simulatedTicketsForWeek = 2;
         currentTrackWeek = weekOfCheck;
       }
       if (activeSet.has(checkDate)) {
         streakDays += 1;
-      } else if (simulatedTicketsForStreak > 0) {
-        simulatedTicketsForStreak -= 1;
+      } else if (simulatedTicketsForWeek > 0) {
+        simulatedTicketsForWeek -= 1;
       } else {
         break;
       }

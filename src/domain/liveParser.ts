@@ -3,8 +3,8 @@
 import { z } from 'zod';
 import type { Chunk, Level, LiveLogSummary } from '../types';
 
-// weakChunks用文字フィルタ：英字・数字・空白・基本的な記号のみ許可
-const SAFE_ENGLISH_CHUNK_REGEX = /^[A-Za-z0-9\s.,!?'"-]+$/;
+// weakChunks用文字フィルタ：英字・数字・空白・基本的な記号のみ許可（かつ英数字を1文字以上含む）
+const SAFE_ENGLISH_CHUNK_REGEX = /^(?=.*[A-Za-z0-9])[A-Za-z0-9\s.,!?'"-]+$/;
 
 const RawLiveJsonSchema = z.object({
   durationMinutes: z.number().optional().default(20),
@@ -35,7 +35,19 @@ export function extractJsonStringFromText(rawText: string): string | null {
     }
   }
 
-  // 2. テキスト全体から最初の対応が取れた {...} を抽出
+  // 2. テキスト全体から対応が取れた {...} を順に探索し、JSON.parse に成功するものを返す
+  let offset = 0;
+  while (offset < rawText.length) {
+    const candidate = extractFirstBalancedBraces(rawText.slice(offset));
+    if (!candidate) break;
+    try {
+      JSON.parse(candidate);
+      return candidate;
+    } catch {
+      const idx = rawText.indexOf(candidate, offset);
+      offset = idx !== -1 ? idx + 1 : offset + 1;
+    }
+  }
   return extractFirstBalancedBraces(rawText);
 }
 

@@ -117,8 +117,9 @@ export function evaluatePromotionGate(params: {
   chunks: Chunk[];
   reviewStates: ReviewState[];
   attempts: Attempt[];
+  levelPromotedAt?: number;
 }): GateStatus {
-  const { level, chunks, reviewStates, attempts } = params;
+  const { level, chunks, reviewStates, attempts, levelPromotedAt } = params;
 
   const coreChunks = chunks.filter((c) => c.level === level && c.isCore && !c.disabled);
   const stateMap = new Map<string, ReviewState>(
@@ -143,8 +144,13 @@ export function evaluatePromotionGate(params: {
   const corePassed =
     coreTotal > 0 && coreRate >= GATE_CORE_THRESHOLD - 1e-9;
 
-  // ②リスニング（直近40問）
-  const listeningAttempts = attempts
+  // ②リスニング（現レベル昇格後の直近40問）
+  const scopedAttempts =
+    typeof levelPromotedAt === 'number' && levelPromotedAt > 0
+      ? attempts.filter((a) => a.startedAt >= levelPromotedAt)
+      : attempts;
+
+  const listeningAttempts = scopedAttempts
     .filter((a) => {
       if (level === 1) {
         return a.exerciseType === 'sound_change';
@@ -173,9 +179,10 @@ export function evaluatePromotionGate(params: {
     listeningAttempts.length >= GATE_LISTENING_WINDOW &&
     listeningRate >= GATE_LISTENING_THRESHOLD - 1e-9;
 
-  // ③発話（直近40回で緑75%以上）
-  const speakingAttempts = attempts
+  // ③発話（現レベル昇格後の直近40回で緑75%以上。スリープモードの自己判定は除外）
+  const speakingAttempts = scopedAttempts
     .filter((a) => {
+      if (a.isSleepPriming) return false;
       if (level === 1) {
         return a.exerciseType === 'speak';
       }
@@ -331,16 +338,27 @@ export function lockCoreSetForLevel(
     return updatedChunks;
   }
 
+  const usedEnTexts = new Set(
+    updatedChunks.map((c) => c.enText.trim().toLowerCase())
+  );
   let idx = 1;
-  while (lockedCount < 40) {
-    const base = baseSamples[(idx - 1) % baseSamples.length];
+  let attemptsGuard = 0;
+  while (lockedCount < 40 && attemptsGuard < 200) {
+    attemptsGuard += 1;
+    const base = baseSamples[(attemptsGuard - 1) % baseSamples.length];
     const recomposed = recomposeChunk(base, idx);
+    const normEn = recomposed.enText.trim().toLowerCase();
+    idx += 1;
+    // すでに同じ英文が存在する場合は別バリエーションを試す（150回超えたら許容して無限ループ防止）
+    if (usedEnTexts.has(normEn) && attemptsGuard < 150) {
+      continue;
+    }
+    usedEnTexts.add(normEn);
     recomposed.id = `lv${targetLevel}_core_recomp_${lockedCount + 1}`;
     recomposed.level = targetLevel;
     recomposed.isCore = true;
     updatedChunks.push(recomposed);
     lockedCount += 1;
-    idx += 1;
   }
 
   return updatedChunks;
@@ -358,6 +376,9 @@ export interface BossQuestion {
  */
 export function buildBossQuestions(level: Level, chunks: Chunk[]): BossQuestion[] {
   const pool = chunks.filter((c) => c.level === level && !c.disabled);
+  if (pool.length === 0) {
+    return [];
+  }
   const fallback = chunks.filter((c) => !c.disabled);
   const source = pool.length >= 10 ? pool : [...pool, ...fallback];
 

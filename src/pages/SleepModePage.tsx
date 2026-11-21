@@ -1,11 +1,12 @@
 // スリープ・プライミングモード画面（就寝前の3分・スリープ専用テーマ配色・苦戦3チャンク音声再生・SRS非反映の自己判定・要件4-4, 7）
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle, Moon, Play, Volume2 } from 'lucide-react';
 import type { ThemePalette } from '../domain/contrast';
 import { playTactileClick, unlockAudioContext } from '../services/audioService';
 import {
   speakEnglishText,
+  stopSpeechSynthesis,
   unlockSpeechSynthesis,
 } from '../services/ttsService';
 import type { Attempt, Chunk, Rating, Session } from '../types';
@@ -80,56 +81,83 @@ export const SleepModePage: React.FC<SleepModePageProps> = ({
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
   const [hasListenedAll, setHasListenedAll] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const playRunIdRef = useRef<number>(0);
+  const submittingRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    return () => {
+      playRunIdRef.current += 1;
+      stopSpeechSynthesis();
+    };
+  }, []);
 
   const handlePlayAllThreeAudioOnly = async () => {
+    if (playingIdx !== null) return;
     unlockSpeechSynthesis();
     unlockAudioContext();
     playTactileClick(clickSound);
 
+    const runId = ++playRunIdRef.current;
     for (let i = 0; i < targetThreeChunks.length; i++) {
+      if (playRunIdRef.current !== runId) return;
       setPlayingIdx(i);
       await speakEnglishText({
         text: targetThreeChunks[i].enText,
         rate: Math.max(0.75, ttsRate * 0.9),
       });
     }
+    if (playRunIdRef.current !== runId) return;
     setPlayingIdx(null);
     setHasListenedAll(true);
   };
 
-  // 最後に1回、「頭の中で言えたか」を自己判定させる（記録するだけで、SRSには一切反映しない：updateSrs: false・要件4-4）
+  // 最後に1回、「頭の中で言えたか」を自己判定させる（SRS非反映・発話ゲート対象外）
   const handleFinalSelfJudge = async (rating: Rating) => {
+    if (submittingRef.current || completed) return;
+    submittingRef.current = true;
+    setSubmitting(true);
+    playRunIdRef.current += 1;
+    stopSpeechSynthesis();
+    setPlayingIdx(null);
     playTactileClick(clickSound);
-    const primaryChunk = targetThreeChunks[0];
-    if (primaryChunk) {
-      const attempt: Attempt = {
-        id: `att_sleep_${Date.now()}`,
-        chunkId: primaryChunk.id,
-        sessionId: session.id,
-        exerciseType: 'speak',
-        studyDate: currentStudyDate,
-        startedAt: Date.now(),
-        reactionMs: null,
-        completionMs: null,
-        replayBeforeShown: 0,
-        replayAfterShown: 0,
-        rating,
-        inputMode: 'silent',
-        selfJudged: true,
-      };
-      await onRecordSleepAttempt({
-        attempt,
-        session,
-        updateSrs: false,
-      });
-    }
 
-    const finishedSession: Session = {
-      ...session,
-      endedAt: Date.now(),
-    };
-    await onCompleteSession(finishedSession);
-    setCompleted(true);
+    try {
+      const primaryChunk = targetThreeChunks[0];
+      if (primaryChunk) {
+        const attempt: Attempt = {
+          id: `att_sleep_${Date.now()}`,
+          chunkId: primaryChunk.id,
+          sessionId: session.id,
+          exerciseType: 'speak',
+          studyDate: currentStudyDate,
+          startedAt: Date.now(),
+          reactionMs: null,
+          completionMs: null,
+          replayBeforeShown: 0,
+          replayAfterShown: 0,
+          rating,
+          inputMode: 'silent',
+          selfJudged: true,
+          isSleepPriming: true,
+        };
+        await onRecordSleepAttempt({
+          attempt,
+          session,
+          updateSrs: false,
+        });
+      }
+
+      const finishedSession: Session = {
+        ...session,
+        endedAt: Date.now(),
+      };
+      await onCompleteSession(finishedSession);
+      setCompleted(true);
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -191,6 +219,7 @@ export const SleepModePage: React.FC<SleepModePageProps> = ({
 
         <button
           type="button"
+          disabled={playingIdx !== null || targetThreeChunks.length === 0}
           onClick={handlePlayAllThreeAudioOnly}
           style={{
             backgroundColor: palette.background,
@@ -198,7 +227,7 @@ export const SleepModePage: React.FC<SleepModePageProps> = ({
             borderBottomWidth: '3px',
             color: palette.text,
           }}
-          className="w-full min-h-[56px] px-5 py-3 rounded-lg border font-bold text-sm flex items-center justify-center gap-2 tactile-block"
+          className="w-full min-h-[56px] px-5 py-3 rounded-lg border font-bold text-sm flex items-center justify-center gap-2 tactile-block disabled:opacity-50"
           data-testid="play-sleep-audio-button"
         >
           {playingIdx !== null ? (
@@ -221,36 +250,39 @@ export const SleepModePage: React.FC<SleepModePageProps> = ({
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
+                disabled={submitting}
                 onClick={() => handleFinalSelfJudge('green')}
                 style={{
                   borderColor: palette.border,
                   borderBottomWidth: '3px',
                 }}
-                className="min-h-[48px] py-2 rounded-lg border font-bold text-xs tactile-block"
+                className="min-h-[48px] py-2 rounded-lg border font-bold text-xs tactile-block disabled:opacity-40"
                 data-testid="sleep-judge-green"
               >
                 言えた
               </button>
               <button
                 type="button"
+                disabled={submitting}
                 onClick={() => handleFinalSelfJudge('yellow')}
                 style={{
                   borderColor: palette.border,
                   borderBottomWidth: '3px',
                 }}
-                className="min-h-[48px] py-2 rounded-lg border font-bold text-xs tactile-block"
+                className="min-h-[48px] py-2 rounded-lg border font-bold text-xs tactile-block disabled:opacity-40"
                 data-testid="sleep-judge-yellow"
               >
                 おおよそ言えた
               </button>
               <button
                 type="button"
+                disabled={submitting}
                 onClick={() => handleFinalSelfJudge('red')}
                 style={{
                   borderColor: palette.border,
                   borderBottomWidth: '3px',
                 }}
-                className="min-h-[48px] py-2 rounded-lg border font-bold text-xs tactile-block"
+                className="min-h-[48px] py-2 rounded-lg border font-bold text-xs tactile-block disabled:opacity-40"
                 data-testid="sleep-judge-red"
               >
                 まだ曖昧

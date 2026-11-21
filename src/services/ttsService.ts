@@ -139,6 +139,22 @@ export interface SpeakEnglishOptions {
  * - (文字数 ÷ 14) ÷ 再生速度 × 1000 + 1000ms を過ぎても onend が来なければ完了とみなして onEnd を発火
  * - Lv.2以降の複数話者モードでは英語音声をランダム選択し、1つしかなければ pitch と rate を少し変えて代替する
  */
+let activeTtsToken = 0;
+
+/**
+ * 再生中のTTSを即座に安全停止する（画面遷移・アンマウント・次問切替時の音声リーク防止）
+ */
+export function stopSpeechSynthesis(): void {
+  activeTtsToken += 1;
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    try {
+      window.speechSynthesis.cancel();
+    } catch {
+      // 無視
+    }
+  }
+}
+
 export async function speakEnglishText(
   options: SpeakEnglishOptions
 ): Promise<void> {
@@ -164,8 +180,14 @@ export async function speakEnglishText(
   }
 
   const synth = window.speechSynthesis;
-  // 読み上げの直前には必ず cancel() を呼ぶ（要件6-1）
-  synth.cancel();
+  const myToken = ++activeTtsToken;
+  if (synth.speaking || synth.pending) {
+    try {
+      synth.cancel();
+    } catch {
+      // 無視
+    }
+  }
 
   // iOS Safariのタップイベント同期コンテキストを維持するため、awaitを挟まず同期的に音声を取得する
   const voices = getEnglishVoicesSync();
@@ -174,26 +196,37 @@ export async function speakEnglishText(
     let completed = false;
     let timerId: ReturnType<typeof setTimeout> | null = null;
 
-    const completeOnce = () => {
+    const completeOnce = (invokeOnEnd: boolean = true) => {
       if (completed) return;
       completed = true;
       if (timerId !== null) {
         clearTimeout(timerId);
         timerId = null;
       }
-      onEnd?.();
+      if (invokeOnEnd && myToken === activeTtsToken) {
+        onEnd?.();
+      }
       resolve();
     };
 
-    // onend が発火しない場合のタイムアウト保護（要件6-2）
-    timerId = setTimeout(() => {
-      try {
-        synth.cancel();
-      } catch {
-        // 無視
+    const armTimeout = (ms: number) => {
+      if (timerId !== null) {
+        clearTimeout(timerId);
       }
-      completeOnce();
-    }, timeoutMs);
+      timerId = setTimeout(() => {
+        try {
+          if (myToken === activeTtsToken) {
+            synth.cancel();
+          }
+        } catch {
+          // 無視
+        }
+        completeOnce(true);
+      }, ms);
+    };
+
+    // onend が発火しない場合のタイムアウト保護（起動遅延も考慮して余裕を持たせる）
+    armTimeout(timeoutMs);
 
     try {
       const utterance = new SpeechSynthesisUtterance(text);
@@ -227,19 +260,21 @@ export async function speakEnglishText(
       }
 
       utterance.onstart = () => {
+        if (myToken !== activeTtsToken) return;
+        armTimeout(timeoutMs);
         onStart?.();
       };
       utterance.onend = () => {
-        completeOnce();
+        completeOnce(true);
       };
       utterance.onerror = () => {
-        completeOnce();
+        completeOnce(true);
       };
 
       onStart?.();
       synth.speak(utterance);
     } catch {
-      completeOnce();
+      completeOnce(true);
     }
   });
 }

@@ -12,11 +12,10 @@ import {
   Volume2,
 } from 'lucide-react';
 import { ALL_SEED_CHUNKS } from '../data/seed';
-import { ScrollReveal } from '../components/ScrollReveal';
 import type { ThemePalette } from '../domain/contrast';
 import { playTactileClick } from '../services/audioService';
 import { getCachedCloudStatus } from '../services/cloudSyncService';
-import { askAiCoachQuestion } from '../services/geminiService';
+import { askAiCoachQuestion, type CoachErrorCode } from '../services/geminiService';
 import { speakEnglishText } from '../services/ttsService';
 import type { Chunk, CoachMessage, Settings } from '../types';
 
@@ -27,9 +26,23 @@ export interface CoachChatPageProps {
   onUpsertMessage: (msg: CoachMessage) => Promise<void>;
   onDeleteMessage?: (id: string) => Promise<void>;
   onClearMessages?: () => Promise<void>;
+  onRecordApiCall?: () => void;
   chunks?: Chunk[];
   cloudEnabled?: boolean;
   serverHasGeminiKey?: boolean;
+}
+
+const ERROR_CODE_MESSAGES: Record<CoachErrorCode, string> = {
+  offline: 'オフラインのため、質問を保留リストに保存しました。オンライン復帰後に再送できます。',
+  daily_limit: '本日のAI利用上限回数に達しました。設定画面から上限を調整するか、明日またお試しください。',
+  no_api_key: 'AIキーが未設定のため、オフライン向けの基本ガイドで回答しました。',
+  rate_limit: 'AIサーバーが混み合っています（429）。少し時間を置いてから「再送する」を押してください。',
+  auth_error: 'AIサーバーまたはAPIキーの認証に失敗しました。設定画面またはログイン状態をご確認ください。',
+  server_error: 'AIサーバーとの通信で一時的なエラーが発生しました。時間をおいて「再送する」をお試しください。',
+};
+
+function makeCoachId(): string {
+  return `coach_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
 export const CoachChatPage: React.FC<CoachChatPageProps> = ({
@@ -39,12 +52,13 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
   onUpsertMessage,
   onDeleteMessage,
   onClearMessages,
+  onRecordApiCall,
   chunks = ALL_SEED_CHUNKS,
-  cloudEnabled,
   serverHasGeminiKey,
 }) => {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
   // タップで回答部分を折りたたむ（非表示にする）ためのメッセージIDセット
   const [collapsedAnswerIds, setCollapsedAnswerIds] = useState<Set<string>>(
     () => new Set()
@@ -69,7 +83,6 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
   const isAiConnected =
     Boolean(settings.geminiApiKey?.trim()) ||
     Boolean(serverHasGeminiKey) ||
-    Boolean(cloudEnabled) ||
     getCachedCloudStatus().serverHasGeminiKey;
 
   const handleSendQuestion = async (questionText: string) => {
@@ -77,18 +90,20 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
     if (!trimmed || sending) return;
     playTactileClick(settings.clickSound);
     setInput('');
+    setErrorBanner(null);
 
     const isOffline =
       typeof navigator !== 'undefined' && navigator.onLine === false;
 
     if (isOffline) {
       const offlineMsg: CoachMessage = {
-        id: `coach_${Date.now()}`,
+        id: makeCoachId(),
         question: trimmed,
         status: 'pending_offline',
         createdAt: Date.now(),
       };
       await onUpsertMessage(offlineMsg);
+      setErrorBanner(ERROR_CODE_MESSAGES.offline);
       return;
     }
 
@@ -100,9 +115,11 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
         chunks,
       });
       if (res.usedMock && isAiConnected) {
-        // オンライン連携中にもかかわらずAPI一時混雑等でフォールバックになった場合は、無関係な定型文を出さず再送可能な保留状態にする
+        if (res.errorCode) {
+          setErrorBanner(ERROR_CODE_MESSAGES[res.errorCode]);
+        }
         const retryMsg: CoachMessage = {
-          id: `coach_${Date.now()}`,
+          id: makeCoachId(),
           question: trimmed,
           status: 'pending_offline',
           createdAt: Date.now(),
@@ -110,8 +127,13 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
         await onUpsertMessage(retryMsg);
         return;
       }
+      if (!res.usedMock) {
+        onRecordApiCall?.();
+      } else if (res.errorCode && res.errorCode !== 'no_api_key') {
+        setErrorBanner(ERROR_CODE_MESSAGES[res.errorCode]);
+      }
       const answeredMsg: CoachMessage = {
-        id: `coach_${Date.now()}`,
+        id: makeCoachId(),
         question: trimmed,
         answer: res.answer,
         examples: res.examples,
@@ -127,6 +149,7 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
   const handleResendOfflineMessage = async (msg: CoachMessage) => {
     if (sending) return;
     playTactileClick(settings.clickSound);
+    setErrorBanner(null);
     setSending(true);
     try {
       const res = await askAiCoachQuestion({
@@ -135,7 +158,13 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
         chunks,
       });
       if (res.usedMock && isAiConnected) {
+        if (res.errorCode) {
+          setErrorBanner(ERROR_CODE_MESSAGES[res.errorCode]);
+        }
         return;
+      }
+      if (!res.usedMock) {
+        onRecordApiCall?.();
       }
       await onUpsertMessage({
         ...msg,
@@ -150,7 +179,6 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
-      <ScrollReveal delayMs={40}>
       <div
         style={{
           backgroundColor: palette.card,
@@ -212,12 +240,13 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
                   <span className="truncate font-medium">{m.question}</span>
                   <button
                     type="button"
+                    disabled={sending}
                     onClick={() => handleResendOfflineMessage(m)}
                     style={{
                       borderColor: palette.border,
                       borderBottomWidth: '2px',
                     }}
-                    className="flex items-center gap-1 px-3 py-1 rounded border font-bold shrink-0"
+                    className="flex items-center gap-1 px-3 py-1 rounded border font-bold shrink-0 disabled:opacity-40"
                     data-testid={`resend-question-${m.id}`}
                   >
                     <RefreshCw
@@ -233,6 +262,20 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
           </div>
         )}
 
+        {errorBanner && (
+          <div
+            style={{
+              backgroundColor: palette.background,
+              borderColor: palette.crimsonText ?? palette.border,
+              color: palette.crimsonText ?? palette.text,
+            }}
+            className="p-3 rounded-lg border text-xs font-semibold"
+            data-testid="coach-error-banner"
+          >
+            {errorBanner}
+          </div>
+        )}
+
         {/* 自由質問入力フォーム */}
         <form
           onSubmit={(e) => {
@@ -245,13 +288,14 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="例：「take it easy は仕事相手にも使える？」「on my way の発音のコツは？」など自由に入力..."
+            maxLength={500}
+            placeholder="例：「take it easy は仕事相手にも使える？」「ヒート最高ってなんて言う？」"
             style={{
               backgroundColor: palette.background,
               borderColor: palette.border,
               color: palette.text,
             }}
-            className="flex-1 min-h-[48px] px-3.5 py-2 rounded-lg border text-sm"
+            className="flex-1 min-w-0 min-h-[48px] px-3.5 py-2 rounded-lg border text-base sm:text-sm"
             data-testid="coach-question-input"
           />
           <button
@@ -352,9 +396,10 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
                       {onDeleteMessage && (
                         <button
                           type="button"
+                          disabled={sending}
                           onClick={() => void onDeleteMessage(msg.id)}
                           style={{ borderColor: palette.border }}
-                          className="p-1.5 rounded border opacity-80 hover:opacity-100 tactile-btn"
+                          className="p-1.5 rounded border opacity-80 hover:opacity-100 tactile-btn disabled:opacity-40"
                           aria-label="この履歴を削除"
                           data-testid={`delete-coach-message-${msg.id}`}
                         >
@@ -371,14 +416,26 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
                   {!isCollapsed &&
                     (msg.answer || (msg.examples && msg.examples.length > 0)) && (
                       <div
-                        onClick={() => toggleAnswerVisibility(msg.id)}
-                        className="space-y-2.5 cursor-pointer"
-                        title="タップで回答を閉じる"
+                        onClick={() => {
+                          if (window.getSelection?.()?.toString()) return;
+                          toggleAnswerVisibility(msg.id);
+                        }}
+                        className="space-y-2.5 cursor-pointer select-text"
+                        title="タップで回答を閉じる（文字選択時は閉じません）"
                         data-testid={`coach-answer-body-${msg.id}`}
                       >
                         {msg.answer && (
                           <div className="leading-relaxed whitespace-pre-line text-sm">
-                            <strong>AI講師の解説（タップで閉じる）：</strong>
+                            <div className="flex items-center justify-between gap-2">
+                              <strong>AI講師の解説：</strong>
+                              <button
+                                type="button"
+                                onClick={() => toggleAnswerVisibility(msg.id)}
+                                className="text-[11px] opacity-75 hover:opacity-100 underline"
+                              >
+                                回答を閉じる
+                              </button>
+                            </div>
                             <p className="mt-1">{msg.answer}</p>
                           </div>
                         )}
@@ -389,10 +446,10 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
                             </p>
                             <ul className="space-y-1.5">
                               {msg.examples.map((ex, i) => {
-                                const englishOnly = ex
-                                  .split('（')[0]
-                                  .split('(')[0]
-                                  .trim();
+                                const englishOnly =
+                                  ex
+                                    .replace(/\s*[（(][^）)]*[）)]\s*$/, '')
+                                    .trim() || ex;
                                 return (
                                   <li
                                     key={i}
@@ -439,7 +496,6 @@ export const CoachChatPage: React.FC<CoachChatPageProps> = ({
           )}
         </div>
       </div>
-      </ScrollReveal>
     </div>
   );
 };

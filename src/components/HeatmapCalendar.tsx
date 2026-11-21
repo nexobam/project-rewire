@@ -94,7 +94,7 @@ export const HeatmapCalendar: React.FC<HeatmapCalendarProps> = ({
       </div>
 
       {/* 7列×4週のヒートマップグリッド（緑1色の濃淡のみ） */}
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2">
         {days.map((dateStr) => {
           const mins = minutesByDate.get(dateStr) ?? 0;
           const opacity = getGreenOpacity(mins);
@@ -110,7 +110,7 @@ export const HeatmapCalendar: React.FC<HeatmapCalendarProps> = ({
                 borderColor: isSelected ? palette.text : palette.border,
                 backgroundColor: palette.background,
               }}
-              className={`relative rounded border p-2 text-center transition-all ${
+              className={`relative rounded border p-1 sm:p-2 text-center transition-all ${
                 isSelected ? 'ring-1 ring-current font-bold' : ''
               }`}
               data-testid={`heatmap-cell-${dateStr}`}
@@ -192,6 +192,16 @@ export const HeatmapCalendar: React.FC<HeatmapCalendarProps> = ({
                 }}
                 className="p-3 rounded border space-y-1.5"
               >
+                {rep.status === 'pending' && !rep.analyst && !rep.liveLog && (
+                  <p className="text-xs opacity-75">
+                    AI講師チームが分析レポートを作成中です...
+                  </p>
+                )}
+                {rep.status === 'failed' && !rep.analyst && !rep.liveLog && (
+                  <p className="text-xs opacity-75">
+                    通信状況などによりレポート作成を完了できませんでした。
+                  </p>
+                )}
                 {rep.analyst && (
                   <div>
                     <p className="font-semibold">

@@ -6,6 +6,7 @@ import type { ThemePalette } from '../domain/contrast';
 
 export interface BackupBannerProps {
   lastBackupAt?: number;
+  firstUsedAt?: number;
   justPromoted: boolean;
   palette: ThemePalette;
   onOneTapBackup: () => void;
@@ -18,6 +19,7 @@ const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 
 export const BackupBanner: React.FC<BackupBannerProps> = ({
   lastBackupAt,
+  firstUsedAt,
   justPromoted,
   palette,
   onOneTapBackup,
@@ -26,8 +28,14 @@ export const BackupBanner: React.FC<BackupBannerProps> = ({
 }) => {
   const [dismissed, setDismissed] = useState(false);
 
+  const baseTimestamp =
+    typeof lastBackupAt === 'number'
+      ? lastBackupAt
+      : typeof firstUsedAt === 'number'
+        ? firstUsedAt
+        : undefined;
   const elapsedMs =
-    typeof lastBackupAt === 'number' ? nowMs - lastBackupAt : Infinity;
+    typeof baseTimestamp === 'number' ? Math.max(0, nowMs - baseTimestamp) : 0;
   const isOver14Days = elapsedMs >= FOURTEEN_DAYS_MS;
   const isOver7Days = elapsedMs >= SEVEN_DAYS_MS;
 

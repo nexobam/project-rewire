@@ -185,11 +185,13 @@ export const WordOrderBoard: React.FC<WordOrderBoardProps> = ({
                     className="w-full h-full min-h-[56px] px-4 py-2 rounded-lg border font-semibold text-base tactile-block flex items-center justify-between"
                     data-testid={`choice-block-${block.id}`}
                   >
-                    <span className="text-xs font-mono opacity-50 mr-2">
+                    <span className="text-xs font-mono opacity-50 mr-1.5 shrink-0">
                       {index + 1}
                     </span>
-                    <span className="truncate">{block.text}</span>
-                    <span className="w-3" />
+                    <span className="break-words text-center leading-snug">
+                      {block.text}
+                    </span>
+                    <span className="w-2 shrink-0" />
                   </button>
                 )}
               </div>

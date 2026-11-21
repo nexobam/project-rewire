@@ -49,6 +49,7 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
   onReportUnnatural,
 }) => {
   const [reported, setReported] = useState(false);
+  const [confirmingReport, setConfirmingReport] = useState(false);
   const [practiceMicActive, setPracticeMicActive] = useState(false);
   const [practiceTranscript, setPracticeTranscript] = useState(
     sttTranscript ?? ''
@@ -167,7 +168,9 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
         </div>
 
         <div className="text-[11px] font-mono opacity-75 flex items-center gap-2.5">
-          <span>初動 {reactionSec}</span>
+          {reactionMs !== null &&
+            completionMs !== null &&
+            reactionMs !== completionMs && <span>初動 {reactionSec}</span>}
           <span>完了 {completionSec}</span>
         </div>
       </div>
@@ -211,8 +214,17 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
       >
         <button
           type="button"
-          onPointerDown={handlePracticeMicPointerDown}
+          onPointerDown={(e) => {
+            try {
+              e.currentTarget.setPointerCapture?.(e.pointerId);
+            } catch {
+              // 無視
+            }
+            handlePracticeMicPointerDown();
+          }}
           onPointerUp={handlePracticeMicPointerUp}
+          onPointerCancel={handlePracticeMicPointerUp}
+          onLostPointerCapture={handlePracticeMicPointerUp}
           onContextMenu={(e) => e.preventDefault()}
           style={{
             backgroundColor: practiceMicActive
@@ -227,7 +239,7 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
             userSelect: 'none',
             WebkitUserSelect: 'none',
           }}
-          className="w-full min-h-[48px] px-3 py-2 rounded-lg border font-bold text-xs flex items-center justify-center gap-2 tactile-block select-none"
+          className="w-full min-h-[48px] px-3 py-2 rounded-lg border font-bold text-xs flex items-center justify-center gap-2 tactile-block select-none no-touch-callout"
           data-testid="post-answer-mic-button"
         >
           <Mic size={16} strokeWidth={1.75} color="currentColor" />
@@ -301,7 +313,12 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
           type="button"
           disabled={reported}
           onClick={() => {
+            if (!confirmingReport) {
+              setConfirmingReport(true);
+              return;
+            }
             setReported(true);
+            setConfirmingReport(false);
             onReportUnnatural(chunk.id);
           }}
           style={{ borderColor: palette.border }}
@@ -310,7 +327,11 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
         >
           <Flag size={14} strokeWidth={1.75} color="currentColor" />
           <span>
-            {reported ? '報告済み（以後出題しません）' : '不自然な問題として報告'}
+            {reported
+              ? '報告済み（以後出題しません）'
+              : confirmingReport
+                ? '本当に非表示にしますか？（再タップで確定）'
+                : '不自然な問題として報告'}
           </span>
         </button>
 

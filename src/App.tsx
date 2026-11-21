@@ -1,6 +1,6 @@
 // Project Rewire ルートアプリケーションコンポーネント
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Header, type NavTab } from './components/Header';
 import { exportBackupJson } from './db/backup';
 import {
@@ -42,6 +42,8 @@ export const App: React.FC = () => {
     justPromotedBanner,
     setJustPromotedBanner,
     updateSettings,
+    recordAiApiCall,
+    refreshStudyDateEvaluation,
     recordQuestionAttempt,
     completeSessionWithAiReport,
     markChunkUnnatural,
@@ -51,6 +53,7 @@ export const App: React.FC = () => {
     deleteCoachMessage,
     clearCoachMessages,
     generateAiQuestionsNow,
+    applyImportedBackup,
   } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<NavTab>('home');
@@ -62,9 +65,46 @@ export const App: React.FC = () => {
   const isSleepModeActive = activeMode?.mode === 'sleep';
   const { palette } = useTheme(settings.themePreference, isSleepModeActive);
 
-  const currentStudyDate = getStudyDate();
+  const [currentStudyDate, setCurrentStudyDate] = useState(() => getStudyDate());
 
-  // 昇格ゲートとETAの計算（即時・確定的・要件3, 5）
+  // 午前4時境界跨ぎやPWA復帰時の学習日・ストリーク再評価
+  useEffect(() => {
+    const syncStudyDate = () => {
+      const nextDate = getStudyDate();
+      setCurrentStudyDate((prev) => {
+        if (prev !== nextDate) {
+          void refreshStudyDateEvaluation();
+        }
+        return nextDate;
+      });
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        syncStudyDate();
+      }
+    };
+    window.addEventListener('focus', syncStudyDate);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('focus', syncStudyDate);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [refreshStudyDateEvaluation]);
+
+  // セッション実行中フラグをPWA SW更新制御へ共有（セッション終了後に安全リロード）
+  useEffect(() => {
+    const win = window as unknown as {
+      __rewireSessionActive?: boolean;
+      __rewirePendingReload?: boolean;
+    };
+    win.__rewireSessionActive = Boolean(activeMode);
+    if (!activeMode && win.__rewirePendingReload) {
+      win.__rewirePendingReload = false;
+      window.location.reload();
+    }
+  }, [activeMode]);
+
+  // 昇格ゲートとETAの計算（現レベル昇格後の実績のみを集計）
   const gateStatus = useMemo(
     () =>
       evaluatePromotionGate({
@@ -72,8 +112,9 @@ export const App: React.FC = () => {
         chunks,
         reviewStates,
         attempts,
+        levelPromotedAt: settings.levelPromotedAt,
       }),
-    [attempts, chunks, reviewStates, settings.level]
+    [attempts, chunks, reviewStates, settings.level, settings.levelPromotedAt]
   );
 
   const etaResult = useMemo(() => {
@@ -120,7 +161,9 @@ export const App: React.FC = () => {
       a.href = url;
       a.download = `project-rewire-backup-${currentStudyDate}.json`;
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 10000);
     }
   };
 
@@ -139,7 +182,7 @@ export const App: React.FC = () => {
           backgroundColor: palette.background,
           color: palette.text,
         }}
-        className="min-h-screen flex items-center justify-center text-sm font-semibold"
+        className="min-h-dvh flex items-center justify-center text-sm font-semibold"
       >
         Project Rewire を起動中...
       </div>
@@ -154,7 +197,7 @@ export const App: React.FC = () => {
           backgroundColor: palette.background,
           color: palette.text,
         }}
-        className="min-h-screen flex items-center justify-center px-4"
+        className="min-h-dvh flex items-center justify-center px-4"
       >
         <form
           onSubmit={async (e) => {
@@ -184,7 +227,7 @@ export const App: React.FC = () => {
               backgroundColor: palette.background,
               borderColor: palette.border,
             }}
-            className="w-full px-3 py-2.5 rounded-lg border text-sm"
+            className="w-full px-3 py-2.5 rounded-lg border text-base sm:text-sm"
             autoFocus
           />
           {passcodeError && (
@@ -220,7 +263,7 @@ export const App: React.FC = () => {
           backgroundColor: palette.background,
           color: palette.text,
         }}
-        className="min-h-screen"
+        className="min-h-dvh"
       >
         <Header
           level={settings.level}
@@ -229,7 +272,12 @@ export const App: React.FC = () => {
           restTickets={settings.restTickets}
           palette={palette}
           activeTab={activeTab}
-          onChangeTab={setActiveTab}
+          onChangeTab={(tab) => {
+            if (isRecalibrating) {
+              setIsRecalibrating(false);
+              setActiveTab(tab);
+            }
+          }}
         />
         <DiagnosisPage
           palette={palette}
@@ -265,7 +313,7 @@ export const App: React.FC = () => {
         backgroundColor: palette.background,
         color: palette.text,
       }}
-      className="min-h-screen"
+      className="min-h-dvh pb-[env(safe-area-inset-bottom)]"
     >
       <Header
         level={settings.level}
@@ -275,7 +323,21 @@ export const App: React.FC = () => {
         palette={palette}
         activeTab={activeTab}
         onChangeTab={(tab) => {
-          setActiveMode(null);
+          if (activeMode) {
+            const msg =
+              activeMode.mode === 'boss'
+                ? 'ボス戦を中断すると24時間のクールダウンに入ります。移動してよろしいですか？'
+                : 'トレーニングを中断して移動しますか？（回答済みの記録は保存されています）';
+            if (typeof window !== 'undefined' && !window.confirm(msg)) {
+              return;
+            }
+            if (activeMode.mode === 'boss') {
+              void updateSettings({
+                bossCooldownUntil: Date.now() + 24 * 60 * 60 * 1000,
+              });
+            }
+            setActiveMode(null);
+          }
           setActiveTab(tab);
         }}
       />
@@ -359,16 +421,21 @@ export const App: React.FC = () => {
           onUpsertMessage={upsertCoachMessage}
           onDeleteMessage={deleteCoachMessage}
           onClearMessages={clearCoachMessages}
+          onRecordApiCall={() => void recordAiApiCall(1)}
           chunks={chunks}
-          cloudEnabled={cloudEnabled}
           serverHasGeminiKey={serverHasGeminiKey}
         />
       ) : activeTab === 'settings' ? (
         <SettingsPage
           settings={settings}
+          sessions={sessions}
           palette={palette}
+          cloudEnabled={cloudEnabled}
+          serverHasGeminiKey={serverHasGeminiKey}
           onUpdateSettings={updateSettings}
           onStartRecalibration={() => setIsRecalibrating(true)}
+          onExportBackup={handleOneTapBackup}
+          onImportBackup={applyImportedBackup}
         />
       ) : (
         <HomePage

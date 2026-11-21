@@ -50,6 +50,10 @@ export function useTheme(
       document.documentElement.dataset.theme = activeTheme;
       document.body.style.backgroundColor = palette.background;
       document.body.style.color = palette.text;
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', palette.background);
+      }
     }
   }, [activeTheme, palette]);
 

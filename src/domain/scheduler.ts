@@ -102,29 +102,79 @@ export function recomposeChunk(baseChunk: Chunk, indexSuffix: number): Chunk {
       patternSuffix: '_today',
       sceneAlt: 'cafe',
     },
+    {
+      prefix: 'By the way',
+      jaPrefix: 'ところで、',
+      jaChunkNote: 'By the way（ところで）→ ',
+      patternSuffix: '_btw',
+      sceneAlt: 'lounge',
+    },
+    {
+      prefix: 'To be honest',
+      jaPrefix: '正直に言うと、',
+      jaChunkNote: 'To be honest（正直に言うと）→ ',
+      patternSuffix: '_tbh',
+      sceneAlt: 'office',
+    },
+    {
+      prefix: 'In fact',
+      jaPrefix: '実際、',
+      jaChunkNote: 'In fact（実際）→ ',
+      patternSuffix: '_infact',
+      sceneAlt: 'meeting',
+    },
   ];
 
   // 元文にすでに時間表現（tomorrow, today, right now, tonight 等）がある場合は時間系修飾子を除外して衝突を防ぐ
   const hasTimeAdverb = /\b(tomorrow|today|tonight|right now|now)\b/i.test(
     baseChunk.enText
   );
-  const eligibleModifiers = hasTimeAdverb
-    ? modifiers.filter((m) => m.suffix !== 'right now' && m.suffix !== 'today')
-    : modifiers;
+  const isQuestion = baseChunk.enText.trim().endsWith('?');
+  const eligibleModifiers = modifiers.filter((m) => {
+    if (hasTimeAdverb && (m.suffix === 'right now' || m.suffix === 'today')) {
+      return false;
+    }
+    if (isQuestion && m.suffix === 'today') {
+      return false;
+    }
+    return true;
+  });
 
-  const mod = eligibleModifiers[indexSuffix % eligibleModifiers.length];
+  const safePool = eligibleModifiers.length > 0 ? eligibleModifiers : modifiers;
+  const mod = safePool[indexSuffix % safePool.length];
   const baseWords = baseChunk.blocks.map((b) => b.text);
   let newWords: string[];
   let appliedModifier = false;
 
-  if (mod.prefix && baseWords.length <= 7) {
-    const firstWordLower =
-      baseWords[0] === 'I' || baseWords[0].startsWith('I ')
-        ? baseWords[0]
-        : baseWords[0].charAt(0).toLowerCase() + baseWords[0].slice(1);
-    newWords = [mod.prefix, firstWordLower, ...baseWords.slice(1)];
+  const PROPER_NOUNS = new Set([
+    'I',
+    'Bam',
+    'Jimmy',
+    'Miami',
+    'Tyler',
+    'Spo',
+    'Heat',
+    'Friday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Saturday',
+    'Sunday',
+  ]);
+
+  if (mod.prefix && baseWords.length <= 8) {
+    const firstWordToken = baseWords[0].replace(/[^A-Za-z]/g, '');
+    const keepCapital =
+      baseWords[0] === 'I' ||
+      baseWords[0].startsWith('I ') ||
+      PROPER_NOUNS.has(firstWordToken);
+    const firstWordAdjusted = keepCapital
+      ? baseWords[0]
+      : baseWords[0].charAt(0).toLowerCase() + baseWords[0].slice(1);
+    newWords = [mod.prefix, firstWordAdjusted, ...baseWords.slice(1)];
     appliedModifier = true;
-  } else if (mod.suffix && baseWords.length <= 7) {
+  } else if (mod.suffix && baseWords.length <= 8) {
     const lastWord = baseWords[baseWords.length - 1].replace(/[.!?]+$/, '');
     const punct = baseChunk.enText.match(/[.!?]+$/)?.[0] ?? '.';
     newWords = [
@@ -137,8 +187,8 @@ export function recomposeChunk(baseChunk: Chunk, indexSuffix: number): Chunk {
     newWords = [...baseWords];
   }
 
-  // ブロック数は 3〜9 個の範囲内に収める
-  if (newWords.length > 9) {
+  // ブロック数は 3〜10 個の範囲内に収める
+  if (newWords.length > 10) {
     newWords = [...baseWords];
     appliedModifier = false;
   }
@@ -344,13 +394,14 @@ export function buildSessionBatch(params: BuildSessionBatchParams): Chunk[] {
   } = params;
 
   // 毎回同じ固定順（lv1_01, lv1_02...）にならないよう最初にシャッフルしてから優先度別に分類する
-  const activeChunks = shuffleArray(
-    allChunks.filter((c) => {
-      if (c.disabled) return false;
-      if (mode !== 'speak' && c.speakOnly) return false;
-      return c.level <= Math.max(1, currentLevel);
-    })
-  );
+  // 診断用 lv0 問題（level === 0 && !isCore）は通常トレーニング（Lv.1以降）には混ぜない
+  const eligibleChunks = allChunks.filter((c) => {
+    if (c.disabled) return false;
+    if (mode !== 'speak' && c.speakOnly) return false;
+    if (c.level === 0 && !c.isCore) return false;
+    return c.level <= Math.max(1, currentLevel);
+  });
+  const activeChunks = shuffleArray(eligibleChunks);
 
   const stateMap = new Map<string, ReviewState>();
   for (const rs of reviewStates) {
@@ -377,14 +428,20 @@ export function buildSessionBatch(params: BuildSessionBatchParams): Chunk[] {
     }
   }
 
-  // 1. SRS期限到来（または Live最優先）の復習問題を抽出
+  // 1. SRS期限到来（または Live最優先：1バッチ最大3問）の復習問題を抽出
   const dueChunks: Chunk[] = [];
   const newOrWeakChunks: Chunk[] = [];
+  let livePrioritizedCount = 0;
 
   for (const chunk of activeChunks) {
     const state = stateMap.get(chunk.id);
-    if (chunk.source === 'live' && (!state || isReviewDue(state, currentStudyDate))) {
-      dueChunks.unshift(chunk); // Live弱点は最優先
+    if (
+      chunk.source === 'live' &&
+      (!state || isReviewDue(state, currentStudyDate)) &&
+      livePrioritizedCount < 3
+    ) {
+      dueChunks.unshift(chunk); // Live弱点は1バッチ最大3問まで最優先
+      livePrioritizedCount += 1;
     } else if (state && isReviewDue(state, currentStudyDate)) {
       dueChunks.push(chunk);
     } else {

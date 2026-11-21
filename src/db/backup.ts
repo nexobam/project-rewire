@@ -18,9 +18,6 @@ import { migrateBackupData } from './migration';
 export const MAX_IMPORT_BYTES = 10 * 1024 * 1024; // 10MB
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
-// 文字列段階でプロトタイプ汚染キーが含まれていないか検査する正規表現
-const FORBIDDEN_JSON_KEY_REGEX = /"(?:__proto__|constructor|prototype)"\s*:/;
-
 /**
  * オブジェクトツリーを再帰的に走査し、__proto__ / constructor / prototype キーが含まれていれば例外を投げる
  */
@@ -130,6 +127,7 @@ const AttemptSchema = z.object({
   selfJudged: z.boolean(),
   sttTranscript: z.string().optional(),
   sttMatch: z.number().optional(),
+  isSleepPriming: z.boolean().optional(),
 });
 
 const SessionSchema = z.object({
@@ -208,6 +206,8 @@ const SettingsWithoutKeySchema = z.object({
   lastTicketRefillWeek: z.string().optional(),
   lastEvaluatedStudyDate: z.string().optional(),
   allEnglishMode: z.boolean().optional(),
+  levelPromotedAt: z.number().optional(),
+  firstUsedAt: z.number().optional(),
 });
 
 const CoachMessageSchema = z.object({
@@ -314,14 +314,7 @@ export function validateAndPreviewImportJson(
     throw new Error('ファイルサイズが上限（10MB）を超えています。');
   }
 
-  // 2. 生JSONテキスト内の禁止キー検査（__proto__ / constructor / prototype）
-  if (FORBIDDEN_JSON_KEY_REGEX.test(rawJsonText)) {
-    throw new Error(
-      'セキュリティエラー：禁止されたキー（__proto__ / constructor / prototype）が含まれています。'
-    );
-  }
-
-  // 3. JSONパース（reviverでも禁止キーを検査）
+  // 2. JSONパース（reviverで禁止キーを厳格検査。文字列内の偶発的な語句での誤検知は防ぐ）
   let parsed: unknown;
   try {
     parsed = JSON.parse(rawJsonText, (key, value) => {

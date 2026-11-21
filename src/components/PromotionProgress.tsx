@@ -124,6 +124,11 @@ export const PromotionProgress: React.FC<PromotionProgressProps> = ({
           <div className="flex items-center justify-between font-semibold">
             <span>{listeningLabel}</span>
             <span>
+              {gateStatus.listeningSampled < 40 && (
+                <span className="text-[11px] font-normal opacity-75 mr-1">
+                  計測中
+                </span>
+              )}
               {Math.round(gateStatus.listeningRate * 100)}% ({gateStatus.listeningSampled}
               /40問)
             </span>
@@ -149,6 +154,11 @@ export const PromotionProgress: React.FC<PromotionProgressProps> = ({
           <div className="flex items-center justify-between font-semibold">
             <span>{speakingLabel}</span>
             <span>
+              {gateStatus.speakingSampled < 40 && (
+                <span className="text-[11px] font-normal opacity-75 mr-1">
+                  計測中
+                </span>
+              )}
               {Math.round(gateStatus.speakingGreenRate * 100)}% (
               {gateStatus.speakingSampled}/40回)
             </span>
@@ -199,7 +209,9 @@ export const PromotionProgress: React.FC<PromotionProgressProps> = ({
                 : palette.background,
             color:
               gateStatus.bossUnlocked && !inCooldown
-                ? '#FFFFFF'
+                ? palette.background === '#141416'
+                  ? '#141416'
+                  : '#FFFFFF'
                 : palette.text,
             borderColor: palette.border,
             borderBottomWidth: '3px',

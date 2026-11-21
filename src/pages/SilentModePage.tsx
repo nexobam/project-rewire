@@ -26,6 +26,7 @@ import {
 } from '../services/audioService';
 import {
   speakEnglishText,
+  stopSpeechSynthesis,
   unlockSpeechSynthesis,
 } from '../services/ttsService';
 import type {
@@ -124,11 +125,31 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
   const shownTimestampRef = useRef<number>(performance.now());
   const firstTapMsRef = useRef<number | null>(null);
   const sessionStartMsRef = useRef<number>(Date.now());
+  const pausedTotalMsRef = useRef<number>(0);
+  const hiddenAtMsRef = useRef<number | null>(null);
+  const submittingAnswerRef = useRef<boolean>(false);
+  const navigatingNextRef = useRef<boolean>(false);
   const hasshownChoicesRef = useRef<boolean>(false);
   // バックグラウンド同期や設定更新で現在の問題や回答後解説がリセットされないためのガード
   const preparedQuestionKeyRef = useRef<string | null>(null);
 
   const currentChunk = batch[currentIndex];
+
+  useEffect(() => {
+    const onVisChange = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenAtMsRef.current = Date.now();
+      } else if (document.visibilityState === 'visible' && hiddenAtMsRef.current !== null) {
+        pausedTotalMsRef.current += Date.now() - hiddenAtMsRef.current;
+        hiddenAtMsRef.current = null;
+      }
+    };
+    document.addEventListener('visibilitychange', onVisChange);
+    return () => document.removeEventListener('visibilitychange', onVisChange);
+  }, []);
+
+  const getActiveElapsedMs = () =>
+    Math.max(0, Date.now() - sessionStartMsRef.current - pausedTotalMsRef.current);
 
   // 出題形式の決定
   // - Lv.1前半（lv1Phase === 'picture'）：絵カード4択（picture_choice）
@@ -162,11 +183,12 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
   useEffect(() => {
     unlockSpeechSynthesis();
     unlockAudioContext();
-    if (settings.level === 3) {
+    if (settings.level >= 3) {
       startAmbientNoise();
     }
     return () => {
       stopAmbientNoise();
+      stopSpeechSynthesis();
     };
   }, [settings.level]);
 
@@ -185,15 +207,31 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
         strictShuffleBlocks(chunk.blocks, chunk.acceptableOrders)
       );
 
-      const baseSoundChoices =
-        chunk.soundChangeChoices && chunk.soundChangeChoices.includes(chunk.enText)
-          ? chunk.soundChangeChoices
-          : [
-              chunk.enText,
-              'I am going to check it later.',
-              'Let us talk about that tomorrow.',
-              'That sounds totally fine with me.',
-            ];
+      let baseSoundChoices: string[];
+      if (
+        chunk.soundChangeChoices &&
+        chunk.soundChangeChoices.includes(chunk.enText)
+      ) {
+        baseSoundChoices = chunk.soundChangeChoices;
+      } else {
+        const distractors = allChunks
+          .filter(
+            (c) =>
+              !c.disabled &&
+              c.id !== chunk.id &&
+              c.enText.trim().toLowerCase() !== chunk.enText.trim().toLowerCase()
+          )
+          .map((c) => c.enText);
+        const fallbackDistractors = [
+          'I am going to check it later.',
+          'Let us talk about that tomorrow.',
+          'That sounds totally fine with me.',
+        ];
+        const picked = shuffleArray(
+          Array.from(new Set([...distractors, ...fallbackDistractors]))
+        ).slice(0, 3);
+        baseSoundChoices = [chunk.enText, ...picked];
+      }
       setShuffledSoundChoices(shuffleArray(baseSoundChoices));
 
       // 絵カード4択用のダミー選択肢3枚（場面・場所タグ・アイコンが被らないカードを優先）＋正解1枚を作成
@@ -316,55 +354,63 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
     completionMs: number | null;
     missType?: 'sound_change' | 'order_delay';
   }) => {
-    const { rating, reactionMs, completionMs, missType } = params;
-    setAnsweredResult({ rating, reactionMs, completionMs });
+    if (submittingAnswerRef.current || answeredResult || !currentChunk) return;
+    submittingAnswerRef.current = true;
+    try {
+      const { rating, reactionMs, completionMs, missType } = params;
+      setAnsweredResult({ rating, reactionMs, completionMs });
 
-    const nextResults = [...sessionResults, rating];
-    setSessionResults(nextResults);
-    if (rating === 'green') {
-      const nextCombo = combo + 1;
-      setCombo(nextCombo);
-      setMaxCombo((prev) => Math.max(prev, nextCombo));
-    } else {
-      setCombo(0);
+      const nextResults = [...sessionResults, rating];
+      setSessionResults(nextResults);
+      if (rating === 'green') {
+        const nextCombo = combo + 1;
+        setCombo(nextCombo);
+        setMaxCombo((prev) => Math.max(prev, nextCombo));
+      } else {
+        setCombo(0);
+      }
+
+      const elapsedSeconds = Math.max(
+        1,
+        Math.round(getActiveElapsedMs() / 1000)
+      );
+      const updatedSession: Session = {
+        ...session,
+        activeSeconds: elapsedSeconds,
+      };
+
+      const attempt: Attempt = {
+        id: `att_${Date.now()}_b${batchGeneration}_${currentIndex}_${Math.random().toString(36).slice(2, 6)}`,
+        chunkId: currentChunk.id,
+        sessionId: session.id,
+        exerciseType,
+        studyDate: currentStudyDate,
+        startedAt: Date.now(),
+        reactionMs,
+        completionMs,
+        replayBeforeShown,
+        replayAfterShown,
+        rating,
+        missType,
+        inputMode: 'silent',
+        selfJudged: false,
+      };
+
+      await onRecordAttempt({
+        attempt,
+        session: updatedSession,
+        updateSrs: true,
+      });
+    } finally {
+      submittingAnswerRef.current = false;
     }
-
-    const elapsedSeconds = Math.max(
-      1,
-      Math.round((Date.now() - sessionStartMsRef.current) / 1000)
-    );
-    const updatedSession: Session = {
-      ...session,
-      activeSeconds: elapsedSeconds,
-    };
-
-    const attempt: Attempt = {
-      id: `att_${Date.now()}_${currentIndex}`,
-      chunkId: currentChunk.id,
-      sessionId: session.id,
-      exerciseType,
-      studyDate: currentStudyDate,
-      startedAt: Date.now(),
-      reactionMs,
-      completionMs,
-      replayBeforeShown,
-      replayAfterShown,
-      rating,
-      missType,
-      inputMode: 'silent',
-      selfJudged: false,
-    };
-
-    await onRecordAttempt({
-      attempt,
-      session: updatedSession,
-      updateSrs: true,
-    });
   };
 
   // 語順ブロックのタップ処理
   const handleSelectWordBlock = (block: Block) => {
-    if (answeredResult || isAudioPlaying) return;
+    if (answeredResult || isAudioPlaying || selectedBlockIds.includes(block.id)) {
+      return;
+    }
     playTactileClick(settings.clickSound);
 
     const now = performance.now();
@@ -473,52 +519,94 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
 
   // 次の問題へ進む（指定時間を過ぎていれば解いているこの問題でセッション終了・15問使い切ったら新バッチ補充・要件4）
   const handleNextQuestion = async () => {
-    const elapsedMinutes =
-      (Date.now() - sessionStartMsRef.current) / (60 * 1000);
-    if (elapsedMinutes >= plannedMinutes) {
-      const finalSession: Session = {
-        ...session,
-        activeSeconds: Math.max(
-          60,
-          Math.round((Date.now() - sessionStartMsRef.current) / 1000)
-        ),
-        endedAt: Date.now(),
-      };
-      setSessionFinished(true);
-      await onCompleteSession(finalSession);
-      return;
-    }
+    if (navigatingNextRef.current) return;
+    navigatingNextRef.current = true;
+    stopSpeechSynthesis();
+    try {
+      const elapsedMinutes = getActiveElapsedMs() / (60 * 1000);
+      if (elapsedMinutes >= plannedMinutes) {
+        const finalSession: Session = {
+          ...session,
+          activeSeconds:
+            sessionResults.length > 0
+              ? Math.max(60, Math.round(getActiveElapsedMs() / 1000))
+              : 0,
+          endedAt: Date.now(),
+        };
+        setSessionFinished(true);
+        await onCompleteSession(finalSession);
+        return;
+      }
 
-    if (currentIndex + 1 < batch.length) {
-      setCurrentIndex((prev) => prev + 1);
-    } else {
-      // 15問バッチ完了：まだ残り時間がある場合は次バッチを補充
-      const nextBatch = buildSessionBatch({
-        allChunks,
-        reviewStates,
-        recentAttempts,
-        currentStudyDate,
-        currentLevel: settings.level,
-        mode: isRehab ? 'rehab' : 'silent',
-      });
-      setBatch(nextBatch);
-      setBatchGeneration((prev) => prev + 1);
-      setCurrentIndex(0);
+      if (currentIndex + 1 < batch.length) {
+        setCurrentIndex((prev) => prev + 1);
+      } else {
+        // 15問バッチ完了：まだ残り時間がある場合は次バッチを補充
+        const nextBatch = buildSessionBatch({
+          allChunks,
+          reviewStates,
+          recentAttempts,
+          currentStudyDate,
+          currentLevel: settings.level,
+          mode: isRehab ? 'rehab' : 'silent',
+        });
+        setBatch(nextBatch);
+        setBatchGeneration((prev) => prev + 1);
+        setCurrentIndex(0);
+      }
+    } finally {
+      navigatingNextRef.current = false;
     }
   };
 
   const handleFinishSessionEarly = async () => {
-    const finalSession: Session = {
-      ...session,
-      activeSeconds: Math.max(
-        60,
-        Math.round((Date.now() - sessionStartMsRef.current) / 1000)
-      ),
-      endedAt: Date.now(),
-    };
-    setSessionFinished(true);
-    await onCompleteSession(finalSession);
+    if (navigatingNextRef.current) return;
+    navigatingNextRef.current = true;
+    stopSpeechSynthesis();
+    try {
+      const finalSession: Session = {
+        ...session,
+        activeSeconds:
+          sessionResults.length > 0
+            ? Math.max(60, Math.round(getActiveElapsedMs() / 1000))
+            : 0,
+        endedAt: Date.now(),
+      };
+      setSessionFinished(true);
+      await onCompleteSession(finalSession);
+    } finally {
+      navigatingNextRef.current = false;
+    }
   };
+
+  if (!currentChunk && !sessionFinished) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-10">
+        <div
+          style={{
+            backgroundColor: palette.card,
+            borderColor: palette.border,
+            color: palette.text,
+          }}
+          className="border rounded-xl p-6 space-y-4 text-center"
+        >
+          <p className="font-bold">現在、出題できる問題がありません。</p>
+          <button
+            type="button"
+            onClick={onExitHome}
+            style={{
+              backgroundColor: palette.text,
+              color: palette.card,
+              borderColor: palette.text,
+            }}
+            className="px-5 py-2.5 rounded-lg font-bold text-sm"
+          >
+            ホームへ戻る
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // セッション終了時の即時スコア表示（スコア・緑の割合・コンボ・ゲートの進捗・要件5）
   if (sessionFinished) {
@@ -627,8 +715,6 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
     );
   }
 
-  // Lv.2以降では音声と文字の同時表示を解禁（Lv.1は回答後まで英文非表示・要件2-1-2, 3）
-  const allowSimultaneousSubtitle = settings.level >= 2;
   const isAllEnglish =
     settings.level === 4 && Boolean(settings.allEnglishMode);
 
@@ -729,20 +815,18 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
               allEnglishMode={isAllEnglish}
               showSituationMeaning={Boolean(answeredResult)}
               showCategoryBadge={Boolean(answeredResult)}
-              showEnglishSubtitle={
-                allowSimultaneousSubtitle || Boolean(answeredResult)
-              }
+              showEnglishSubtitle={Boolean(answeredResult)}
             />
           )}
 
-          {/* サイレントモード左カラムにも回答後の語順チャンク解説サマリーを表示（スマホ・PCどちらでも一目で解説が見えるようにする） */}
+          {/* サイレントモード左カラム解説サマリー（PC幅のみ表示しモバイルでの二重表示を防止） */}
           {answeredResult && !isAllEnglish && (
             <div
               style={{
                 backgroundColor: palette.card,
                 borderColor: palette.border,
               }}
-              className="border rounded-lg p-4 space-y-2 text-xs"
+              className="hidden lg:block border rounded-lg p-4 space-y-2 text-xs"
               data-testid="silent-left-explanation-summary"
             >
               <p className="font-bold">

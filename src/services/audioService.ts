@@ -18,7 +18,10 @@ export function unlockAudioContext(): AudioContext | null {
     if (!sharedAudioCtx) {
       sharedAudioCtx = new AudioCtx();
     }
-    if (sharedAudioCtx.state === 'suspended') {
+    if (
+      sharedAudioCtx.state === 'suspended' ||
+      (sharedAudioCtx.state as string) === 'interrupted'
+    ) {
       void sharedAudioCtx.resume();
     }
     return sharedAudioCtx;
@@ -106,6 +109,8 @@ export function startAmbientNoise(): () => void {
       try {
         whiteNoise.stop();
         whiteNoise.disconnect();
+        filter.disconnect();
+        gain.disconnect();
       } catch {
         // 無視
       }
