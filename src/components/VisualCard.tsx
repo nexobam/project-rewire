@@ -1,8 +1,9 @@
-// 状況ビジュアルカード（単色SVGアイコン2つ＋日本語の場面タグ3つ［場所／相手／感情］＋場面で言っていること解説）コンポーネント（要件2-1-1, 7）
+// 状況ビジュアルカード（シーンイラスト図解バナー・SVGアイコン3つ＋場面タグ4つ［場所／相手／状況／焦点］＋場面で言っていること解説）コンポーネント
 
 import React from 'react';
 import { extractSituationMeaning } from '../domain/chunkExplanation';
 import type { ThemePalette } from '../domain/contrast';
+import { getPictureSceneVisualMeta } from '../domain/pictureChoiceDistinct';
 import type { Chunk } from '../types';
 import { WhitelistedIcon } from './IconWhitelist';
 
@@ -30,9 +31,10 @@ export const VisualCard: React.FC<VisualCardProps> = ({
   selected = false,
 }) => {
   const [mainIcon, subIcon] = chunk.visual.icons;
-  const [placeTag, partnerTag, emotionTag] = chunk.visual.tags;
+  const [placeTag, partnerTag, situationTag] = chunk.visual.tags;
   const isHeat = chunk.contentCategory === 'heat';
   const situationMeaning = extractSituationMeaning(chunk);
+  const visualMeta = getPictureSceneVisualMeta(chunk);
 
   const Wrapper = onClick ? 'button' : 'div';
 
@@ -45,37 +47,32 @@ export const VisualCard: React.FC<VisualCardProps> = ({
         borderColor: selected ? palette.text : palette.border,
         color: palette.text,
       }}
-      className={`w-full text-left border rounded-lg ${
-        compact ? 'p-3' : 'p-5'
-      } ${onClick ? 'tactile-btn cursor-pointer' : ''}`}
+      className={`w-full text-left border rounded-xl ${
+        compact ? 'p-3.5' : 'p-5'
+      } ${onClick ? 'tactile-btn cursor-pointer hover:shadow-md transition-shadow' : ''}`}
       data-testid={`visual-card-${chunk.id}`}
     >
-      <div className="flex items-center justify-between gap-3 mb-3">
-        {/* 単色SVGアイコン2つの組み合わせ */}
-        <div className="flex items-center gap-3">
-          <div
+      {/* 上段：シーン別カラーイラスト図解バナー（アイコン3つ＋シーン見出し） */}
+      <div
+        style={{
+          background: visualMeta.softBgCss,
+          borderColor: palette.border,
+        }}
+        className={`rounded-lg border ${compact ? 'p-2.5 mb-2.5' : 'p-3.5 mb-3.5'} space-y-2`}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span
             style={{
-              backgroundColor: palette.background,
+              color: visualMeta.accentHex,
+              backgroundColor: palette.card,
               borderColor: palette.border,
             }}
-            className="p-2.5 rounded-lg border flex items-center justify-center"
+            className="text-[11px] font-extrabold px-2 py-0.5 rounded-full border tracking-tight"
           >
-            <WhitelistedIcon name={mainIcon} size={compact ? 22 : 28} />
-          </div>
-          <div
-            style={{
-              backgroundColor: palette.background,
-              borderColor: palette.border,
-            }}
-            className="p-2.5 rounded-lg border flex items-center justify-center"
-          >
-            <WhitelistedIcon name={subIcon} size={compact ? 20 : 24} />
-          </div>
-        </div>
+            {visualMeta.sceneTitle}
+          </span>
 
-        <div className="flex items-center gap-1.5">
-          {/* Miami Heat タグは回答前のネタバレ防止のため、回答後（showCategoryBadge時）のみ表示（要件7・背景トークンと組み合わせて4.5:1以上を確保） */}
-          {isHeat && showCategoryBadge && (
+          {isHeat && showCategoryBadge ? (
             <span
               style={{
                 backgroundColor: palette.background,
@@ -86,14 +83,76 @@ export const VisualCard: React.FC<VisualCardProps> = ({
             >
               MIAMI HEAT
             </span>
+          ) : (
+            !allEnglishMode && (
+              <span
+                style={{
+                  backgroundColor: palette.card,
+                  borderColor: palette.border,
+                }}
+                className="text-[11px] font-bold px-2 py-0.5 rounded border opacity-90"
+              >
+                焦点：{visualMeta.actionTag}
+              </span>
+            )
+          )}
+        </div>
+
+        {/* 3アイコンによる状況イラスト構図（主体 × 対象 × キーモチーフ） */}
+        <div className="flex items-center justify-between gap-2 pt-0.5">
+          <div className="flex items-center gap-2">
+            <div
+              style={{
+                backgroundColor: palette.card,
+                borderColor: visualMeta.accentHex,
+              }}
+              className="p-2.5 rounded-lg border-2 flex items-center justify-center shadow-sm"
+            >
+              <WhitelistedIcon name={mainIcon} size={compact ? 22 : 26} />
+            </div>
+            <span className="text-xs font-bold opacity-50">×</span>
+            <div
+              style={{
+                backgroundColor: palette.card,
+                borderColor: palette.border,
+              }}
+              className="p-2 rounded-lg border flex items-center justify-center shadow-sm"
+            >
+              <WhitelistedIcon name={subIcon} size={compact ? 20 : 24} />
+            </div>
+            <span className="text-xs font-bold opacity-50">＋</span>
+            <div
+              style={{
+                backgroundColor: palette.card,
+                borderColor: palette.border,
+              }}
+              className="p-2 rounded-lg border flex items-center justify-center opacity-90"
+            >
+              <WhitelistedIcon
+                name={visualMeta.thirdIcon}
+                size={compact ? 18 : 22}
+              />
+            </div>
+          </div>
+
+          {!allEnglishMode && (
+            <div
+              style={{
+                backgroundColor: palette.card,
+                borderColor: visualMeta.accentHex,
+              }}
+              className="px-2.5 py-1 rounded-md border text-xs font-extrabold shadow-sm shrink-0"
+            >
+              {situationTag}
+            </div>
           )}
         </div>
       </div>
 
-      {/* 場面タグ3つ（場所／相手／感情の名詞・各8文字以内）＋この場面で言っていること解説。Lv.4 All Englishモード時は非表示 */}
+      {/* 下段：場面タグ（場所／相手／状況）＋回答後の場面解説 */}
       {!allEnglishMode ? (
         <div className="space-y-2.5">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             <span
               style={{
                 backgroundColor: palette.background,
@@ -119,7 +178,7 @@ export const VisualCard: React.FC<VisualCardProps> = ({
               }}
               className="text-xs font-semibold px-2.5 py-1 rounded border"
             >
-              感情：{emotionTag}
+              状況：{situationTag}
             </span>
           </div>
 

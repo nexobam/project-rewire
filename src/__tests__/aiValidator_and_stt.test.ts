@@ -8,6 +8,10 @@ import {
   validateAiQuestion,
 } from '../domain/aiValidator';
 import {
+  getPictureSceneVisualMeta,
+  selectDistinctPictureDistractors,
+} from '../domain/pictureChoiceDistinct';
+import {
   calculateSttMatch,
   containsNgWord,
   resolveSpeechRating,
@@ -195,5 +199,37 @@ describe('aiValidator & sttMatcher - AI生成問題の7項目機械検証と音�
     expect(
       containsNgWord('We had to postpone the meeting.', ['postpone', 'delay'])
     ).toEqual(['postpone']);
+  });
+
+  it('絵カード4択（Lv.1日常会話全25問）で選ばれる4枚のカードがすべて異なる意味クラスタ・場所タグ・状況タグ・焦点タグを持ち、紛らわしい選択肢が並ばないこと', () => {
+    const lv1Daily = ALL_SEED_CHUNKS.filter(
+      (c) => c.level === 1 && c.contentCategory === 'daily'
+    );
+    expect(lv1Daily.length).toBe(25);
+
+    for (const target of lv1Daily) {
+      const distractors = selectDistinctPictureDistractors(
+        target,
+        ALL_SEED_CHUNKS,
+        3
+      );
+      expect(distractors.length).toBe(3);
+
+      const fourCards = [target, ...distractors];
+      const clusters = new Set(
+        fourCards.map((c) => getPictureSceneVisualMeta(c).cluster)
+      );
+      const places = new Set(fourCards.map((c) => c.visual.tags[0]));
+      const situations = new Set(fourCards.map((c) => c.visual.tags[2]));
+      const actions = new Set(
+        fourCards.map((c) => getPictureSceneVisualMeta(c).actionTag)
+      );
+
+      // 4枚すべてで意味クラスタ・場所・状況・焦点が完全に別々であること
+      expect(clusters.size).toBe(4);
+      expect(places.size).toBe(4);
+      expect(situations.size).toBe(4);
+      expect(actions.size).toBe(4);
+    }
   });
 });

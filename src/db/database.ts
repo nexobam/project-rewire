@@ -233,12 +233,15 @@ export function upgradeSeedChunksWithLatestExplanations(chunks: Chunk[]): {
       const curOrderJson = JSON.stringify(c.acceptableOrders);
       const seedChoicesJson = JSON.stringify(latestSeed.soundChangeChoices ?? null);
       const curChoicesJson = JSON.stringify(c.soundChangeChoices ?? null);
+      const seedVisualJson = JSON.stringify(latestSeed.visual);
+      const curVisualJson = JSON.stringify(c.visual);
       if (
         c.enText !== latestSeed.enText ||
         c.coreImageJa !== latestSeed.coreImageJa ||
         c.pronunciationTip !== latestSeed.pronunciationTip ||
         seedOrderJson !== curOrderJson ||
-        seedChoicesJson !== curChoicesJson
+        seedChoicesJson !== curChoicesJson ||
+        seedVisualJson !== curVisualJson
       ) {
         changed = true;
         return {
@@ -246,6 +249,7 @@ export function upgradeSeedChunksWithLatestExplanations(chunks: Chunk[]): {
           enText: latestSeed.enText,
           blocks: latestSeed.blocks,
           acceptableOrders: latestSeed.acceptableOrders,
+          visual: latestSeed.visual,
           soundChangeChoices: latestSeed.soundChangeChoices,
           coreImageJa: latestSeed.coreImageJa,
           pronunciationTip: latestSeed.pronunciationTip,
