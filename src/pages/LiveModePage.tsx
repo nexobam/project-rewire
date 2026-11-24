@@ -58,6 +58,10 @@ export const LiveModePage: React.FC<LiveModePageProps> = ({
     minutes: number;
     fluencyScore: number;
     overallReview: string;
+    topicsDiscussed?: string[];
+    conversationHighlights?: string;
+    goodPoints: string[];
+    badPoints: string[];
     addedChunks: Chunk[];
   } | null>(null);
 
@@ -160,6 +164,10 @@ export const LiveModePage: React.FC<LiveModePageProps> = ({
         minutes: parsed.calendarMinutes,
         fluencyScore: parsed.summary.fluencyScore,
         overallReview: parsed.summary.overallReview,
+        topicsDiscussed: parsed.summary.topicsDiscussed,
+        conversationHighlights: parsed.summary.conversationHighlights,
+        goodPoints: parsed.summary.goodPoints,
+        badPoints: parsed.summary.badPoints,
         addedChunks: parsed.generatedChunks,
       });
     } catch (err) {
@@ -307,7 +315,7 @@ export const LiveModePage: React.FC<LiveModePageProps> = ({
               backgroundColor: palette.background,
               borderColor: palette.greenText ?? palette.border,
             }}
-            className="p-4 rounded-lg border-2 space-y-2 text-xs"
+            className="p-4 rounded-lg border-2 space-y-3 text-xs"
             data-testid="live-import-success"
           >
             <div className="flex items-center gap-1.5 font-bold text-sm">
@@ -316,22 +324,99 @@ export const LiveModePage: React.FC<LiveModePageProps> = ({
                 取り込み完了！カレンダーに {importedSummary.minutes} 分を加算しました
               </span>
             </div>
-            <p>
-              Fluency Score: {importedSummary.fluencyScore}/5 / 総評:{' '}
-              {importedSummary.overallReview}
+
+            {importedSummary.topicsDiscussed &&
+              importedSummary.topicsDiscussed.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="font-bold opacity-75">話したトピック:</span>
+                  {importedSummary.topicsDiscussed.map((topic, idx) => (
+                    <span
+                      key={idx}
+                      style={{ borderColor: palette.border }}
+                      className="px-2 py-0.5 rounded-full border font-semibold"
+                    >
+                      {topic}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+            {importedSummary.conversationHighlights && (
+              <div
+                style={{
+                  backgroundColor: palette.card,
+                  borderColor: palette.border,
+                }}
+                className="p-3 rounded-lg border space-y-1"
+              >
+                <p className="font-bold opacity-80">今日の会話内容・振り返り</p>
+                <p className="leading-relaxed">
+                  {importedSummary.conversationHighlights}
+                </p>
+              </div>
+            )}
+
+            <p className="leading-relaxed">
+              <span className="font-bold">
+                Fluency Score: {importedSummary.fluencyScore}/5
+              </span>{' '}
+              / 総評: {importedSummary.overallReview}
             </p>
-            <p className="font-semibold">
-              登録された弱点チャンク ({importedSummary.addedChunks.length}件):
-            </p>
-            <ul className="list-disc pl-5 space-y-1">
-              {importedSummary.addedChunks.map((c) => (
-                <li key={c.id}>
-                  <span className="font-mono font-bold">{c.enText}</span> (
-                  {c.speakOnly ? '3語未満：発話ドリル専用' : '3語以上：語順ブロック問題'}
-                  )
-                </li>
-              ))}
-            </ul>
+
+            {importedSummary.goodPoints.length > 0 && (
+              <div className="space-y-1">
+                <p className="font-bold">良かった点・使えていた表現:</p>
+                <ul className="list-disc pl-5 space-y-0.5">
+                  {importedSummary.goodPoints.map((pt, i) => (
+                    <li key={i}>{pt}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {importedSummary.badPoints.length > 0 && (
+              <div className="space-y-1">
+                <p className="font-bold">改善ポイント・次回の課題:</p>
+                <ul className="list-disc pl-5 space-y-0.5">
+                  {importedSummary.badPoints.map((pt, i) => (
+                    <li key={i}>{pt}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="space-y-2 pt-1">
+              <p className="font-semibold">
+                SRS復習キューに登録された弱点チャンク ({importedSummary.addedChunks.length}件):
+              </p>
+              <ul className="space-y-2">
+                {importedSummary.addedChunks.map((c) => (
+                  <li
+                    key={c.id}
+                    style={{
+                      backgroundColor: palette.card,
+                      borderColor: palette.border,
+                    }}
+                    className="p-2.5 rounded-lg border space-y-1"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-mono font-bold text-sm">
+                        {c.enText}
+                      </span>
+                      <span className="text-[11px] opacity-75">
+                        {c.speakOnly
+                          ? '3語未満：発話ドリル専用'
+                          : '3語以上：語順ブロック問題'}
+                      </span>
+                    </div>
+                    <p className="opacity-85 leading-relaxed">{c.coreImageJa}</p>
+                    <p className="opacity-70 text-[11px]">
+                      発音のコツ: {c.pronunciationTip}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
       </div>

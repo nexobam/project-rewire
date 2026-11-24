@@ -229,6 +229,16 @@ export const HeatmapCalendar: React.FC<HeatmapCalendarProps> = ({
                       【Live実戦総評（Fluency: {rep.liveLog.fluencyScore}/5）】{' '}
                       {rep.liveLog.overallReview}
                     </p>
+                    {rep.liveLog.topicsDiscussed &&
+                      rep.liveLog.topicsDiscussed.length > 0 && (
+                        <p>
+                          話したトピック:{' '}
+                          {rep.liveLog.topicsDiscussed.join(' / ')}
+                        </p>
+                      )}
+                    {rep.liveLog.conversationHighlights && (
+                      <p>会話内容: {rep.liveLog.conversationHighlights}</p>
+                    )}
                     {rep.liveLog.goodPoints.length > 0 && (
                       <p>良かった点: {rep.liveLog.goodPoints.join(' / ')}</p>
                     )}

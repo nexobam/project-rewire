@@ -161,6 +161,15 @@ export interface Session {
   endedAt?: number;
 }
 
+export interface LiveWeakItemDetail {
+  enText: string;
+  whatYouWantedToSay?: string;
+  yourAttempt?: string;
+  coreImageJa?: string;
+  pronunciationTip?: string;
+  sceneTags?: string[];
+}
+
 export interface LiveLogSummary {
   durationMinutes: number;
   overallReview: string;
@@ -168,6 +177,9 @@ export interface LiveLogSummary {
   badPoints: string[];
   fluencyScore: number;
   weakChunks: string[];
+  topicsDiscussed?: string[];
+  conversationHighlights?: string;
+  weakItems?: LiveWeakItemDetail[];
 }
 
 export interface AiReport {

@@ -72,5 +72,50 @@ See you next time!
     expect(prompt).toContain('take it easy');
     expect(prompt).toContain('Finish');
     expect(prompt).toContain('durationMinutes');
+    expect(prompt).toContain('topicsDiscussed');
+    expect(prompt).toContain('weakItems');
+  });
+
+  it('会話内容詳細（topicsDiscussed / conversationHighlights / weakItems）から具体的なコアイメージ解説付きチャンクを生成し、overallReview・fluencyScore欠落時も柔軟に補完できること', () => {
+    const richJson = `
+\`\`\`json
+{
+  "durationMinutes": 20,
+  "topicsDiscussed": ["週末のカフェ巡り", "仕事のスケジュール調整"],
+  "conversationHighlights": "週末に行ったカフェの話題で盛り上がりましたが、予定変更の理由を説明する際に過去形のチャンクに詰まる場面がありました。",
+  "goodPoints": ["I mean を使った自然なつなぎ"],
+  "badPoints": ["ended up + -ing の形がすぐに出なかった"],
+  "weakItems": [
+    {
+      "enText": "I ended up staying home.",
+      "whatYouWantedToSay": "結局家にいることになっちゃった",
+      "yourAttempt": "I was stay home finally",
+      "coreImageJa": "【言いたいこと】結局家にいることになった ／ 【英語の語順】I ended up（最終的に行き着いた）→ staying home.（家にいる状態に）",
+      "pronunciationTip": "ended up はエンディダッと一息で繋ぐ。",
+      "sceneTags": ["カフェ", "同僚", "雑談"]
+    }
+  ]
+}
+\`\`\`
+`;
+    const parsed = parseLiveSessionLog(richJson, 2);
+    expect(parsed.summary.topicsDiscussed).toEqual([
+      '週末のカフェ巡り',
+      '仕事のスケジュール調整',
+    ]);
+    expect(parsed.summary.conversationHighlights).toContain(
+      '週末に行ったカフェの話題'
+    );
+    // overallReview や fluencyScore が省略されていてもエラーにならず補完される
+    expect(parsed.summary.overallReview.length).toBeGreaterThan(0);
+    expect(parsed.summary.fluencyScore).toBe(3);
+
+    expect(parsed.generatedChunks.length).toBe(1);
+    const chunk = parsed.generatedChunks[0];
+    expect(chunk.enText).toBe('I ended up staying home.');
+    expect(chunk.coreImageJa).toContain('結局家にいることになった');
+    expect(chunk.coreImageJa).toContain('I was stay home finally');
+    expect(chunk.pronunciationTip).toBe('ended up はエンディダッと一息で繋ぐ。');
+    expect(chunk.visual.tags).toEqual(['カフェ', '同僚', '雑談']);
   });
 });

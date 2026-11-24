@@ -177,6 +177,20 @@ const AiReportSchema = z.object({
       badPoints: z.array(z.string()),
       fluencyScore: z.number(),
       weakChunks: z.array(z.string()),
+      topicsDiscussed: z.array(z.string()).optional(),
+      conversationHighlights: z.string().optional(),
+      weakItems: z
+        .array(
+          z.object({
+            enText: z.string(),
+            whatYouWantedToSay: z.string().optional(),
+            yourAttempt: z.string().optional(),
+            coreImageJa: z.string().optional(),
+            pronunciationTip: z.string().optional(),
+            sceneTags: z.array(z.string()).optional(),
+          })
+        )
+        .optional(),
     })
     .optional(),
   createdAt: z.number(),
