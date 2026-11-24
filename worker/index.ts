@@ -364,7 +364,7 @@ export default {
             });
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 11000);
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
 
             try {
               const geminiRes = await fetch(endpoint, {

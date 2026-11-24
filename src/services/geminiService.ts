@@ -1,10 +1,7 @@
 // 専属AI講師チーム（2ステップAPIパイプライン）・AI講師質問チャット・指数バックオフ・スマートフォールバックサービス（要件5・要件6-11・要件8-3）
 
 import { ALL_SEED_CHUNKS } from '../data/seed';
-import {
-  buildDuplicateForbidList,
-  filterValidAiQuestions,
-} from '../domain/aiValidator';
+import { filterValidAiQuestions } from '../domain/aiValidator';
 import {
   extractSituationMeaning,
   extractWordOrderBreakdown,
@@ -266,6 +263,238 @@ export function generateLocalMockPipelineOutput(params: {
         'totally の t はフラップで軽く弾き、good with を密着させる。',
       hasSoundChange: true,
     },
+    {
+      contentCategory: 'daily',
+      sceneCategory: 'office',
+      grammarPattern: 'double_check',
+      enText: 'Let me double check the schedule.',
+      blocks: ['Let', 'me', 'double', 'check', 'the', 'schedule.'],
+      acceptableOrders: [
+        ['Let', 'me', 'double', 'check', 'the', 'schedule.'],
+      ],
+      icons: ['Calendar', 'CheckCircle'],
+      tags: ['デスク', '同僚', '日程確認'],
+      coreImageJa:
+        '【言いたいこと】スケジュールを念のため再確認させてください ／ 【英語の語順】Let me double check（私に二重確認させて）→ the schedule.（その予定を）',
+      pronunciationTip: 'Let me はレミ、check the の k は軽く止めて繋げる。',
+      hasSoundChange: true,
+    },
+    {
+      contentCategory: 'daily',
+      sceneCategory: 'cafe',
+      grammarPattern: 'grab_table',
+      enText: 'Shall we grab a table outside?',
+      blocks: ['Shall', 'we', 'grab', 'a', 'table', 'outside?'],
+      acceptableOrders: [['Shall', 'we', 'grab', 'a', 'table', 'outside?']],
+      icons: ['Coffee', 'Sun'],
+      tags: ['テラス席', '友人', '席取り'],
+      coreImageJa:
+        '【言いたいこと】外のテラス席を確保しようか？ ／ 【英語の語順】Shall we grab（サッと確保しようか）→ a table outside?（外のテーブルを）',
+      pronunciationTip: 'grab a はグラバと連結し、outside の t は軽く止める。',
+      hasSoundChange: true,
+    },
+    {
+      contentCategory: 'daily',
+      sceneCategory: 'home',
+      grammarPattern: 'order_takeout',
+      enText: 'We might as well order takeout tonight.',
+      blocks: ['We', 'might', 'as', 'well', 'order', 'takeout', 'tonight.'],
+      acceptableOrders: [
+        ['We', 'might', 'as', 'well', 'order', 'takeout', 'tonight.'],
+      ],
+      icons: ['Utensils', 'Home'],
+      tags: ['リビング', '家族', '出前注文'],
+      coreImageJa:
+        '【言いたいこと】今夜はもうテイクアウトを頼んじゃおうよ ／ 【英語の語順】We might as well order（いっそ注文した方がいい）→ takeout tonight.（今夜の持ち帰り料理を）',
+      pronunciationTip: 'might as well はマイタズウェルと一息のチャンクで。',
+      hasSoundChange: true,
+    },
+    {
+      contentCategory: 'daily',
+      sceneCategory: 'train',
+      grammarPattern: 'catch_earlier_train',
+      enText: 'I managed to catch the earlier train.',
+      blocks: ['I', 'managed', 'to', 'catch', 'the', 'earlier', 'train.'],
+      acceptableOrders: [
+        ['I', 'managed', 'to', 'catch', 'the', 'earlier', 'train.'],
+      ],
+      icons: ['Train', 'Clock'],
+      tags: ['駅ホーム', '友人', '一本早い'],
+      coreImageJa:
+        '【言いたいこと】なんとか1本早い電車に乗れました ／ 【英語の語順】I managed to catch（なんとか捕まえた）→ the earlier train.（より早い電車を）',
+      pronunciationTip: 'managed to はマネージトゥと d を飲み込んで繋ぐ。',
+      hasSoundChange: true,
+    },
+    {
+      contentCategory: 'heat',
+      sceneCategory: 'arena',
+      grammarPattern: 'heat_defense_stop',
+      enText: 'Miami came up with a huge stop.',
+      blocks: ['Miami', 'came', 'up', 'with', 'a', 'huge', 'stop.'],
+      acceptableOrders: [
+        ['Miami', 'came', 'up', 'with', 'a', 'huge', 'stop.'],
+      ],
+      icons: ['Shield', 'Flame'],
+      tags: ['コート脇', '観衆', '守備成功'],
+      coreImageJa:
+        '【言いたいこと】マイアミがここ一番でビッグストップ（守備成功）を決めた ／ 【英語の語順】Miami came up with（マイアミが繰り出した）→ a huge stop.（巨大なディフェンスストップを）',
+      pronunciationTip: 'came up with a はケイマップウィザと一息で繋げる。',
+      hasSoundChange: true,
+    },
+    {
+      contentCategory: 'daily',
+      sceneCategory: 'office',
+      grammarPattern: 'run_by_you',
+      enText: 'Can I run this idea by you?',
+      blocks: ['Can', 'I', 'run', 'this', 'idea', 'by', 'you?'],
+      acceptableOrders: [['Can', 'I', 'run', 'this', 'idea', 'by', 'you?']],
+      icons: ['MessageSquare', 'Briefcase'],
+      tags: ['オフィス', '上司', '企画相談'],
+      coreImageJa:
+        '【言いたいこと】このアイデアをちょっと相談（確認）してもいいですか？ ／ 【英語の語順】Can I run this idea（この考えを走らせていい？）→ by you?（あなたのそばを通過させて）',
+      pronunciationTip: 'Can I はキャナイ、run this はランディスと滑らかに。',
+      hasSoundChange: true,
+    },
+    {
+      contentCategory: 'daily',
+      sceneCategory: 'shop',
+      grammarPattern: 'out_of_stock',
+      enText: 'That size is currently out of stock.',
+      blocks: ['That', 'size', 'is', 'currently', 'out', 'of', 'stock.'],
+      acceptableOrders: [
+        ['That', 'size', 'is', 'currently', 'out', 'of', 'stock.'],
+      ],
+      icons: ['ShoppingBag', 'AlertCircle'],
+      tags: ['売り場', '店員', '在庫切れ'],
+      coreImageJa:
+        '【言いたいこと】そのサイズは現在在庫切れとなっております ／ 【英語の語順】That size is currently（そのサイズは現在）→ out of stock.（在庫の外に出ている）',
+      pronunciationTip: 'out of stock はアウラヴストックと t をフラップ化する。',
+      hasSoundChange: true,
+    },
+    {
+      contentCategory: 'daily',
+      sceneCategory: 'phone',
+      grammarPattern: 'call_you_right_back',
+      enText: 'I will call you right back.',
+      blocks: ['I', 'will', 'call', 'you', 'right', 'back.'],
+      acceptableOrders: [['I', 'will', 'call', 'you', 'right', 'back.']],
+      icons: ['Phone', 'Clock'],
+      tags: ['移動中', '通話相手', '折り返し'],
+      coreImageJa:
+        '【言いたいこと】すぐ折り返し電話しますね ／ 【英語の語順】I will call you（あなたに電話する）→ right back.（すぐさま折り返して）',
+      pronunciationTip: 'call you はコーリュー、right back の t は止める。',
+      hasSoundChange: true,
+    },
+    {
+      contentCategory: 'daily',
+      sceneCategory: 'home',
+      grammarPattern: 'charge_my_phone',
+      enText: 'I forgot to charge my phone last night.',
+      blocks: ['I', 'forgot', 'to', 'charge', 'my', 'phone', 'last', 'night.'],
+      acceptableOrders: [
+        ['I', 'forgot', 'to', 'charge', 'my', 'phone', 'last', 'night.'],
+      ],
+      icons: ['Smartphone', 'Zap'],
+      tags: ['寝室', '自分', '充電忘れ'],
+      coreImageJa:
+        '【言いたいこと】昨夜スマホを充電するのを忘れてしまった ／ 【英語の語順】I forgot to charge（充電するのを忘れた）→ my phone last night.（自分のスマホを昨夜）',
+      pronunciationTip: 'forgot to はフォガットゥ、last night の t は脱落させる。',
+      hasSoundChange: true,
+    },
+    {
+      contentCategory: 'daily',
+      sceneCategory: 'office',
+      grammarPattern: 'take_care_of_it',
+      enText: 'I will take care of it right away.',
+      blocks: ['I', 'will', 'take', 'care', 'of', 'it', 'right', 'away.'],
+      acceptableOrders: [
+        ['I', 'will', 'take', 'care', 'of', 'it', 'right', 'away.'],
+      ],
+      icons: ['CheckCircle', 'Briefcase'],
+      tags: ['職場', '取引先', '即時対応'],
+      coreImageJa:
+        '【言いたいこと】ただちに私が対応いたします ／ 【英語の語順】I will take care of it（私がその世話・処理を引き受ける）→ right away.（今すぐに）',
+      pronunciationTip: 'care of it はケアロヴィッ、right away はライタウェイと連結。',
+      hasSoundChange: true,
+    },
+    {
+      contentCategory: 'daily',
+      sceneCategory: 'street',
+      grammarPattern: 'traffic_held_up',
+      enText: 'I got held up in heavy traffic.',
+      blocks: ['I', 'got', 'held', 'up', 'in', 'heavy', 'traffic.'],
+      acceptableOrders: [
+        ['I', 'got', 'held', 'up', 'in', 'heavy', 'traffic.'],
+      ],
+      icons: ['Car', 'Clock'],
+      tags: ['幹線道路', '友人', '渋滞遅延'],
+      coreImageJa:
+        '【言いたいこと】ひどい渋滞に捕まって足止めされました ／ 【英語の語順】I got held up（足止めされた状態になった）→ in heavy traffic.（激しい渋滞の中で）',
+      pronunciationTip: 'held up in はヘルダッピンと d・u・p・i を滑らかに繋ぐ。',
+      hasSoundChange: true,
+    },
+    {
+      contentCategory: 'daily',
+      sceneCategory: 'restaurant',
+      grammarPattern: 'make_reservation',
+      enText: 'Did you make a reservation for tonight?',
+      blocks: ['Did', 'you', 'make', 'a', 'reservation', 'for', 'tonight?'],
+      acceptableOrders: [
+        ['Did', 'you', 'make', 'a', 'reservation', 'for', 'tonight?'],
+      ],
+      icons: ['Utensils', 'Calendar'],
+      tags: ['店先', 'パートナー', '予約確認'],
+      coreImageJa:
+        '【言いたいこと】今夜のお店の予約って取ってある？ ／ 【英語の語順】Did you make a reservation（予約を作った？）→ for tonight?（今夜のために）',
+      pronunciationTip: 'Did you はディジュー、make a はメイカと軽く繋げる。',
+      hasSoundChange: true,
+    },
+    {
+      contentCategory: 'daily',
+      sceneCategory: 'airport',
+      grammarPattern: 'boarding_soon',
+      enText: 'Our flight is boarding in ten minutes.',
+      blocks: ['Our', 'flight', 'is', 'boarding', 'in', 'ten', 'minutes.'],
+      acceptableOrders: [
+        ['Our', 'flight', 'is', 'boarding', 'in', 'ten', 'minutes.'],
+      ],
+      icons: ['Plane', 'Bell'],
+      tags: ['搭乗口', '同行者', '搭乗開始'],
+      coreImageJa:
+        '【言いたいこと】私たちの便、あと10分で搭乗が始まるよ ／ 【英語の語順】Our flight is boarding（私たちの便が搭乗を始める）→ in ten minutes.（10分後に）',
+      pronunciationTip: 'boarding in はボーディンギンと母音へ滑らかに繋ぐ。',
+      hasSoundChange: true,
+    },
+    {
+      contentCategory: 'heat',
+      sceneCategory: 'arena',
+      grammarPattern: 'heat_three_pointer',
+      enText: 'Herro drained a deep three from downtown.',
+      blocks: ['Herro', 'drained', 'a', 'deep', 'three', 'from', 'downtown.'],
+      acceptableOrders: [
+        ['Herro', 'drained', 'a', 'deep', 'three', 'from', 'downtown.'],
+      ],
+      icons: ['Trophy', 'Target'],
+      tags: ['アリーナ', 'ファン', '長距離砲'],
+      coreImageJa:
+        '【言いたいこと】ヒーローが遠くの位置からディープスリーを綺麗に沈めた ／ 【英語の語順】Herro drained a deep three（ヒーローが深い3Pを吸い込ませた）→ from downtown.（ロングレンジから）',
+      pronunciationTip: 'drained a はドレインダと d と a を滑らかに連結する。',
+      hasSoundChange: true,
+    },
+    {
+      contentCategory: 'daily',
+      sceneCategory: 'home',
+      grammarPattern: 'do_the_laundry',
+      enText: 'I need to catch up on laundry.',
+      blocks: ['I', 'need', 'to', 'catch', 'up', 'on', 'laundry.'],
+      acceptableOrders: [['I', 'need', 'to', 'catch', 'up', 'on', 'laundry.']],
+      icons: ['Home', 'Sun'],
+      tags: ['洗面所', '家族', '洗濯溜め'],
+      coreImageJa:
+        '【言いたいこと】溜まっていた洗濯物を片付けないと ／ 【英語の語順】I need to catch up（遅れを取り戻す必要がある）→ on laundry.（洗濯物に関して）',
+      pronunciationTip: 'need to はニードトゥ、catch up on はキャッチャポンと繋ぐ。',
+      hasSoundChange: true,
+    },
   ];
 
   const allExistingEnTexts = existingChunks.map((c) =>
@@ -275,7 +504,7 @@ export function generateLocalMockPipelineOutput(params: {
     rawMockCandidates,
     allExistingEnTexts,
     settings.level
-  );
+  ).slice(0, 5);
 
   return { analyst, teacher, newChunks };
 }
@@ -468,21 +697,71 @@ export async function runFourAiEmployeesPipeline(params: {
     };
   }
 
-  const forbidList = buildDuplicateForbidList(existingChunks);
+  const forbidList = existingChunks
+    .slice(-80)
+    .map((c) => c.enText.trim().replace(/\s+/g, ' '));
   const whitelistStr = ICON_WHITELIST.join(', ');
+  const whitelistSet = new Set<string>(ICON_WHITELIST);
+
+  const repairRawAiQuestions = (rawList: unknown[]): unknown[] => {
+    return rawList.map((item) => {
+      if (!item || typeof item !== 'object') return item;
+      const obj = { ...(item as Record<string, unknown>) };
+      if (typeof obj.enText === 'string') {
+        const cleanEn = obj.enText.trim().replace(/\s+/g, ' ');
+        obj.enText = cleanEn;
+        const words = cleanEn.split(' ').filter((w) => w.length > 0);
+        const curBlocks = Array.isArray(obj.blocks)
+          ? obj.blocks.filter((b): b is string => typeof b === 'string')
+          : [];
+        if (curBlocks.join(' ').trim().replace(/\s+/g, ' ') !== cleanEn) {
+          obj.blocks = words;
+        }
+        const finalBlocks = obj.blocks as string[];
+        const curOrders = Array.isArray(obj.acceptableOrders)
+          ? (obj.acceptableOrders as unknown[][])
+          : [];
+        obj.acceptableOrders = [finalBlocks, ...curOrders.slice(0, 3)];
+      }
+      if (Array.isArray(obj.icons)) {
+        const ic0 =
+          typeof obj.icons[0] === 'string' && whitelistSet.has(obj.icons[0])
+            ? obj.icons[0]
+            : 'MessageSquare';
+        const ic1 =
+          typeof obj.icons[1] === 'string' && whitelistSet.has(obj.icons[1])
+            ? obj.icons[1]
+            : 'Zap';
+        obj.icons = [ic0, ic1];
+      }
+      if (Array.isArray(obj.tags)) {
+        const rawTags = obj.tags as unknown[];
+        const defaults = ['オフィス', '同僚', '日常会話'];
+        obj.tags = [0, 1, 2].map((i) => {
+          const item = rawTags[i];
+          const rawTag = typeof item === 'string' ? item.trim() : '';
+          const clipped = [...rawTag].slice(0, 8).join('');
+          return clipped.length > 0 ? clipped : defaults[i];
+        });
+      }
+      return obj;
+    });
+  };
 
   const step1SystemPrompt = `あなたは英語脳再配線アプリ「Project Rewire」の専属AI英語講師チーム（弱点分析・コアイメージ解説・カリキュラム作成）です。
 【絶対ルール】
 - 出題中（回答前）に日本語を英訳させることは禁止ですが、回答後の解説（coreImageJa）では何を言っている文なのか100%理解できるよう、必ず「【言いたいこと】自然な場面の意味・ニュアンス ／ 【英語の語順】前から順のチャンク理解と空間コアイメージ」の形式で記述すること。
 - 新規問題は5問（日常会話85%：Miami Heat 15%の比率、パターンプラクティスとチャンク・ビルディングを混合）。
 - Lv.2以降では、マイアミのストリート・ドライブ・相棒とのリアルな掛け合い（GTA6 / Vice City のような日常の相棒トークやゲーム雑談でも使える自然なカジュアル英語・口語表現）も適度に織り交ぜること。
-- タグは「場所／相手／感情」の名詞3つ（各8文字以内）。動詞やヒント語は禁止。
+- タグは「場所／相手／具体的な状況」の名詞3つ（各8文字以内）。動詞やヒント語は禁止。
 - アイコンは次のホワイトリストからのみ2つ選択: ${whitelistStr}
 - enTextは80文字以内、blocksは3〜9個、acceptableOrdersにはblocks自身の並びを必ず含める。
-- 重複禁止リスト: ${forbidList.join(' | ')}`;
+- 重複禁止リスト（これらと全く異なる新しい表現を作ること）: ${forbidList.join(' | ')}`;
 
   const step1UserPrompt = JSON.stringify({
     level: settings.level,
+    existingCount: existingChunks.length,
+    requestSeed: Date.now(),
     attemptsCount: sessionAttempts.length,
     greenCount: sessionAttempts.filter((a) => a.rating === 'green').length,
     soundMisses: sessionAttempts.filter((a) => a.missType === 'sound_change')
@@ -495,7 +774,7 @@ export async function runFourAiEmployeesPipeline(params: {
 
   try {
     // コール1（temperature 0.7）
-    const step1Result = await callGeminiJsonEndpoint({
+    const step1Result = (await callGeminiJsonEndpoint({
       apiKey: settings.geminiApiKey ?? '',
       model: settings.geminiModel,
       systemInstruction: step1SystemPrompt,
@@ -503,36 +782,48 @@ export async function runFourAiEmployeesPipeline(params: {
       temperature: 0.7,
       responseSchema: GEMINI_STEP1_RESPONSE_SCHEMA,
       fetchImpl,
-    });
-
-    // コール2（temperature 0.2、独立した品質監査AI講師）
-    const step2SystemPrompt = `あなたは独立した英語・認知言語学の品質監査AI講師です。
-入力されたJSONについて以下の2点を厳格に監査・修正し、同じJSONスキーマで最終版を納品してください：
-1. 日本語解説（coreImageJa）が抽象的で意味不明になっていないか検査し、必ず「【言いたいこと】その場面で伝えたい自然な意味 ／ 【英語の語順】英語の語順のまま前から区切ったチャンク理解とコアイメージ」の形式に整える。タグは8文字以内の名詞（場所・相手・感情）に修正する。
-2. 英文（enText, blocks, acceptableOrders）から「ネイティブとして不自然な英語」を排除し、自然で語順が1通りに定まりやすいチャンク（3〜9語、80文字以内）に修正する。`;
-
-    const step2Result = (await callGeminiJsonEndpoint({
-      apiKey: settings.geminiApiKey ?? '',
-      model: settings.geminiModel,
-      systemInstruction: step2SystemPrompt,
-      userPrompt: JSON.stringify(step1Result),
-      temperature: 0.2,
-      responseSchema: GEMINI_STEP2_RESPONSE_SCHEMA,
-      fetchImpl,
     })) as {
       analyst?: { bottleneck?: string; growth?: string };
       teacher?: { coreImage?: string; pronunciation?: string; praise?: string }[];
       questions?: unknown[];
     };
 
+    // コール2（temperature 0.2、独立した品質監査AI講師。万一タイムアウトしてもStep1の出力を活かす）
+    const step2SystemPrompt = `あなたは独立した英語・認知言語学の品質監査AI講師です。
+入力されたJSONについて以下の2点を厳格に監査・修正し、同じJSONスキーマで最終版を納品してください：
+1. 日本語解説（coreImageJa）が抽象的で意味不明になっていないか検査し、必ず「【言いたいこと】その場面で伝えたい自然な意味 ／ 【英語の語順】英語の語順のまま前から区切ったチャンク理解とコアイメージ」の形式に整える。タグは8文字以内の名詞（場所・相手・状況）に修正する。
+2. 英文（enText, blocks, acceptableOrders）から「ネイティブとして不自然な英語」を排除し、自然で語順が1通りに定まりやすいチャンク（3〜9語、80文字以内）に修正する。`;
+
+    let step2Result = step1Result;
+    let apiCallsMade = 1;
+    try {
+      step2Result = (await callGeminiJsonEndpoint({
+        apiKey: settings.geminiApiKey ?? '',
+        model: settings.geminiModel,
+        systemInstruction: step2SystemPrompt,
+        userPrompt: JSON.stringify(step1Result),
+        temperature: 0.2,
+        responseSchema: GEMINI_STEP2_RESPONSE_SCHEMA,
+        fetchImpl,
+      })) as typeof step1Result;
+      apiCallsMade = 2;
+    } catch {
+      // Step 2 がタイムアウト等した場合は Step 1 の生成結果をそのまま使用する
+      step2Result = step1Result;
+    }
+
     const allExistingEnTexts = existingChunks.map((c) =>
       c.enText.trim().replace(/\s+/g, ' ')
     );
+    const mergedRawQuestions = [
+      ...(Array.isArray(step2Result?.questions) ? step2Result.questions : []),
+      ...(Array.isArray(step1Result?.questions) ? step1Result.questions : []),
+    ];
     const validChunks = filterValidAiQuestions(
-      Array.isArray(step2Result.questions) ? step2Result.questions : [],
+      repairRawAiQuestions(mergedRawQuestions),
       allExistingEnTexts,
       settings.level
-    );
+    ).slice(0, 5);
 
     const mockFallback = generateLocalMockPipelineOutput({
       sessionAttempts,
@@ -540,27 +831,41 @@ export async function runFourAiEmployeesPipeline(params: {
       settings,
     });
 
+    const finalChunks = [
+      ...validChunks,
+      ...mockFallback.newChunks.filter(
+        (m) =>
+          !validChunks.some(
+            (v) => v.enText.toLowerCase() === m.enText.toLowerCase()
+          )
+      ),
+    ].slice(0, 5);
+
     return {
       analyst: {
         bottleneck: (
-          step2Result.analyst?.bottleneck || mockFallback.analyst.bottleneck
+          step2Result?.analyst?.bottleneck ||
+          step1Result?.analyst?.bottleneck ||
+          mockFallback.analyst.bottleneck
         ).slice(0, 100),
         growth: (
-          step2Result.analyst?.growth || mockFallback.analyst.growth
+          step2Result?.analyst?.growth ||
+          step1Result?.analyst?.growth ||
+          mockFallback.analyst.growth
         ).slice(0, 100),
       },
       teacher:
-        Array.isArray(step2Result.teacher) && step2Result.teacher.length > 0
+        Array.isArray(step2Result?.teacher) && step2Result.teacher.length > 0
           ? step2Result.teacher.slice(0, 2).map((t) => ({
               coreImage: (t.coreImage || '').slice(0, 100),
               pronunciation: t.pronunciation || '',
               praise: t.praise || '',
             }))
           : mockFallback.teacher,
-      newChunks: validChunks.length > 0 ? validChunks : mockFallback.newChunks,
+      newChunks: finalChunks,
       usedMock: false,
       rateLimited: false,
-      apiCallsMade: 2,
+      apiCallsMade,
     };
   } catch (err) {
     secureLogger.warn(err, settings.geminiApiKey);
