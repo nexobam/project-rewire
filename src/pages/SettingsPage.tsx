@@ -82,44 +82,81 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           <span>1. 英語音声・効果音・回答スピードの調整</span>
         </div>
 
-        {/* TTS再生速度 (0.7x〜1.2x) ＋ 試聴ボタン */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-xs space-y-0.5">
-            <p className="font-bold text-sm">
-              英語音声の話すスピード：{settings.ttsRate.toFixed(2)}倍速
-            </p>
-            <p className="opacity-80">
-              聴き取りにくいときは 0.80〜0.90倍、慣れてきたら 1.00〜1.15倍がおすすめです
-            </p>
+        {/* TTS再生速度 (0.5x〜1.5x) ＋ プリセット＆試聴ボタン */}
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-xs space-y-0.5">
+              <p className="font-bold text-sm">
+                英語音声の話すスピード：{settings.ttsRate.toFixed(2)}倍速
+              </p>
+              <p className="opacity-80">
+                聴き取りにくいときは 0.70〜0.85倍、負荷をかけるなら 1.15〜1.30倍がおすすめです
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={MIN_TTS_RATE}
+                max={MAX_TTS_RATE}
+                step={0.05}
+                value={settings.ttsRate}
+                onChange={(e) => {
+                  const nextRate = Number(e.target.value);
+                  void onUpdateSettings({ ttsRate: nextRate });
+                }}
+                className="w-36"
+                aria-label="読み上げ速度"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  void speakEnglishText({
+                    text: 'Let me get a cold brew.',
+                    rate: settings.ttsRate,
+                  });
+                }}
+                style={{ borderColor: palette.border, borderBottomWidth: '2px' }}
+                className="px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 tactile-btn"
+                data-testid="test-tts-rate-button"
+              >
+                <Volume2 size={14} strokeWidth={1.75} color="currentColor" />
+                <span>速度を試聴</span>
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <input
-              type="range"
-              min={MIN_TTS_RATE}
-              max={MAX_TTS_RATE}
-              step={0.05}
-              value={settings.ttsRate}
-              onChange={(e) =>
-                void onUpdateSettings({ ttsRate: Number(e.target.value) })
-              }
-              className="w-36"
-              aria-label="読み上げ速度"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                void speakEnglishText({
-                  text: 'Let me get a cold brew.',
-                  rate: settings.ttsRate,
-                });
-              }}
-              style={{ borderColor: palette.border, borderBottomWidth: '2px' }}
-              className="px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1 tactile-btn"
-              data-testid="test-tts-rate-button"
-            >
-              <Volume2 size={14} strokeWidth={1.75} color="currentColor" />
-              <span>速度を試聴</span>
-            </button>
+
+          {/* ワンタップ速度プリセット（タップで即設定＆その速度で試聴） */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            {[
+              { label: '0.70x ゆっくり', value: 0.7 },
+              { label: '0.85x ややゆっくり', value: 0.85 },
+              { label: '1.00x 標準', value: 1.0 },
+              { label: '1.15x やや速め', value: 1.15 },
+              { label: '1.30x 高速', value: 1.3 },
+            ].map((preset) => {
+              const isSelected = Math.abs(settings.ttsRate - preset.value) < 0.02;
+              return (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onClick={() => {
+                    void onUpdateSettings({ ttsRate: preset.value });
+                    void speakEnglishText({
+                      text: 'Let me get a cold brew.',
+                      rate: preset.value,
+                    });
+                  }}
+                  style={{
+                    backgroundColor: isSelected ? palette.text : palette.background,
+                    color: isSelected ? palette.card : palette.text,
+                    borderColor: isSelected ? palette.text : palette.border,
+                  }}
+                  className="px-2.5 py-1 rounded-md border text-[11px] font-bold tactile-btn"
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 

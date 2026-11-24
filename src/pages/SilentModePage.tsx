@@ -858,35 +858,32 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
       {/* PCでは2カラム表示（左：状況ビジュアルカード＋場面解説、右：インタラクション／回答後カード） */}
       <div
         key={currentQuestionKey ?? currentIndex}
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start animate-card-enter"
+        className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 lg:gap-6 items-start animate-card-enter"
       >
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {exerciseType === 'picture_choice' && !answeredResult ? (
             <div
               style={{
                 backgroundColor: palette.card,
                 borderColor: palette.border,
               }}
-              className="border rounded-lg p-5 space-y-3"
+              className="border rounded-lg px-3.5 py-2.5 flex items-center justify-between gap-2"
               data-testid="silent-picture-choice-guide"
             >
-              <p className="text-sm font-bold">
-                Lv.1前半（絵カード期）：流れた英語の音を聴き、その場面に合う状況ビジュアルカード（場所・相手・感情）を4枚から1枚選んでください。
-              </p>
-              <p className="text-xs opacity-80">
-                ※日本語のネタバレは出ません。選択後に正解の英文・言っていること・語順チャンク解説・発音フォームが表示されます。
+              <p className="text-xs font-bold leading-snug">
+                流れた英語の場面に合うカードを4枚から選んでください
               </p>
               <button
                 type="button"
                 onClick={handleReplay}
                 style={{
                   borderColor: palette.border,
-                  borderBottomWidth: '3px',
+                  borderBottomWidth: '2px',
                 }}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-lg border text-xs font-semibold tactile-block"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold shrink-0 tactile-block"
               >
-                <Volume2 size={16} strokeWidth={1.75} color="currentColor" />
-                <span>もう一度聴く (Space)</span>
+                <Volume2 size={14} strokeWidth={1.75} color="currentColor" />
+                <span>もう一度聴く</span>
               </button>
             </div>
           ) : (
@@ -974,7 +971,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
               </div>
             ) : (
               <div
-                className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                className="grid grid-cols-1 sm:grid-cols-2 gap-2"
                 data-testid="picture-choice-grid"
               >
                 {pictureChoices.map((card) => (

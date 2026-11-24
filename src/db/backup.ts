@@ -209,7 +209,7 @@ const SettingsWithoutKeySchema = z.object({
   perTapMs: z.number().min(350).max(700),
   geminiModel: z.string().min(1),
   dailyApiCallLimit: z.number().min(1),
-  ttsRate: z.number().min(0.7).max(1.2),
+  ttsRate: z.number().min(0.5).max(1.5),
   clickSound: z.boolean(),
   themePreference: z.enum(['auto', 'light', 'dark']),
   lastBackupAt: z.number().optional(),

@@ -1,7 +1,25 @@
 // Web Speech API (TTS) 制御サービス（iOSアンロック・cancel()・onendタイムアウト保護・英語話者選択）
 
-export const MIN_TTS_RATE = 0.7;
-export const MAX_TTS_RATE = 1.2;
+export const MIN_TTS_RATE = 0.5;
+export const MAX_TTS_RATE = 1.5;
+
+/**
+ * ユーザーが設定した倍率（0.50〜1.50）を、iOS Safari / Web Speech API で
+ * 実際に人間がハッキリ速度差を体感できる実効レートに変換する
+ * （iOS Safari は 0.85〜1.15 付近の不感帯が広いため、1.0 を基準に変化幅を増幅する）
+ */
+export function toEffectiveUtteranceRate(userRate: number): number {
+  const clamped = Math.min(MAX_TTS_RATE, Math.max(MIN_TTS_RATE, userRate || 1.0));
+  if (Math.abs(clamped - 1.0) < 0.01) {
+    return 1.0;
+  }
+  if (clamped < 1.0) {
+    // 例: 0.85 -> 0.79, 0.70 -> 0.58, 0.50 -> 0.35
+    return Number(Math.max(0.35, 1.0 - (1.0 - clamped) * 1.4).toFixed(2));
+  }
+  // 例: 1.15 -> 1.23, 1.30 -> 1.45, 1.50 -> 1.75
+  return Number(Math.min(2.0, 1.0 + (clamped - 1.0) * 1.5).toFixed(2));
+}
 
 /**
  * onend が発火しない場合の保護タイムアウト時間（ms）を計算する（要件6-2）
@@ -27,7 +45,16 @@ export function selectEnglishVoices(
       !/japanese/i.test(v.name)
   );
   const enUs = englishAll.filter((v) => /^en[-_]US/i.test(v.lang));
-  return enUs.length > 0 ? enUs : englishAll;
+  const pool = enUs.length > 0 ? enUs : englishAll;
+
+  // iOS Safari / macOS / Chrome で速度変更が滑らかに反映される高品質な標準英語ボイスを優先ソート
+  const preferredPattern =
+    /Samantha|Ava|Allison|Nicky|Alex|Aaron|Victoria|Daniel|Karen|Google US English|Natural|Enhanced|Premium/i;
+  return [...pool].sort((a, b) => {
+    const aPref = preferredPattern.test(a.name) ? 0 : 1;
+    const bPref = preferredPattern.test(b.name) ? 0 : 1;
+    return aPref - bPref;
+  });
 }
 
 let voicesLoaded = false;
@@ -230,10 +257,11 @@ export async function speakEnglishText(
 
     try {
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      utterance.rate = clampedRate;
-      utterance.pitch = 1.0;
+      const finalRate = toEffectiveUtteranceRate(clampedRate);
+      let finalPitch = 1.0;
 
+      // 注意：iOS Safari では utterance.voice や lang を後から代入すると rate が 1.0 にリセットされることがあるため、
+      // 必ず voice と lang を先にセットしてから、最後に rate と pitch を代入する
       if (voices.length > 0) {
         if (multiSpeakerRandom) {
           if (voices.length > 1) {
@@ -241,23 +269,22 @@ export async function speakEnglishText(
             utterance.voice = voices[randomIndex];
             utterance.lang = voices[randomIndex].lang;
           } else {
-            // 音声が1つしかなければ pitch と rate を少し変えて代わりにする（要件6-3）
             utterance.voice = voices[0];
             utterance.lang = voices[0].lang;
-            const pitchOffsets = [0.88, 0.95, 1.06, 1.14];
-            const rateOffsets = [-0.06, -0.03, 0.04, 0.07];
+            const pitchOffsets = [0.92, 0.97, 1.04, 1.08];
             const idx = Math.floor(Math.random() * pitchOffsets.length);
-            utterance.pitch = pitchOffsets[idx];
-            utterance.rate = Math.min(
-              MAX_TTS_RATE,
-              Math.max(MIN_TTS_RATE, clampedRate + rateOffsets[idx])
-            );
+            finalPitch = pitchOffsets[idx];
           }
         } else {
           utterance.voice = voices[0];
           utterance.lang = voices[0].lang;
         }
+      } else {
+        utterance.lang = 'en-US';
       }
+
+      utterance.pitch = finalPitch;
+      utterance.rate = finalRate;
 
       utterance.onstart = () => {
         if (myToken !== activeTtsToken) return;

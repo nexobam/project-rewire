@@ -1,4 +1,4 @@
-// 状況ビジュアルカード（シーンイラスト図解バナー・SVGアイコン3つ＋場面タグ4つ［場所／相手／状況／焦点］＋場面で言っていること解説）コンポーネント
+// 状況ビジュアルカード（シーンイラスト図解バナー・SVGアイコン3つ＋場面タグ4つ［場所／相手／状況／焦点］＋iPhone 4択コンパクト対応）コンポーネント
 
 import React from 'react';
 import { extractSituationMeaning } from '../domain/chunkExplanation';
@@ -38,6 +38,125 @@ export const VisualCard: React.FC<VisualCardProps> = ({
 
   const Wrapper = onClick ? 'button' : 'div';
 
+  // iPhoneの4択画面（compact時）は1画面に4枚が余裕で収まるよう高さを抑えたスリムレイアウトにする
+  if (compact) {
+    return (
+      <Wrapper
+        type={onClick ? 'button' : undefined}
+        onClick={onClick}
+        style={{
+          backgroundColor: palette.card,
+          borderColor: selected ? palette.text : palette.border,
+          color: palette.text,
+        }}
+        className={`w-full text-left border rounded-xl p-2.5 space-y-1.5 ${
+          onClick
+            ? 'tactile-btn cursor-pointer hover:shadow-sm transition-shadow'
+            : ''
+        }`}
+        data-testid={`visual-card-${chunk.id}`}
+      >
+        {/* 上段（スリム1行）：左に3アイコン図解、右にシーン見出し＆焦点バッジ */}
+        <div
+          style={{
+            background: visualMeta.softBgCss,
+            borderColor: palette.border,
+          }}
+          className="rounded-lg border px-2 py-1.5 flex items-center justify-between gap-2"
+        >
+          <div className="flex items-center gap-1 shrink-0">
+            <div
+              style={{
+                backgroundColor: palette.card,
+                borderColor: visualMeta.accentHex,
+              }}
+              className="p-1.5 rounded-md border flex items-center justify-center"
+            >
+              <WhitelistedIcon name={mainIcon} size={16} />
+            </div>
+            <span className="text-[10px] font-bold opacity-45">×</span>
+            <div
+              style={{
+                backgroundColor: palette.card,
+                borderColor: palette.border,
+              }}
+              className="p-1 rounded-md border flex items-center justify-center"
+            >
+              <WhitelistedIcon name={subIcon} size={14} />
+            </div>
+            <span className="text-[10px] font-bold opacity-45">＋</span>
+            <div
+              style={{
+                backgroundColor: palette.card,
+                borderColor: palette.border,
+              }}
+              className="p-1 rounded-md border flex items-center justify-center opacity-90"
+            >
+              <WhitelistedIcon name={visualMeta.thirdIcon} size={13} />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-end gap-1 min-w-0">
+            <span
+              style={{
+                color: visualMeta.accentHex,
+                backgroundColor: palette.card,
+                borderColor: palette.border,
+              }}
+              className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full border tracking-tight truncate"
+            >
+              {visualMeta.sceneTitle}
+            </span>
+            {!allEnglishMode && (
+              <span
+                style={{
+                  backgroundColor: palette.card,
+                  borderColor: visualMeta.accentHex,
+                }}
+                className="text-[10px] font-extrabold px-1.5 py-0.5 rounded border shrink-0"
+              >
+                {visualMeta.actionTag}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* 下段（スリム1行）：場所・相手・状況の3タグ */}
+        {!allEnglishMode && (
+          <div className="flex flex-wrap items-center gap-1">
+            <span
+              style={{
+                backgroundColor: palette.background,
+                borderColor: palette.border,
+              }}
+              className="text-[11px] font-semibold px-2 py-0.5 rounded border leading-tight"
+            >
+              場所：{placeTag}
+            </span>
+            <span
+              style={{
+                backgroundColor: palette.background,
+                borderColor: palette.border,
+              }}
+              className="text-[11px] font-semibold px-2 py-0.5 rounded border leading-tight"
+            >
+              相手：{partnerTag}
+            </span>
+            <span
+              style={{
+                backgroundColor: palette.background,
+                borderColor: visualMeta.accentHex,
+              }}
+              className="text-[11px] font-bold px-2 py-0.5 rounded border leading-tight"
+            >
+              状況：{situationTag}
+            </span>
+          </div>
+        )}
+      </Wrapper>
+    );
+  }
+
   return (
     <Wrapper
       type={onClick ? 'button' : undefined}
@@ -47,9 +166,9 @@ export const VisualCard: React.FC<VisualCardProps> = ({
         borderColor: selected ? palette.text : palette.border,
         color: palette.text,
       }}
-      className={`w-full text-left border rounded-xl ${
-        compact ? 'p-3.5' : 'p-5'
-      } ${onClick ? 'tactile-btn cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+      className={`w-full text-left border rounded-xl p-5 ${
+        onClick ? 'tactile-btn cursor-pointer hover:shadow-md transition-shadow' : ''
+      }`}
       data-testid={`visual-card-${chunk.id}`}
     >
       {/* 上段：シーン別カラーイラスト図解バナー（アイコン3つ＋シーン見出し） */}
@@ -58,7 +177,7 @@ export const VisualCard: React.FC<VisualCardProps> = ({
           background: visualMeta.softBgCss,
           borderColor: palette.border,
         }}
-        className={`rounded-lg border ${compact ? 'p-2.5 mb-2.5' : 'p-3.5 mb-3.5'} space-y-2`}
+        className="rounded-lg border p-3.5 mb-3.5 space-y-2"
       >
         <div className="flex items-center justify-between gap-2">
           <span
@@ -108,7 +227,7 @@ export const VisualCard: React.FC<VisualCardProps> = ({
               }}
               className="p-2.5 rounded-lg border-2 flex items-center justify-center shadow-sm"
             >
-              <WhitelistedIcon name={mainIcon} size={compact ? 22 : 26} />
+              <WhitelistedIcon name={mainIcon} size={26} />
             </div>
             <span className="text-xs font-bold opacity-50">×</span>
             <div
@@ -118,7 +237,7 @@ export const VisualCard: React.FC<VisualCardProps> = ({
               }}
               className="p-2 rounded-lg border flex items-center justify-center shadow-sm"
             >
-              <WhitelistedIcon name={subIcon} size={compact ? 20 : 24} />
+              <WhitelistedIcon name={subIcon} size={24} />
             </div>
             <span className="text-xs font-bold opacity-50">＋</span>
             <div
@@ -128,10 +247,7 @@ export const VisualCard: React.FC<VisualCardProps> = ({
               }}
               className="p-2 rounded-lg border flex items-center justify-center opacity-90"
             >
-              <WhitelistedIcon
-                name={visualMeta.thirdIcon}
-                size={compact ? 18 : 22}
-              />
+              <WhitelistedIcon name={visualMeta.thirdIcon} size={22} />
             </div>
           </div>
 

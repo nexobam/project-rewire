@@ -636,7 +636,18 @@ async function callGeminiJsonEndpoint(params: {
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/\s*```$/i, '')
     .trim();
-  return JSON.parse(cleanedJson);
+
+  try {
+    return JSON.parse(cleanedJson);
+  } catch {
+    const startIdx = cleanedJson.indexOf('{');
+    const endIdx = cleanedJson.lastIndexOf('}');
+    if (startIdx !== -1 && endIdx > startIdx) {
+      const slice = cleanedJson.slice(startIdx, endIdx + 1);
+      return JSON.parse(slice);
+    }
+    throw new Error('Failed to parse Gemini JSON output');
+  }
 }
 
 /**
