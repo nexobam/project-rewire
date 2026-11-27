@@ -199,6 +199,21 @@ describe('aiValidator & sttMatcher - AI生成問題の7項目機械検証と音�
     expect(
       containsNgWord('We had to postpone the meeting.', ['postpone', 'delay'])
     ).toEqual(['postpone']);
+
+    // 短縮形（I'm ⇔ I am, Let's ⇔ Let us）や数字（7 ⇔ seven）の自然な発話が100%一致と判定されること
+    const contractionMatch = calculateSttMatch(
+      'I am on my way there.',
+      "I'm on my way there"
+    );
+    expect(contractionMatch.matchRate).toBe(1);
+    expect(contractionMatch.isMatched).toBe(true);
+
+    const numberAndLetsMatch = calculateSttMatch(
+      'I can make it by seven.',
+      'I can make it by 7'
+    );
+    expect(numberAndLetsMatch.matchRate).toBe(1);
+    expect(numberAndLetsMatch.isMatched).toBe(true);
   });
 
   it('絵カード4択（Lv.1日常会話全25問）で選ばれる4枚のカードがすべて異なる意味クラスタ・場所タグ・状況タグ・焦点タグを持ち、紛らわしい選択肢が並ばないこと', () => {

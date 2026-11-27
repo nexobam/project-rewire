@@ -459,12 +459,32 @@ export function buildSessionBatch(params: BuildSessionBatchParams): Chunk[] {
     dueChunks.sort(prioritizeSilentCleared);
     newOrWeakChunks.sort(prioritizeSilentCleared);
   } else {
-    // 弱点（最新評価が red のもの）→ 未学習のAI新規生成問題 → 未学習シード問題の順で優先
+    // 期限到来した復習問題（dueChunks）の優先順位：
+    // ① Live実戦由来の弱点 → ② 直近評価が赤（要復習） → ③ 昇格ゲート対象コア問題（未卒業） → ④ SRS stageが浅い順
+    dueChunks.sort((a, b) => {
+      const sa = stateMap.get(a.id);
+      const sb = stateMap.get(b.id);
+      const duePriority = (c: Chunk, s?: ReviewState) => {
+        let p = 0;
+        if (c.source === 'live') p += 100;
+        const lastRating = s?.recentRatings[s.recentRatings.length - 1];
+        if (lastRating === 'red') p += 50;
+        else if (lastRating === 'yellow') p += 20;
+        if (c.isCore) p += 10;
+        p += Math.max(0, 4 - (s?.stage ?? 0));
+        return p;
+      };
+      return duePriority(b, sb) - duePriority(a, sa);
+    });
+
+    // 新規・弱点枠（newOrWeakChunks）の優先順位：
+    // ① 直近評価が red の弱点 → ② 未習得のコア問題（昇格ゲート対象がAI追加問題で埋もれないよう優先） → ③ 未学習のAI新規問題 → ④ その他
     newOrWeakChunks.sort((a, b) => {
       const sa = stateMap.get(a.id);
       const sb = stateMap.get(b.id);
       const score = (c: Chunk, s?: ReviewState) => {
-        if (s?.recentRatings[s.recentRatings.length - 1] === 'red') return 3;
+        if (s?.recentRatings[s.recentRatings.length - 1] === 'red') return 4;
+        if (!s && c.isCore) return 3;
         if (!s && c.source === 'ai') return 2;
         if (!s) return 1;
         return 0;

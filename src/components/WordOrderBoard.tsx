@@ -1,8 +1,9 @@
 // 語順ブロックボード（レイアウトシフト完全防止プレースホルダー・下辺3pxボーダー・translateY(2px)・最小高56px・間隔12px・PCキーボード1〜9/Backspace/Space対応）
 
 import React from 'react';
-import { RotateCcw, Volume2 } from 'lucide-react';
+import { RotateCcw, Volume2, Zap } from 'lucide-react';
 import type { ThemePalette } from '../domain/contrast';
+import { spotIdiomAnchor } from '../domain/idiomSpotter';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import type { Block } from '../types';
 
@@ -30,6 +31,9 @@ export const WordOrderBoard: React.FC<WordOrderBoardProps> = ({
   const selectedBlocks = selectedBlockIds
     .map((id) => blockMap.get(id))
     .filter((b): b is Block => Boolean(b));
+  const assembledText = selectedBlocks.map((b) => b.text).join(' ');
+  const activeIdiomAnchor =
+    selectedBlocks.length >= 2 ? spotIdiomAnchor(assembledText) : null;
 
   // キーボード操作：1〜9（ブロック選択）、Backspace（1つ戻す）、Space（リプレイ）
   useKeyboardShortcuts({
@@ -69,23 +73,42 @@ export const WordOrderBoard: React.FC<WordOrderBoardProps> = ({
               : '聴こえた英語の語順のままブロックをタップ（または数字キー 1〜9）'}
           </span>
         ) : (
-          selectedBlocks.map((block) => (
-            <button
-              key={`selected_${block.id}`}
-              type="button"
-              onClick={() => onUndoBlock(block.id)}
-              style={{
-                backgroundColor: palette.background,
-                borderColor: palette.text,
-                borderBottomWidth: '3px',
-                color: palette.text,
-              }}
-              className="min-h-[44px] px-3 py-1.5 rounded-lg border font-semibold text-sm tactile-block flex items-center justify-center"
-              data-testid={`selected-block-${block.id}`}
-            >
-              <span>{block.text}</span>
-            </button>
-          ))
+          <>
+            {selectedBlocks.map((block) => (
+              <button
+                key={`selected_${block.id}`}
+                type="button"
+                onClick={() => onUndoBlock(block.id)}
+                style={{
+                  backgroundColor: palette.background,
+                  borderColor: palette.text,
+                  borderBottomWidth: '3px',
+                  color: palette.text,
+                }}
+                className="min-h-[44px] px-3 py-1.5 rounded-lg border font-semibold text-sm tactile-block flex items-center justify-center"
+                data-testid={`selected-block-${block.id}`}
+              >
+                <span>{block.text}</span>
+              </button>
+            ))}
+            {activeIdiomAnchor && (
+              <div
+                style={{
+                  backgroundColor: palette.background,
+                  borderColor: palette.amberText ?? palette.border,
+                  color: palette.text,
+                }}
+                className="w-full mt-auto px-2.5 py-1 rounded border text-[11px] font-bold flex items-center gap-1.5"
+                data-testid="active-idiom-chunk-badge"
+              >
+                <Zap size={12} strokeWidth={2.2} className="shrink-0" />
+                <span className="truncate">
+                  塊チャンク成立: [{activeIdiomAnchor.chunkPhrase}]{' '}
+                  {activeIdiomAnchor.easyEnglish}
+                </span>
+              </div>
+            )}
+          </>
         )}
       </div>
 
