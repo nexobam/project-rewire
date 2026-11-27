@@ -14,6 +14,7 @@ import {
   extractWordOrderBreakdown,
 } from '../domain/chunkExplanation';
 import type { ThemePalette } from '../domain/contrast';
+import { spotIdiomAnchor } from '../domain/idiomSpotter';
 import { calculateSttMatch } from '../domain/sttMatcher';
 import {
   startAuxiliaryStt,
@@ -291,52 +292,97 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
         )}
       </div>
 
-      {/* 場面での意味・英語の語順チャンク理解・発音フォーム（Lv.4 All Englishモード時は非表示） */}
-      {!allEnglishMode && (
-        <div className="space-y-2 text-sm" data-testid="post-answer-explanation">
-          <div
-            style={{
-              backgroundColor: palette.background,
-              borderColor: palette.border,
-            }}
-            className="p-3 rounded border"
-            data-testid="explanation-situation-meaning"
-          >
-            <p className="text-xs font-bold opacity-75 mb-1">
-              このセリフで言っていること（場面の意図）
-            </p>
-            <p className="font-bold text-base">{situationMeaning}</p>
-          </div>
+      {/* 場面での意味・英語の語順チャンク理解・慣用句の英語脳リンク・発音フォーム */}
+      {(() => {
+        const idiomAnchor = spotIdiomAnchor(chunk.enText);
+        if (allEnglishMode) {
+          return idiomAnchor ? (
+            <div
+              style={{
+                backgroundColor: palette.background,
+                borderColor: palette.border,
+              }}
+              className="p-3 rounded border text-xs space-y-1"
+              data-testid="explanation-idiom-anchor"
+            >
+              <p className="font-bold opacity-75">
+                Chunk &amp; Easy English Paraphrase
+              </p>
+              <p className="font-mono font-bold text-sm">
+                [{idiomAnchor.chunkPhrase}] {idiomAnchor.easyEnglish}
+              </p>
+            </div>
+          ) : null;
+        }
+        return (
+          <div className="space-y-2 text-sm" data-testid="post-answer-explanation">
+            <div
+              style={{
+                backgroundColor: palette.background,
+                borderColor: palette.border,
+              }}
+              className="p-3 rounded border"
+              data-testid="explanation-situation-meaning"
+            >
+              <p className="text-xs font-bold opacity-75 mb-1">
+                このセリフで言っていること（場面の意図）
+              </p>
+              <p className="font-bold text-base">{situationMeaning}</p>
+            </div>
 
-          <div
-            style={{
-              backgroundColor: palette.background,
-              borderColor: palette.border,
-            }}
-            className="p-3 rounded border"
-            data-testid="explanation-word-order"
-          >
-            <p className="text-xs font-bold opacity-75 mb-1">
-              英語の語順のまま前から理解（チャンク分解・コアイメージ）
-            </p>
-            <p>{wordOrderBreakdown}</p>
-          </div>
+            {idiomAnchor && (
+              <div
+                style={{
+                  backgroundColor: palette.background,
+                  borderColor: palette.amberText ?? palette.border,
+                }}
+                className="p-3 rounded border space-y-1"
+                data-testid="explanation-idiom-anchor"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-1.5">
+                  <span className="text-xs font-bold opacity-80">
+                    慣用句・語彙の英語脳リンク（塊チャンク ⇔ 簡単英語）
+                  </span>
+                  <span className="font-mono font-extrabold text-xs px-2 py-0.5 rounded border">
+                    [{idiomAnchor.chunkPhrase}] {idiomAnchor.easyEnglish}
+                  </span>
+                </div>
+                <p className="text-xs leading-relaxed opacity-90">
+                  {idiomAnchor.spatialImageJa}
+                </p>
+              </div>
+            )}
 
-          <div
-            style={{
-              backgroundColor: palette.background,
-              borderColor: palette.border,
-            }}
-            className="p-3 rounded border"
-            data-testid="explanation-pronunciation"
-          >
-            <p className="text-xs font-bold opacity-75 mb-1">
-              発音フォーム（口・舌・リズム）
-            </p>
-            <p>{chunk.pronunciationTip}</p>
+            <div
+              style={{
+                backgroundColor: palette.background,
+                borderColor: palette.border,
+              }}
+              className="p-3 rounded border"
+              data-testid="explanation-word-order"
+            >
+              <p className="text-xs font-bold opacity-75 mb-1">
+                英語の語順のまま前から理解（チャンク分解・コアイメージ）
+              </p>
+              <p>{wordOrderBreakdown}</p>
+            </div>
+
+            <div
+              style={{
+                backgroundColor: palette.background,
+                borderColor: palette.border,
+              }}
+              className="p-3 rounded border"
+              data-testid="explanation-pronunciation"
+            >
+              <p className="text-xs font-bold opacity-75 mb-1">
+                発音フォーム（口・舌・リズム）
+              </p>
+              <p>{chunk.pronunciationTip}</p>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* アクションフッター：「不自然」報告ボタン＆次の問題へ */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
