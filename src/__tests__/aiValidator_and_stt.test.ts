@@ -247,4 +247,41 @@ describe('aiValidator & sttMatcher - AI生成問題の7項目機械検証と音�
       expect(actions.size).toBe(4);
     }
   });
+
+  it('train を含む文が rain（天気・傘準備）に誤判定されず、自宅(home)の行動がオフィス・会議ワークに誤分類されないこと', () => {
+    const seedTrainChunk = ALL_SEED_CHUNKS.find((c) =>
+      c.enText.toLowerCase().includes('train')
+    );
+    expect(seedTrainChunk).toBeDefined();
+    if (seedTrainChunk) {
+      const meta = getPictureSceneVisualMeta(seedTrainChunk);
+      expect(meta.cluster).toBe('transit_flight');
+      expect(meta.sceneTitle).not.toContain('天気');
+      expect(meta.actionTag).not.toContain('傘');
+    }
+
+    // AI追加フレーズ「I managed to catch the earlier train.」のケースも検証
+    const earlierTrainMeta = getPictureSceneVisualMeta({
+      ...ALL_SEED_CHUNKS[0],
+      enText: 'I managed to catch the earlier train.',
+      sceneCategory: 'train',
+      visual: {
+        icons: ['Train', 'Clock'],
+        tags: ['駅ホーム', '自分', '早めの乗車'],
+      },
+    });
+    expect(earlierTrainMeta.cluster).toBe('transit_flight');
+    expect(earlierTrainMeta.sceneTitle).not.toContain('天気');
+    expect(earlierTrainMeta.actionTag).not.toContain('傘');
+
+    const homeChunks = ALL_SEED_CHUNKS.filter(
+      (c) => c.sceneCategory === 'home'
+    );
+    expect(homeChunks.length).toBeGreaterThan(0);
+    for (const hc of homeChunks) {
+      const meta = getPictureSceneVisualMeta(hc);
+      expect(meta.cluster).not.toBe('office_meeting_work');
+      expect(meta.sceneTitle).not.toContain('オフィス');
+    }
+  });
 });

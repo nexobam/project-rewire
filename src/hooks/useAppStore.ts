@@ -37,6 +37,7 @@ import {
 import {
   normalizeGeminiModelName,
   runFourAiEmployeesPipeline,
+  type PipelineSkipReason,
 } from '../services/geminiService';
 import type { UserProfileId } from '../services/profileService';
 import {
@@ -911,6 +912,7 @@ export function useAppStore(activeProfile: UserProfileId | null = null) {
   const generateAiQuestionsNow = useCallback(async (): Promise<{
     addedCount: number;
     usedMock: boolean;
+    skipReason?: PipelineSkipReason;
   }> => {
     const result = await runFourAiEmployeesPipeline({
       sessionAttempts: attemptsRef.current.slice(-15),
@@ -976,7 +978,11 @@ export function useAppStore(activeProfile: UserProfileId | null = null) {
       settings: settingsRef.current,
     });
 
-    return { addedCount, usedMock: result.usedMock };
+    return {
+      addedCount,
+      usedMock: result.usedMock,
+      skipReason: result.skipReason,
+    };
   }, [syncPushWithRetryFlag]);
 
   // パスコード認証してD1と安全マージ同期する

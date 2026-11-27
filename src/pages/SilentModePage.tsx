@@ -122,6 +122,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
     rating: Rating;
     isCorrect: boolean;
     judgeReason: string;
+    userAnswerText?: string;
     reactionMs: number | null;
     completionMs: number | null;
   } | null>(null);
@@ -355,6 +356,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
     rating: Rating;
     isCorrect: boolean;
     judgeReason: string;
+    userAnswerText?: string;
     reactionMs: number | null;
     completionMs: number | null;
     missType?: 'sound_change' | 'order_delay';
@@ -362,12 +364,20 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
     if (submittingAnswerRef.current || answeredResult || !currentChunk) return;
     submittingAnswerRef.current = true;
     try {
-      const { rating, isCorrect, judgeReason, reactionMs, completionMs, missType } =
-        params;
+      const {
+        rating,
+        isCorrect,
+        judgeReason,
+        userAnswerText,
+        reactionMs,
+        completionMs,
+        missType,
+      } = params;
       setAnsweredResult({
         rating,
         isCorrect,
         judgeReason,
+        userAnswerText,
         reactionMs,
         completionMs,
       });
@@ -469,6 +479,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
           replayBeforeShown,
           replayAfterShown
         ),
+        userAnswerText: userOrder.join(' '),
         reactionMs,
         completionMs,
         missType: judged.missType,
@@ -512,6 +523,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
         replayBeforeShown,
         replayAfterShown
       ),
+      userAnswerText: `場所：${chosenCard.visual.tags[0]} ／ 相手：${chosenCard.visual.tags[1]} ／ 状況：${chosenCard.visual.tags[2]}`,
       reactionMs: completionMs,
       completionMs,
       missType: judged.missType,
@@ -544,6 +556,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
         replayBeforeShown,
         replayAfterShown
       ),
+      userAnswerText: choiceText,
       reactionMs: completionMs,
       completionMs,
       missType: judged.missType,
@@ -581,7 +594,26 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
         }
         setCurrentIndex(nextIdx);
       } else {
-        // 15問バッチ完了：まだ残り時間がある場合は次バッチを補充
+        // 15問バッチ完了：標準セッション（15分以下）はここで1セッション完了として新規フレーズ追加＆AI分析を実行
+        if (plannedMinutes <= 15) {
+          const finalSession: Session = {
+            ...session,
+            activeSeconds:
+              sessionResults.length > 0
+                ? Math.max(60, Math.round(getActiveElapsedMs() / 1000))
+                : 0,
+            endedAt: Date.now(),
+          };
+          setSessionFinished(true);
+          await onCompleteSession(finalSession);
+          return;
+        }
+
+        // 30分・60分の長時間コースでまだ残り時間がある場合も、1バッチ完了ごとにAI分析＆新規問題補充を実行
+        void onCompleteSession({
+          ...session,
+          activeSeconds: Math.max(60, Math.round(getActiveElapsedMs() / 1000)),
+        });
         const nextBatch = buildSessionBatch({
           allChunks: selectableChunksForBatch,
           reviewStates,
@@ -927,6 +959,7 @@ export const SilentModePage: React.FC<SilentModePageProps> = ({
               rating={answeredResult.rating}
               isCorrect={answeredResult.isCorrect}
               judgeReason={answeredResult.judgeReason}
+              userAnswerText={answeredResult.userAnswerText}
               reactionMs={answeredResult.reactionMs}
               completionMs={answeredResult.completionMs}
               palette={palette}

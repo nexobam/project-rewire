@@ -149,36 +149,117 @@ export function generateLocalMockPipelineOutput(params: {
     (a) => a.missType === 'speech_block'
   ).length;
   const greenCount = sessionAttempts.filter((a) => a.rating === 'green').length;
+  const yellowCount = sessionAttempts.filter((a) => a.rating === 'yellow').length;
+  const redCount = sessionAttempts.filter((a) => a.rating === 'red').length;
   const total = Math.max(1, sessionAttempts.length);
   const greenPercent = Math.round((greenCount / total) * 100);
 
-  let bottleneck = '語順ブロックの初動1.2秒以内の瞬発出力に伸びしろがあります。';
-  if (soundMisses > orderMisses && soundMisses >= speechMisses) {
+  const chunkMap = new Map<string, Chunk>(
+    [...ALL_SEED_CHUNKS, ...existingChunks].map((c) => [c.id, c])
+  );
+
+  const redAttempts = sessionAttempts.filter((a) => a.rating === 'red');
+  const yellowAttempts = sessionAttempts.filter((a) => a.rating === 'yellow');
+  const greenAttempts = sessionAttempts.filter((a) => a.rating === 'green');
+
+  const uniqueRedChunks = Array.from(
+    new Map(
+      redAttempts
+        .map((a) => chunkMap.get(a.chunkId))
+        .filter((c): c is Chunk => Boolean(c))
+        .map((c) => [c.id, c])
+    ).values()
+  );
+  const uniqueYellowChunks = Array.from(
+    new Map(
+      yellowAttempts
+        .map((a) => chunkMap.get(a.chunkId))
+        .filter((c): c is Chunk => Boolean(c))
+        .map((c) => [c.id, c])
+    ).values()
+  );
+  const uniqueGreenChunks = Array.from(
+    new Map(
+      greenAttempts
+        .map((a) => chunkMap.get(a.chunkId))
+        .filter((c): c is Chunk => Boolean(c))
+        .map((c) => [c.id, c])
+    ).values()
+  );
+
+  const focusWeakChunks = [...uniqueRedChunks, ...uniqueYellowChunks].slice(0, 3);
+  const focusStrongChunks = uniqueGreenChunks.slice(0, 2);
+
+  let bottleneck = '';
+  if (focusWeakChunks.length > 0) {
+    const quotedList = focusWeakChunks
+      .map((c) => `「${c.enText}」（${extractSituationMeaning(c)}）`)
+      .join('、');
+    const causeText =
+      soundMisses > orderMisses && soundMisses >= speechMisses
+        ? '音の連結・脱落（リンキング）の聞き分けで迷いが出ています。単語を1語ずつ追わず、意味の塊（チャンク）の音の輪郭で捉えるのがポイントです。'
+        : speechMisses > orderMisses
+          ? '場面から最初の主語・動詞を口に出す初動で詰まりが出ています。最初の2〜3語を1つの塊として反射的に出す練習が有効です。'
+          : redCount > 0
+            ? '語順の組み立てまたは判断時間に迷いが出ています。日本語に訳さず「誰が→どうする→何を」の順に前から塊で置く意識を持ちましょう。'
+            : '正解できていますが、反射スピードにまだ伸びしろがあります。最初のチャンクを迷わず置くことで緑判定へ引き上げられます。';
+    bottleneck = `今回つまずいた ${quotedList} において、${causeText}`;
+  } else if (sessionAttempts.length > 0) {
     bottleneck =
-      '連結・脱落する音変化のキャッチが最優先ボトルネックです。文字を忘れ音の塊で捉えましょう。';
-  } else if (speechMisses > orderMisses) {
+      '今回のセッションでは赤・黄のミスが0件でした！次はさらに長いチャンクや音変化の激しい文でも同じ初動スピードを維持することが目標です。';
+  } else {
     bottleneck =
-      '状況カードから最初の1語を声に出すまでの反射速度がボトルネックです。';
+      '語順ブロックの最初のチャンク（主語＋動詞の塊）を迷わず置く瞬発力を意識してトレーニングを進めましょう。';
   }
 
-  const analyst = {
-    bottleneck: bottleneck.slice(0, 100),
-    growth: `今回の緑達成率は${greenPercent}%です。英語の語順のまま前から処理する回路が着実に定着しています。`.slice(
-      0,
-      100
-    ),
-  };
+  const avgGreenSec =
+    greenAttempts.length > 0
+      ? (
+          greenAttempts.reduce((acc, a) => acc + (a.completionMs || 2000), 0) /
+          greenAttempts.length /
+          1000
+        ).toFixed(1)
+      : null;
 
-  const teacher = [
-    {
-      coreImage:
-        '主語がまず空間に立ち、そこから動作の矢印が対象へ真っ直ぐ伸びる感覚を掴みましょう。',
-      pronunciation:
-        '機能語（to / of / a）は弱く短く前の単語の語尾にくっつけて一息で発音します。',
-      praise:
-        '迷いながらも最後まで翻訳せずに英語の語順で並べ切った集中力が見事です！',
-    },
-  ];
+  const strongQuote =
+    focusStrongChunks.length > 0
+      ? `特に${focusStrongChunks.map((c) => `「${c.enText}」`).join('や')}は迷わず即答できており、`
+      : '';
+
+  const growth =
+    sessionAttempts.length > 0
+      ? `全${sessionAttempts.length}問中、緑${greenCount}問（${greenPercent}%）・黄${yellowCount}問・赤${redCount}問でした。${strongQuote}${avgGreenSec ? `緑問題の平均回答タイムは${avgGreenSec}秒と、` : ''}英語の語順のまま前から処理する回路が着実に育っています。`
+      : '新しい実践フレーズを追加しました。場面の状況と英語の語順イメージを結びつけてトレーニングを始めましょう。';
+
+  const primaryTarget = focusWeakChunks[0] ?? focusStrongChunks[0];
+  const secondaryTarget = focusWeakChunks[1] ?? focusStrongChunks[1];
+
+  const teacher: NonNullable<AiReport['teacher']> = primaryTarget
+    ? [
+        {
+          coreImage: `【重点復習：${primaryTarget.enText}】${extractWordOrderBreakdown(primaryTarget)}`,
+          pronunciation: `【発音のコツ】${primaryTarget.pronunciationTip}`,
+          praise:
+            focusWeakChunks.length > 0
+              ? `間違えた「${primaryTarget.enText}」も、前からチャンクの塊でイメージすれば次回は必ず即答できます！${secondaryTarget ? `あわせて「${secondaryTarget.enText}」の語順リズムも声に出して確認しておきましょう。` : ''}`
+              : `「${primaryTarget.enText}」をはじめ、翻訳を介さず英語の語順のまま反射的に処理できていて素晴らしい集中力です！`,
+        },
+      ]
+    : [
+        {
+          coreImage:
+            '主語と動詞の塊（例：Let me grab / I ended up / We might as well）を1つのパーツとして空間に置き、そこから対象へ矢印を伸ばす感覚を掴みましょう。',
+          pronunciation:
+            '機能語（to / of / a / on）は弱く短く前の単語の語尾にくっつけて、ひと息のチャンクとして発音するとリスニングも発話も一気に楽になります。',
+          praise:
+            '翻訳癖に頼らず、場面イメージと英語の語順を直結させるトレーニングが順調に進んでいます！',
+        },
+      ];
+
+  const analyst = {
+    bottleneck: bottleneck.slice(0, 320),
+    growth: growth.slice(0, 320),
+  };
 
   const rawMockCandidates = [
     {
@@ -656,6 +737,13 @@ async function callGeminiJsonEndpoint(params: {
  * - コール2 (temperature 0.2): 独立した品質監査AI講師（直訳臭さと不自然な英語を監査・修正）
  * - APIキー未設定、オフライン、上限超過、429エラー時は指数バックオフ／ローカルモックでフォールバック
  */
+export type PipelineSkipReason =
+  | 'offline'
+  | 'daily_limit'
+  | 'rate_limit'
+  | 'no_api_key'
+  | 'api_error';
+
 export async function runFourAiEmployeesPipeline(params: {
   sessionAttempts: Attempt[];
   existingChunks: Chunk[];
@@ -669,6 +757,7 @@ export async function runFourAiEmployeesPipeline(params: {
   usedMock: boolean;
   rateLimited: boolean;
   apiCallsMade: number;
+  skipReason?: PipelineSkipReason;
 }> {
   const {
     sessionAttempts,
@@ -689,12 +778,21 @@ export async function runFourAiEmployeesPipeline(params: {
   }
   const useServerProxy = !hasLocalKey && !params.fetchImpl && serverHasKey;
 
+  const withinDailyLimit = canMakeApiCallToday(settings, 2);
+
   if (
     (!hasLocalKey && !useServerProxy) ||
     isOffline ||
     !fetchImpl ||
-    !canMakeApiCallToday(settings, 2)
+    !withinDailyLimit
   ) {
+    const skipReason: PipelineSkipReason = isOffline
+      ? 'offline'
+      : !withinDailyLimit
+        ? 'daily_limit'
+        : !hasLocalKey && !useServerProxy
+          ? 'no_api_key'
+          : 'api_error';
     const mock = generateLocalMockPipelineOutput({
       sessionAttempts,
       existingChunks,
@@ -705,6 +803,7 @@ export async function runFourAiEmployeesPipeline(params: {
       usedMock: true,
       rateLimited: false,
       apiCallsMade: 0,
+      skipReason,
     };
   }
 
@@ -759,8 +858,39 @@ export async function runFourAiEmployeesPipeline(params: {
     });
   };
 
+  const chunkLookup = new Map<string, Chunk>(
+    [...ALL_SEED_CHUNKS, ...existingChunks].map((c) => [c.id, c])
+  );
+  const redDetails = sessionAttempts
+    .filter((a) => a.rating === 'red')
+    .map((a) => {
+      const ch = chunkLookup.get(a.chunkId);
+      return ch
+        ? `${ch.enText} (miss:${a.missType ?? 'delay'}, ${a.completionMs}ms)`
+        : null;
+    })
+    .filter((x): x is string => Boolean(x))
+    .slice(0, 6);
+  const yellowDetails = sessionAttempts
+    .filter((a) => a.rating === 'yellow')
+    .map((a) => {
+      const ch = chunkLookup.get(a.chunkId);
+      return ch ? `${ch.enText} (${a.completionMs}ms)` : null;
+    })
+    .filter((x): x is string => Boolean(x))
+    .slice(0, 6);
+  const greenDetails = sessionAttempts
+    .filter((a) => a.rating === 'green')
+    .map((a) => {
+      const ch = chunkLookup.get(a.chunkId);
+      return ch ? `${ch.enText} (${a.completionMs}ms)` : null;
+    })
+    .filter((x): x is string => Boolean(x))
+    .slice(0, 6);
+
   const step1SystemPrompt = `あなたは英語脳再配線アプリ「Project Rewire」の専属AI英語講師チーム（弱点分析・コアイメージ解説・カリキュラム作成）です。
 【絶対ルール】
+- analyst.bottleneck と analyst.growth、および teacher の総評では、抽象的な一般論ではなく、必ず入力データ内の「実際に間違えた英文（redQuestions / yellowQuestions）」と「即答できた英文（greenQuestions）」を具体的に『「英文」では〜』と引用し、どの塊・語順・音変化でつまずいたか、次回どこを意識すればいいかを具体的に解説すること。
 - 出題中（回答前）に日本語を英訳させることは禁止ですが、回答後の解説（coreImageJa）では何を言っている文なのか100%理解できるよう、必ず「【言いたいこと】自然な場面の意味・ニュアンス ／ 【英語の語順】前から順のチャンク理解と空間コアイメージ（＋核となる慣用句・句動詞の簡単な英語での言い換え = easy English）」の形式で記述すること。
 - 新規問題は5問（日常会話85%：Miami Heat 15%の比率、パターンプラクティスとチャンク・ビルディングを混合）。単語単体の暗記ではなく、ネイティブが会話で毎日使う句動詞・慣用チャンク・コロケーション（例：figure out, might as well, end up, run out of, come up with, get used to 等）を自然な文脈の塊として織り交ぜること。
 - Lv.2以降では、マイアミのストリート・ドライブ・相棒とのリアルな掛け合い（GTA6 / Vice City のような日常の相棒トークやゲーム雑談でも使える自然なカジュアル英語・口語表現）も適度に織り交ぜること。
@@ -781,6 +911,9 @@ export async function runFourAiEmployeesPipeline(params: {
       .length,
     speechMisses: sessionAttempts.filter((a) => a.missType === 'speech_block')
       .length,
+    redQuestions: redDetails,
+    yellowQuestions: yellowDetails,
+    greenQuestions: greenDetails,
   });
 
   try {
@@ -858,17 +991,17 @@ export async function runFourAiEmployeesPipeline(params: {
           step2Result?.analyst?.bottleneck ||
           step1Result?.analyst?.bottleneck ||
           mockFallback.analyst.bottleneck
-        ).slice(0, 100),
+        ).slice(0, 320),
         growth: (
           step2Result?.analyst?.growth ||
           step1Result?.analyst?.growth ||
           mockFallback.analyst.growth
-        ).slice(0, 100),
+        ).slice(0, 320),
       },
       teacher:
         Array.isArray(step2Result?.teacher) && step2Result.teacher.length > 0
           ? step2Result.teacher.slice(0, 2).map((t) => ({
-              coreImage: (t.coreImage || '').slice(0, 100),
+              coreImage: (t.coreImage || '').slice(0, 320),
               pronunciation: t.pronunciation || '',
               praise: t.praise || '',
             }))
@@ -895,6 +1028,7 @@ export async function runFourAiEmployeesPipeline(params: {
       usedMock: true,
       rateLimited: isRateLimit,
       apiCallsMade: 1,
+      skipReason: isRateLimit ? 'rate_limit' : 'api_error',
     };
   }
 }

@@ -53,6 +53,12 @@ export interface HomePageProps {
   onGenerateAiQuestionsNow?: () => Promise<{
     addedCount: number;
     usedMock: boolean;
+    skipReason?:
+      | 'offline'
+      | 'daily_limit'
+      | 'rate_limit'
+      | 'no_api_key'
+      | 'api_error';
   }>;
 }
 
@@ -682,13 +688,57 @@ export const HomePage: React.FC<HomePageProps> = ({
                     try {
                       const res = await onGenerateAiQuestionsNow();
                       if (res.addedCount > 0) {
-                        setAiGenNotice(
-                          `新しく ${res.addedCount} 問を追加しました！（次回のトレーニングで優先出題されます）`
-                        );
+                        if (!res.usedMock) {
+                          setAiGenNotice(
+                            `AI講師があなたの学習履歴に合わせて新しく ${res.addedCount} 問を作成・追加しました！（次回のトレーニングで優先出題されます）`
+                          );
+                        } else if (res.skipReason === 'offline') {
+                          setAiGenNotice(
+                            `オフライン中のため、内蔵の厳選フレーズプールから新しく ${res.addedCount} 問を追加しました！`
+                          );
+                        } else if (res.skipReason === 'daily_limit') {
+                          setAiGenNotice(
+                            `本日のAI利用上限に達しているため、内蔵の厳選フレーズプールから新しく ${res.addedCount} 問を追加しました！`
+                          );
+                        } else if (res.skipReason === 'rate_limit') {
+                          setAiGenNotice(
+                            `AIサーバー混雑（429）のため、内蔵の厳選フレーズプールから新しく ${res.addedCount} 問を追加しました！`
+                          );
+                        } else if (res.skipReason === 'no_api_key') {
+                          setAiGenNotice(
+                            `AIキー未設定のため、内蔵の厳選フレーズプールから新しく ${res.addedCount} 問を追加しました！`
+                          );
+                        } else {
+                          setAiGenNotice(
+                            `AI通信タイムアウトのため、内蔵の厳選フレーズプールから新しく ${res.addedCount} 問を追加しました！`
+                          );
+                        }
                       } else {
-                        setAiGenNotice(
-                          '現在追加できる新しいフレーズがありません（重複またはAPI制限・未設定のため）。'
-                        );
+                        if (res.skipReason === 'offline') {
+                          setAiGenNotice(
+                            '【オフライン】インターネット未接続かつ内蔵の予備フレーズ（全20問）もすべて追加済みです。通信環境の良い場所で再度お試しください。'
+                          );
+                        } else if (res.skipReason === 'daily_limit') {
+                          setAiGenNotice(
+                            '【本日のAI上限到達】1日のAI生成上限回数に達しており、内蔵の予備フレーズもすべて追加済みです。「設定」から上限回数を増やすか、明日お試しください。'
+                          );
+                        } else if (res.skipReason === 'rate_limit') {
+                          setAiGenNotice(
+                            '【AIサーバー混雑（429）】Gemini APIが一時的に混み合っており新規作成できませんでした。1分ほど待ってからもう一度押してください。'
+                          );
+                        } else if (res.skipReason === 'no_api_key') {
+                          setAiGenNotice(
+                            '【AI未認証】クラウドパスコードまたはGemini APIキーが未設定で、内蔵の予備フレーズもすべて追加済みです。「設定」画面をご確認ください。'
+                          );
+                        } else if (res.skipReason === 'api_error') {
+                          setAiGenNotice(
+                            '【AI通信エラー】AIサーバーからの応答がタイムアウトし、内蔵の予備フレーズもすべて追加済みです。少し時間を置いて再度お試しください。'
+                          );
+                        } else {
+                          setAiGenNotice(
+                            '【重複スキップ】今回AIが生成した候補が既存の登録フレーズと重なったため追加されませんでした。もう一度ボタンを押すと別パターンの新フレーズを生成します。'
+                          );
+                        }
                       }
                     } finally {
                       setGeneratingAi(false);

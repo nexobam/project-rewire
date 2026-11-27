@@ -27,6 +27,7 @@ export interface PostAnswerCardProps {
   rating: Rating;
   isCorrect?: boolean;
   judgeReason?: string;
+  userAnswerText?: string;
   reactionMs: number | null;
   completionMs: number | null;
   palette: ThemePalette;
@@ -43,6 +44,7 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
   rating,
   isCorrect,
   judgeReason,
+  userAnswerText,
   reactionMs,
   completionMs,
   palette,
@@ -205,6 +207,23 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
             {judgeReason}
           </p>
         )}
+
+        {userAnswerText && (
+          <div
+            style={{
+              backgroundColor: palette.background,
+              borderColor:
+                isCorrect === false
+                  ? (palette.crimsonText ?? palette.border)
+                  : palette.border,
+            }}
+            className="px-2.5 py-1.5 rounded border text-xs flex flex-wrap items-center gap-1.5"
+            data-testid="post-answer-user-choice"
+          >
+            <span className="font-bold opacity-75">あなたの選択:</span>
+            <span className="font-semibold">{userAnswerText}</span>
+          </div>
+        )}
       </div>
 
       {/* 回答後に初めて英文全体を開示（要件2-1-2） */}
@@ -336,12 +355,12 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
                   backgroundColor: palette.background,
                   borderColor: palette.amberText ?? palette.border,
                 }}
-                className="p-3 rounded border space-y-1"
+                className="p-3 rounded border space-y-1.5"
                 data-testid="explanation-idiom-anchor"
               >
                 <div className="flex flex-wrap items-center justify-between gap-1.5">
                   <span className="text-xs font-bold opacity-80">
-                    慣用句・語彙の英語脳リンク（塊チャンク ⇔ 簡単英語）
+                    キー構文・熟語の英語脳リンク（塊チャンク ⇔ 簡単英語）
                   </span>
                   <span className="font-mono font-extrabold text-xs px-2 py-0.5 rounded border">
                     [{idiomAnchor.chunkPhrase}] {idiomAnchor.easyEnglish}
@@ -350,6 +369,21 @@ export const PostAnswerCard: React.FC<PostAnswerCardProps> = ({
                 <p className="text-xs leading-relaxed opacity-90">
                   {idiomAnchor.spatialImageJa}
                 </p>
+                {idiomAnchor.examples && idiomAnchor.examples.length > 0 && (
+                  <div
+                    style={{ borderColor: palette.border }}
+                    className="pt-1.5 mt-1 border-t space-y-1 text-xs"
+                  >
+                    <p className="font-bold opacity-75 text-[11px]">
+                      同じ塊を使った応用例文:
+                    </p>
+                    <ul className="list-disc pl-4 space-y-0.5 opacity-90">
+                      {idiomAnchor.examples.map((ex, idx) => (
+                        <li key={idx}>{ex}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
 
